@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import { authConfig } from '../config/auth.config.js';
+import { config } from '../config/config.js';
 import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
 import { authRepository } from '../repositories/auth.repository.js';
 import type { CreateRefreshTokenInput, LoginInput } from '../types/auth.type.js';
@@ -27,11 +27,11 @@ class AuthService {
       });
     }
 
-    const accessToken = jwt.sign({ userId: user.id }, authConfig.accessTokenSecretKey, {
-      expiresIn: authConfig.accessTokenExpiresIn,
+    const accessToken = jwt.sign({ userId: user.id }, config.auth.accessTokenSecretKey, {
+      expiresIn: config.auth.accessTokenExpiresIn,
     });
-    const refreshToken = jwt.sign({ userId: user.id }, authConfig.refreshTokenSecretKey, {
-      expiresIn: authConfig.refreshTokenExpiresIn,
+    const refreshToken = jwt.sign({ userId: user.id }, config.auth.refreshTokenSecretKey, {
+      expiresIn: config.auth.refreshTokenExpiresIn,
     });
 
     const decoded = jwt.decode(refreshToken) as { exp: number; iat: number } | null;

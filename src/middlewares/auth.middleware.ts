@@ -1,13 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { authConfig } from '../config/auth.config.js';
+import { config } from '../config/config.js';
 import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
 import type { TokenPayload } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
-const accessTokenSecretKey = authConfig.accessTokenSecretKey;
+const accessTokenSecretKey = config.auth.accessTokenSecretKey;
 
 const isTokenPayload = (decoded: unknown): decoded is TokenPayload => {
   return (

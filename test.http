@@ -5,7 +5,7 @@
 
 ### 로그인
 # @name login
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
@@ -14,6 +14,6 @@ Content-Type: application/json
 }
 
 ### 내정보 조회
-GET {{baseUrl}}/api/users/me
+GET {{baseUrl}}/users/me
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json

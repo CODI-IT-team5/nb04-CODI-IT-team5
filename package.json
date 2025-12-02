@@ -9,7 +9,7 @@
     "dev": "tsx --watch src/app.ts",
     "build": "tsx",
     "build:watch": "tsc --watch",
-    "start": "node dist/src/app.js",
+    "start": "node --env-file=.env dist/src/app.js",
     "seed": "npx prisma db seed",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -31,6 +31,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "express": "^5.1.0",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/ms": "^2.1.0",

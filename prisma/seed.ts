@@ -1,4 +1,4 @@
-import { appConfig } from '../src/config/app.config.js';
+import { config } from '../src/config/config.js';
 import prisma from '../src/utils/prisma.js';
 
 import { UserRole } from '@prisma/client';
@@ -23,7 +23,7 @@ async function main() {
   // ----------------------
 
   const testPassword = 'test1234';
-  const hashedPassword = await bcrypt.hash(testPassword, appConfig.bcryptSaltRounds);
+  const hashedPassword = await bcrypt.hash(testPassword, config.app.bcryptSaltRounds);
 
   await prisma.user.createMany({
     data: [

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import pino from 'pino';
 
-import { appConfig } from '../config/app.config.js';
+import { config } from '../config/config.js';
 
 const logDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
@@ -10,7 +10,7 @@ const logPath = path.join(logDir, 'app.log');
 
 const logger = pino(
   {
-    level: appConfig.logLevel,
+    level: config.app.logLevel,
     timestamp: pino.stdTimeFunctions.isoTime,
   },
 
