@@ -17,7 +17,7 @@ class UserService {
       id: user.id,
       name: user.name,
       email: user.email,
-      password: user.password.slice(0, 10) + '...',
+      // password: user.password.slice(0, 10) + '...',
       type: user.type,
       points: user.points,
       createdAt: user.createdAt,
