@@ -1,0 +1,19 @@
+
+@baseUrl=http://localhost:3001
+@accessTokenName=accessToken
+@accessToken={{login.response.body.accessToken}}
+
+### 로그인
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 내정보 조회
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json

@@ -4,6 +4,7 @@ import { appConfig } from './config/app.config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
+import { userRouter } from './routes/user.router.js';
 import logger from './utils/logger.js';
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use(loggerMiddleware);
 
 app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
 
 app.use(errorMiddleware);
 

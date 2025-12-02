@@ -14,7 +14,7 @@ const isTokenPayload = (decoded: unknown): decoded is TokenPayload => {
     typeof decoded === 'object' &&
     decoded !== null &&
     'userId' in decoded &&
-    typeof (decoded as TokenPayload).userId === 'number'
+    typeof (decoded as TokenPayload).userId === 'string'
   );
 };
 
@@ -58,7 +58,7 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
       );
     }
 
-    req.user = { id: Number(decoded['userId']) };
+    req.user = { id: decoded['userId'] };
 
     logger.info({
       message: '사용자 인증',

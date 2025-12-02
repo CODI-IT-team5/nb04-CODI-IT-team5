@@ -16,6 +16,7 @@ export const SEND_BIRD_CODE = {
   InternalError: 500901, // 서버에서 요청을 처리하려고 하는 동안 예기치 않은 예외가 발생합니다. 요청을 다시 시도하십시오.
   InvalidValue: 400111, // 요청이 잘못된 값을 지정합니다.
   InvalidApiToken: 400401, // 요청에 제공된 API 토큰은 유효하지 않은 값을 지정합니다.
+  UserNotFound: 400301,
 };
 
 export const MESSAGE = {
