@@ -19,7 +19,7 @@ export const loggerMiddleware = (req: Request, res: Response, next: NextFunction
       type: 'response',
       method: req.method,
       url: req.originalUrl,
-      statusCode: res.statusCode,
+      status: res.statusCode,
       duration: `${duration}ms`,
     });
   });
