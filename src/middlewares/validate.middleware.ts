@@ -17,15 +17,15 @@ export function validateMiddleware(schema: ValidationSchemas) {
     try {
       if (schema.body) {
         req.body = await schema.body.parseAsync(req.body);
-        logger.debug({ message: `validate 미들웨어 req.body: ${JSON.stringify(req.body, null, 2)}` });
+        logger.debug({ type: 'validate 미들웨어', target: 'body', data: req.body });
       }
       if (schema.query) {
         req.query = (await schema.query.parseAsync(req.query)) as typeof req.query;
-        logger.debug({ message: `validate 미들웨어 req.query: ${JSON.stringify(req.query, null, 2)}` });
+        logger.debug({ type: 'validate 미들웨어', target: 'query', data: req.query });
       }
       if (schema.params) {
         req.params = (await schema.params.parseAsync(req.params)) as typeof req.params;
-        logger.debug({ message: `validate 미들웨어 req.params: ${JSON.stringify(req.params, null, 2)}` });
+        logger.debug({ type: 'validate 미들웨어', target: 'params', data: req.params });
       }
       next();
     } catch (err) {
