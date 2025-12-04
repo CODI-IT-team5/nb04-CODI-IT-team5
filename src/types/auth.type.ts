@@ -5,11 +5,6 @@ export interface CreateRefreshTokenInput {
   issuedAt: Date;
 }
 
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
 export interface TokenPayload {
   userId: string;
   iat: number;

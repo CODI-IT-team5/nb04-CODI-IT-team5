@@ -3,13 +3,14 @@ import jwt from 'jsonwebtoken';
 
 import { config } from '../config/config.js';
 import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
+import type { Login } from '../dtos/auth.dto.js';
 import { authRepository } from '../repositories/auth.repository.js';
-import type { CreateRefreshTokenInput, LoginInput } from '../types/auth.type.js';
+import type { CreateRefreshTokenInput } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
 class AuthService {
-  login = async (data: LoginInput) => {
+  login = async (data: Login) => {
     const user = await authRepository.findUserByEmail(data.email);
     if (!user) {
       throw new HttpException({
