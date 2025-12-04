@@ -17,15 +17,12 @@ export function validateMiddleware(schema: ValidationSchemas) {
     try {
       if (schema.body) {
         req.body = await schema.body.parseAsync(req.body);
-        logger.debug({ type: 'validate 미들웨어', target: 'body', data: req.body });
       }
       if (schema.query) {
         req.query = (await schema.query.parseAsync(req.query)) as typeof req.query;
-        logger.debug({ type: 'validate 미들웨어', target: 'query', data: req.query });
       }
       if (schema.params) {
         req.params = (await schema.params.parseAsync(req.params)) as typeof req.params;
-        logger.debug({ type: 'validate 미들웨어', target: 'params', data: req.params });
       }
       next();
     } catch (err) {
@@ -38,8 +35,20 @@ export function validateMiddleware(schema: ValidationSchemas) {
           body: req.body,
           query: req.query,
           params: req.params,
+          errors: err.issues,
         });
-        const message = err.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+
+        const firstError = err.issues[0];
+
+        let message = '유효하지 않은 요청 형식입니다';
+
+        if (firstError) {
+          if (firstError.code === 'unrecognized_keys') {
+            message = `${firstError.keys.join('.')}: 허용되지 않은 필드입니다`;
+          } else {
+            message = `${firstError.path.join('.')}: ${firstError.message}`;
+          }
+        }
         next(
           new HttpException({ status: STATUS_CODE.BAD_REQUEST, message: message, code: SEND_BIRD_CODE.InvalidValue }),
         );

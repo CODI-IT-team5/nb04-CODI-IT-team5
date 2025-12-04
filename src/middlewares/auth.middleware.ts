@@ -23,12 +23,7 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    logger.debug({
-      message: '인증 헤더가 없거나 토큰이 제공되지 않았습니다',
-      path: req.originalUrl,
-      method: req.method,
-      ip: req.ip,
-    });
+    logger.debug({ message: '인증 헤더가 없거나 토큰이 제공되지 않았습니다' });
     return next(
       new HttpException({
         status: STATUS_CODE.UNAUTHORIZED,
@@ -44,9 +39,6 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
     if (!isTokenPayload(decoded)) {
       logger.debug({
         message: 'JWT 페이로드가 잘못되었습니다',
-        path: req.originalUrl,
-        method: req.method,
-        ip: req.ip,
         payload: decoded,
       });
       return next(
@@ -60,19 +52,10 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
 
     req.user = { id: decoded['userId'] };
 
-    logger.info({
-      message: '사용자 인증',
-      path: req.originalUrl,
-      method: req.method,
-      userId: req.user.id,
-    });
-
     next();
   } catch (err) {
     logger.debug({
       message: 'JWT 확인 실패',
-      path: req.originalUrl,
-      method: req.method,
       error: err,
     });
     next(err);
