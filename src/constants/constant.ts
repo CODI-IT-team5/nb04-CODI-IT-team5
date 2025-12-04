@@ -17,6 +17,7 @@ export const SEND_BIRD_CODE = {
   InvalidValue: 400111, // 요청이 잘못된 값을 지정합니다.
   InvalidApiToken: 400401, // 요청에 제공된 API 토큰은 유효하지 않은 값을 지정합니다.
   UserNotFound: 400301,
+  RateLimitExceeded: 500910, // 요청 제한을 초과하여 요청을 완료할 수 없습니다.
 };
 
 export const MESSAGE = {

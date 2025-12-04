@@ -5,18 +5,22 @@ dotenv.config();
 
 export const config = {
   app: {
-    node_env: process.env['NODE_ENV'] || 'development', // 환경
-    port: process.env['PORT'] || 3001, // 서버 실행 포트
-    cors_origin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
-    cors_credentials: process.env['CORS_CREDENTIALS'] === 'true',
-    app_name: process.env['APP_NAME'] || 'app_name', // 애플리케이션 이름
-    logLevel: process.env['LOG_LEVEL'] || 'info', // 로그 레벨
-    bcryptSaltRounds: Number(process.env['BCRYPT_SALT_ROUNDS']) || 10, // 암호화
+    node_env: process.env['NODE_ENV'] || 'development', // 실행 환경 (dev/prod)
+    port: process.env['PORT'] || 3001, // 서버 포트
+    cors_origin: process.env['CORS_ORIGIN'] || 'http://localhost:3000', // CORS 허용 도메인
+    cors_credentials: process.env['CORS_CREDENTIALS'] === 'true', // 쿠키 포함 요청 허용 여부
+    app_name: process.env['APP_NAME'] || 'app_name', // 서비스 이름
+    logLevel: process.env['LOG_LEVEL'] || 'info', // 로그 레벨 (debug/info/warn/error)
+    bcryptSaltRounds: Number(process.env['BCRYPT_SALT_ROUNDS']) || 10, // 비밀번호 해시 강도
+    rateLimitWindowMs: Number(process.env['RATE_LIMIT_WINDOW_MS']) || 15 * 60 * 1000, // rate limit 시간 제한
+    rateLimitMax: Number(process.env['RATE_LIMIT_MAX']) || 100, // 시간 제한당 허용 요청 수
+    compression_threshold: Number(process.env['COMPRESSION_THRESHOLD']) || 1024, // gzip 최소 크기
+    compression_level: Number(process.env['COMPRESSION_LEVEL']) || 6, // gzip 압축 레벨
   },
   auth: {
-    accessTokenSecretKey: process.env['ACCESS_TOKEN_SECRET_KEY'] ?? 'default-access-token-secret',
-    refreshTokenSecretKey: process.env['REFRESH_TOKEN_SECRET_KEY'] ?? 'default-refresh-token-secret',
-    accessTokenExpiresIn: (process.env['ACCESS_TOKEN_EXPIRES_IN'] as StringValue) ?? '1h',
-    refreshTokenExpiresIn: (process.env['REFRESH_TOKEN_EXPIRES_IN'] as StringValue) ?? '7d',
+    accessTokenSecretKey: process.env['ACCESS_TOKEN_SECRET_KEY'] ?? 'default-access-token-secret', // 엑세스 토큰 서명키
+    refreshTokenSecretKey: process.env['REFRESH_TOKEN_SECRET_KEY'] ?? 'default-refresh-token-secret', // 리프레시 토큰 서명키
+    accessTokenExpiresIn: (process.env['ACCESS_TOKEN_EXPIRES_IN'] as StringValue) ?? '1h', // 엑세스 토큰 만료 시간
+    refreshTokenExpiresIn: (process.env['REFRESH_TOKEN_EXPIRES_IN'] as StringValue) ?? '7d', // 리프레시 토큰 만료 시간
   },
 };
