@@ -46,6 +46,35 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  // ----------------------
+  // 3. 카테고리
+  // ----------------------
+  await prisma.category.createMany({
+    data: [
+      { name: 'TOP' },
+      { name: 'BOTTOM' },
+      { name: 'OUTER' },
+      { name: 'DRESS' },
+      { name: 'SKIRT' },
+      { name: 'SHOES' },
+      { name: 'ACC' },
+    ],
+    skipDuplicates: true,
+  });
+
+  // ----------------------
+  // 4. 사이즈
+  // ----------------------
+  await prisma.size.createMany({
+    data: [
+      { id: 'size_s', name: 'S', sizeDetail: { ko: '스몰', en: 'Small' } },
+      { id: 'size_m', name: 'M', sizeDetail: { ko: '미디움', en: 'Medium' } },
+      { id: 'size_l', name: 'L', sizeDetail: { ko: '라지', en: 'Large' } },
+      { id: 'size_xl', name: 'XL', sizeDetail: { ko: '엑스라지', en: 'X-Large' } },
+    ],
+    skipDuplicates: true,
+  });
 }
 
 main()
