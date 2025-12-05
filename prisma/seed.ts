@@ -31,7 +31,7 @@ async function main() {
         email: 'seller1@test.com',
         name: '셀러1',
         password: hashedPassword,
-        lastLogin: new Date(),
+        lastLoginAt: new Date(),
         type: UserRole.SELLER,
         gradeId: 'grade_green',
       },
@@ -39,7 +39,7 @@ async function main() {
         email: 'buyer1@test.com',
         name: '바이어1',
         password: hashedPassword,
-        lastLogin: new Date(),
+        lastLoginAt: new Date(),
         type: UserRole.BUYER,
         gradeId: 'grade_green',
       },
@@ -68,6 +68,7 @@ async function main() {
   // ----------------------
   await prisma.size.createMany({
     data: [
+      { id: 'size_free', name: 'Free', sizeDetail: { ko: '프리사이즈', en: 'Free' } },
       { id: 'size_s', name: 'S', sizeDetail: { ko: '스몰', en: 'Small' } },
       { id: 'size_m', name: 'M', sizeDetail: { ko: '미디움', en: 'Medium' } },
       { id: 'size_l', name: 'L', sizeDetail: { ko: '라지', en: 'Large' } },

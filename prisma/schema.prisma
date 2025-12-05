@@ -21,15 +21,14 @@ model User {
   email    String   @unique
   password String
   name     String
-  type     UserRole @default(BUYER) // API 명세: "BUYER"
+  type     UserRole @default(BUYER)
+  image    String? // 프로필 이미지
 
-  points Int     @default(0)
-  image  String? // 프로필 이미지
-
+  points      Int @default(0)
   totalAmount Int @default(0) // 누적 구매 금액
 
   // 등급 (Grade)
-  gradeId String // 구매자일 경우 필수
+  gradeId String
   grade   Grade  @relation(fields: [gradeId], references: [id])
 
   // 관계 설정
@@ -40,19 +39,77 @@ model User {
   reviews        Review[] // 작성한 리뷰
   inquiries      Inquiry[] // 작성한 상품 문의
   inquiryReplies InquiryReply[] // 판매자: 작성한 답변
-
   favoriteStores FavoriteStore[] // 관심 스토어 목록
   notifications  Notification[] // 알림 목록
+  pointHistories PointHistory[]
+  devices        Device[]
 
-  refreshTokens RefreshToken[] // 인증 토큰
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+
+  @@index([email, password, isDeleted])
+}
+
+enum RevokedTokenReason {
+  LOGOUT
+  PASSWORD_CHANGE
+  DELETED_USER
+  EXPIRED // 만료 시간 지남
+  DEVICE_LIMIT // 로그인 가능 수 제한 넘김
+}
+
+model RefreshToken {
+  id         String              @id @default(cuid())
+  token      String              @unique
+  deviceId   String
+  device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime // 만료 날짜
+  issuedAt   DateTime // 토큰 발급 시간
+  updatedAt  DateTime            @updatedAt
+  lastUsedAt DateTime // 마지막 사용 시간
+  revokedAt  DateTime? // 무묘화 된 시간
+  reason     RevokedTokenReason? // 토큰 무효화 이유
+  isRevoked  Boolean             @default(false) // 무효화 여부
+}
+
+model Device {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip            String
+  userAgent     String // 기기 정보
+  deviceName    String?
+  createdAt     DateTime       @default(now())
+  lastUsedAt    DateTime
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  isDeleted     Boolean        @default(false)
+  refreshTokens RefreshToken[]
+}
+
+enum PointHistoryType {
+  EARN // 적립
+  USE // 사용
+  EXPIRE // 소멸
+}
+
+model PointHistory {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  point       Int
+  type        PointHistoryType
 
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  lastLogin DateTime?
-  deletedAt DateTime?
-  isDeleted Boolean   @default(false)
+  expiredAt DateTime? // 만료 날짜
 
-  @@index([email])
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+  userId  String
+  user    User    @relation(fields: [userId], references: [id])
 }
 
 model Grade {
@@ -63,19 +120,6 @@ model Grade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   users     User[]
-}
-
-model RefreshToken {
-  id        String    @id @default(cuid())
-  token     String    @unique
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime // 만료 날짜
-  issuedAt  DateTime // 토큰 발급 시간
-  updatedAt DateTime  @updatedAt
-  revoked   Boolean   @default(false) // 무효화 여부
-  revokedAt DateTime?
-  //TODO: 추후 넣을 수도 있는 것: 무효화 이유, 마지막 이용 시간
 }
 
 // ==========================================
@@ -89,17 +133,19 @@ model Store {
   image   String?
 
   address       String
-  detailAddress String
+  detailAddress String?
   phoneNumber   String
 
-  userId String @unique
+  userId String @unique // 판매자
   user   User   @relation(fields: [userId], references: [id])
 
   products Product[]
-  likedBy  FavoriteStore[]
+  likedBy  FavoriteStore[] // 관심 스토어
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  isDeleted Boolean  @default(false)
 }
 
 model FavoriteStore {
@@ -130,7 +176,7 @@ model Size {
   // 다국어 지원을 위해 JSON 타입 사용 (PostgreSQL 지원)
   sizeDetail Json?
 
-  stocks     ProductStock[]
+  stocks     ProductStock[] // 재고
   cartItems  CartItem[]
   orderItems OrderItem[]
 }
@@ -143,19 +189,15 @@ model Product {
   id      String  @id @default(cuid())
   name    String
   content String? @db.Text
-  price   Int
+  price   Int // 정가
   image   String?
-
-  discountRate      Int       @default(0)
-  discountStartTime DateTime?
-  discountEndTime   DateTime?
 
   isSoldOut Boolean @default(false)
 
   // 대시보드 및 정렬용 통계 필드
-  salesCount  Int @default(0) // 판매량 (대시보드 Top5용)
-  reviewCount Int @default(0)
-  reviewSum   Int @default(0)
+  salesCount    Int @default(0) // 판매량 (대시보드 Top5용)
+  reviewsCount  Int @default(0) // 리뷰 수
+  reviewsRating Int @default(0) // 별점 평균
 
   storeId String
   store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -170,8 +212,27 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  isDeleted        Boolean           @default(false)
+  productDiscounts ProductDiscount[]
+}
+
+model ProductDiscount {
+  id                String   @id @default(cuid())
+  title             String?
+  description       String?
+  discountRate      Int      @default(0) // 할인율
+  discountStartTime DateTime // 할인 시작 날짜
+  discountEndTime   DateTime // 할인 종료 날짜
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  isRevoked Boolean   @default(false)
 }
 
 model ProductStock {
@@ -224,13 +285,20 @@ model CartItem {
 // ==========================================
 
 enum OrderStatus {
-  WaitingPayment
-  CompletedPayment
-  Preparing
-  Shipping
-  Delivered
-  Cancelled
-  Refunded
+  WaitingPayment // 결제 대기
+  CompletedPayment // 결제 완료
+  Processing // 상품 준비 중
+  Shipping // 배송 중
+  Delivered // 배송 완료
+  Cancelled // 취소 완료
+  Refunded // 반품 완료
+  // 배송 시작
+  // 취소 접수
+  // 반품 접수
+  // 반품 철회
+  // 취소 불가
+  // 반품 불가
+  // 구매 확정
 }
 
 model Order {
@@ -240,10 +308,11 @@ model Order {
   name        String
   phoneNumber String
   address     String
+  email       String
 
   // 금액 정보
-  subtotal Int // 할인 적용 후 총 상품 금액
-  usePoint Int @default(0)
+  subtotal Int // 할인 적용 + 포인트 사용 후 총 상품 금액
+  usePoint Int @default(0) // 사용한 포인트
 
   status OrderStatus @default(WaitingPayment)
 
@@ -255,6 +324,10 @@ model Order {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  deletedAt      DateTime?
+  isDeleted      Boolean        @default(false)
+  pointHistories PointHistory[]
 }
 
 model OrderItem {
@@ -268,21 +341,27 @@ model OrderItem {
   sizeId String
   size   Size   @relation(fields: [sizeId], references: [id])
 
-  quantity Int
-  price    Int // 구매 시점 단가 스냅샷
+  quantity Int // 수량
+
+  // 주문 시점 스냅샷
+  productName String
+  price       Int // 구매 시점 단가 스냅샷
 
   // 리뷰 작성 여부 및 연결
   isReviewed Boolean @default(false)
   review     Review? // 1:1 관계
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  isDeleted Boolean   @default(false)
 }
 
 enum PaymentStatus {
-  Pending
-  CompletedPayment
-  Failed
-  Refunded
+  Pending // 보류 중
+  CompletedPayment // 결제 완료
+  Failed // 실패
+  Refunded // 환불
 }
 
 model Payment {
@@ -319,7 +398,7 @@ model Review {
 }
 
 enum InquiryStatus {
-  Pending // 답변 대기
+  WaitingAnswer // 답변 대기
   CompletedAnswer // 답변 완료
 }
 
@@ -328,7 +407,7 @@ model Inquiry {
   title    String
   content  String        @db.Text
   isSecret Boolean       @default(false)
-  status   InquiryStatus @default(Pending)
+  status   InquiryStatus @default(WaitingAnswer)
 
   userId String // 문의 작성자
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -336,7 +415,7 @@ model Inquiry {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  reply InquiryReply?
+  reply InquiryReply? // 답변
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -360,10 +439,18 @@ model InquiryReply {
 // 8. 알림 (Notification)
 // ==========================================
 
+enum NotificationType {
+  PRODUCT_SOLDOUT_FOR_BUYER
+  INQUIRY_REPLIED_FOR_BUYER
+  PRODUCT_SOLDOUT_FOR_SELLER
+  NEW_INQUIRY_FOR_SELLER
+}
+
 model Notification {
-  id        String  @id @default(cuid())
+  id        String           @id @default(cuid())
   content   String
-  isChecked Boolean @default(false) // 읽음 여부
+  type      NotificationType
+  isChecked Boolean          @default(false) // 읽음 여부
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
