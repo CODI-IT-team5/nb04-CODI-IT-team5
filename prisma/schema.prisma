@@ -196,8 +196,8 @@ model Product {
 
   // 대시보드 및 정렬용 통계 필드
   salesCount   Int @default(0) // 판매량 (대시보드 Top5용)
-  reviewCount  Int @default(0) // 리뷰 수
-  reviewRating Int @default(0) // 별점 평균
+  reviewsCount  Int @default(0) // 리뷰 수
+  reviewsRating Int @default(0) // 별점 평균
 
   storeId String
   store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
