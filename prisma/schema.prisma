@@ -41,8 +41,8 @@ model User {
   inquiryReplies InquiryReply[] // 판매자: 작성한 답변
   favoriteStores FavoriteStore[] // 관심 스토어 목록
   notifications  Notification[] // 알림 목록
-  PointHistory   PointHistory[]
-  Device         Device[]
+  pointHistories PointHistory[]
+  devices        Device[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -76,18 +76,18 @@ model RefreshToken {
 }
 
 model Device {
-  id           String         @id @default(cuid())
-  userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ip           String
-  userAgent    String // 기기 정보
-  deviceName   String?
-  createdAt    DateTime       @default(now())
-  lastUsedAt   DateTime
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
-  isDeleted    Boolean        @default(false)
-  RefreshToken RefreshToken[]
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip            String
+  userAgent     String // 기기 정보
+  deviceName    String?
+  createdAt     DateTime       @default(now())
+  lastUsedAt    DateTime
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  isDeleted     Boolean        @default(false)
+  refreshTokens RefreshToken[]
 }
 
 enum PointHistoryType {
@@ -195,7 +195,7 @@ model Product {
   isSoldOut Boolean @default(false)
 
   // 대시보드 및 정렬용 통계 필드
-  salesCount   Int @default(0) // 판매량 (대시보드 Top5용)
+  salesCount    Int @default(0) // 판매량 (대시보드 Top5용)
   reviewsCount  Int @default(0) // 리뷰 수
   reviewsRating Int @default(0) // 별점 평균
 
@@ -212,14 +212,14 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  deletedAt      DateTime?
-  isDeleted      Boolean          @default(false)
-  PoductDiscount PoductDiscount[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  isDeleted        Boolean           @default(false)
+  productDiscounts ProductDiscount[]
 }
 
-model PoductDiscount {
+model ProductDiscount {
   id                String   @id @default(cuid())
   title             String?
   description       String?
@@ -325,9 +325,9 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  deletedAt    DateTime?
-  isDeleted    Boolean        @default(false)
-  PointHistory PointHistory[]
+  deletedAt      DateTime?
+  isDeleted      Boolean        @default(false)
+  pointHistories PointHistory[]
 }
 
 model OrderItem {
