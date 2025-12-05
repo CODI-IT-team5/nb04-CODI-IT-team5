@@ -32,8 +32,8 @@ model User {
   grade   Grade  @relation(fields: [gradeId], references: [id])
 
   // 관계 설정
-  store Store? // 판매자: 본인 스토어 (1:0..1)
-  cart  Cart? // 구매자: 장바구니 (1:0..1)
+  store Store? // 판매자: 본인 스토어 (1:1)
+  cart  Cart? // 구매자: 장바구니 (1:1)
 
   orders         Order[] // 주문 내역
   reviews        Review[] // 작성한 리뷰
@@ -344,8 +344,8 @@ model OrderItem {
   quantity Int // 수량
 
   // 주문 시점 스냅샷
-  productName  String
-  priceAtOrder Int // 구매 시점 단가 스냅샷
+  productName String
+  price       Int // 구매 시점 단가 스냅샷
 
   // 리뷰 작성 여부 및 연결
   isReviewed Boolean @default(false)
