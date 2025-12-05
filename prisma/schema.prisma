@@ -15,6 +15,7 @@ enum UserRole {
   BUYER
   SELLER
 }
+
 model User {
   id       String   @id @default(cuid())
   email    String   @unique
@@ -219,10 +220,10 @@ model Product {
 }
 
 model PoductDiscount {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   title             String?
   description       String?
-  discountRate      Int       @default(0) // 할인율
+  discountRate      Int      @default(0) // 할인율
   discountStartTime DateTime // 할인 시작 날짜
   discountEndTime   DateTime // 할인 종료 날짜
 
