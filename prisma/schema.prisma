@@ -64,8 +64,8 @@ enum RevokedTokenReason {
 model RefreshToken {
   id         String              @id @default(cuid())
   token      String              @unique
-  dviceId    String
-  device     Device              @relation(fields: [dviceId], references: [id], onDelete: Cascade)
+  deviceId   String
+  device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   expiresAt  DateTime // 만료 날짜
   issuedAt   DateTime // 토큰 발급 시간
   updatedAt  DateTime            @updatedAt
