@@ -48,12 +48,11 @@ model User {
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
   deletedAt   DateTime?
-  isDeleted   Boolean   @default(false)
 
-  @@index([email, password, isDeleted])
+  @@index([email, password, deletedAt])
 }
 
-enum RevokedTokenReason {
+enum DeletedTokenReason {
   LOGOUT
   PASSWORD_CHANGE
   DELETED_USER
@@ -66,27 +65,25 @@ model RefreshToken {
   token      String              @unique
   deviceId   String
   device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime // 만료 날짜
+  reason     DeletedTokenReason? // 토큰 무효화 이유
   issuedAt   DateTime // 토큰 발급 시간
+  expiresAt  DateTime // 만료 날짜
   updatedAt  DateTime            @updatedAt
   lastUsedAt DateTime // 마지막 사용 시간
-  revokedAt  DateTime? // 무묘화 된 시간
-  reason     RevokedTokenReason? // 토큰 무효화 이유
-  isRevoked  Boolean             @default(false) // 무효화 여부
+  deletedAt  DateTime? // 무묘화 된 시간
 }
 
 model Device {
   id            String         @id @default(cuid())
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ip            String
-  userAgent     String // 기기 정보
+  ip            String?
+  userAgent     String? // 기기 정보
   deviceName    String?
   createdAt     DateTime       @default(now())
   lastUsedAt    DateTime
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
-  isDeleted     Boolean        @default(false)
   refreshTokens RefreshToken[]
 }
 
@@ -142,10 +139,9 @@ model Store {
   products Product[]
   likedBy  FavoriteStore[] // 관심 스토어
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  isDeleted Boolean  @default(false)
 }
 
 model FavoriteStore {
@@ -215,7 +211,6 @@ model Product {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   deletedAt        DateTime?
-  isDeleted        Boolean           @default(false)
   productDiscounts ProductDiscount[]
 }
 
@@ -232,7 +227,6 @@ model ProductDiscount {
 
   createdAt DateTime  @default(now())
   revokedAt DateTime?
-  isRevoked Boolean   @default(false)
 }
 
 model ProductStock {
@@ -322,11 +316,10 @@ model Order {
   orderItems OrderItem[]
   payment    Payment?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  deletedAt      DateTime?
-  isDeleted      Boolean        @default(false)
   pointHistories PointHistory[]
 }
 
@@ -354,7 +347,6 @@ model OrderItem {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  isDeleted Boolean   @default(false)
 }
 
 enum PaymentStatus {
@@ -372,6 +364,7 @@ model Payment {
   order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
 }
 
 // ==========================================

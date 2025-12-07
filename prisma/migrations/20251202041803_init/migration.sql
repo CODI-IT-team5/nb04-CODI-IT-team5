@@ -1,31 +1,31 @@
 -- CreateEnum
-CREATE TYPE "public"."UserRole" AS ENUM ('BUYER', 'SELLER');
+CREATE TYPE "UserRole" AS ENUM ('BUYER', 'SELLER');
 
 -- CreateEnum
-CREATE TYPE "public"."RevokedTokenReason" AS ENUM ('LOGOUT', 'PASSWORD_CHANGE', 'DELETED_USER', 'EXPIRED', 'DEVICE_LIMIT');
+CREATE TYPE "DeletedTokenReason" AS ENUM ('LOGOUT', 'PASSWORD_CHANGE', 'DELETED_USER', 'EXPIRED', 'DEVICE_LIMIT');
 
 -- CreateEnum
-CREATE TYPE "public"."PointHistoryType" AS ENUM ('EARN', 'USE', 'EXPIRE');
+CREATE TYPE "PointHistoryType" AS ENUM ('EARN', 'USE', 'EXPIRE');
 
 -- CreateEnum
-CREATE TYPE "public"."OrderStatus" AS ENUM ('WaitingPayment', 'CompletedPayment', 'Processing', 'Shipping', 'Delivered', 'Cancelled', 'Refunded');
+CREATE TYPE "OrderStatus" AS ENUM ('WaitingPayment', 'CompletedPayment', 'Processing', 'Shipping', 'Delivered', 'Cancelled', 'Refunded');
 
 -- CreateEnum
-CREATE TYPE "public"."PaymentStatus" AS ENUM ('Pending', 'CompletedPayment', 'Failed', 'Refunded');
+CREATE TYPE "PaymentStatus" AS ENUM ('Pending', 'CompletedPayment', 'Failed', 'Refunded');
 
 -- CreateEnum
-CREATE TYPE "public"."InquiryStatus" AS ENUM ('WaitingAnswer', 'CompletedAnswer');
+CREATE TYPE "InquiryStatus" AS ENUM ('WaitingAnswer', 'CompletedAnswer');
 
 -- CreateEnum
-CREATE TYPE "public"."NotificationType" AS ENUM ('PRODUCT_SOLDOUT_FOR_BUYER', 'INQUIRY_REPLIED_FOR_BUYER', 'PRODUCT_SOLDOUT_FOR_SELLER', 'NEW_INQUIRY_FOR_SELLER');
+CREATE TYPE "NotificationType" AS ENUM ('PRODUCT_SOLDOUT_FOR_BUYER', 'INQUIRY_REPLIED_FOR_BUYER', 'PRODUCT_SOLDOUT_FOR_SELLER', 'NEW_INQUIRY_FOR_SELLER');
 
 -- CreateTable
-CREATE TABLE "public"."User" (
+CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "type" "public"."UserRole" NOT NULL DEFAULT 'BUYER',
+    "type" "UserRole" NOT NULL DEFAULT 'BUYER',
     "image" TEXT,
     "points" INTEGER NOT NULL DEFAULT 0,
     "totalAmount" INTEGER NOT NULL DEFAULT 0,
@@ -34,50 +34,47 @@ CREATE TABLE "public"."User" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastLoginAt" TIMESTAMP(3),
     "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."RefreshToken" (
+CREATE TABLE "RefreshToken" (
     "id" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "deviceId" TEXT NOT NULL,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "reason" "DeletedTokenReason",
     "issuedAt" TIMESTAMP(3) NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastUsedAt" TIMESTAMP(3) NOT NULL,
-    "revokedAt" TIMESTAMP(3),
-    "reason" "public"."RevokedTokenReason",
-    "isRevoked" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "RefreshToken_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."Device" (
+CREATE TABLE "Device" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "ip" TEXT NOT NULL,
-    "userAgent" TEXT NOT NULL,
+    "ip" TEXT,
+    "userAgent" TEXT,
     "deviceName" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUsedAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Device_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."PointHistory" (
+CREATE TABLE "PointHistory" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "point" INTEGER NOT NULL,
-    "type" "public"."PointHistoryType" NOT NULL,
+    "type" "PointHistoryType" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "expiredAt" TIMESTAMP(3),
     "orderId" TEXT,
@@ -87,7 +84,7 @@ CREATE TABLE "public"."PointHistory" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Grade" (
+CREATE TABLE "Grade" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "rate" INTEGER NOT NULL,
@@ -99,7 +96,7 @@ CREATE TABLE "public"."Grade" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Store" (
+CREATE TABLE "Store" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "content" TEXT NOT NULL,
@@ -110,14 +107,13 @@ CREATE TABLE "public"."Store" (
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3) NOT NULL,
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Store_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."FavoriteStore" (
+CREATE TABLE "FavoriteStore" (
     "userId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -126,7 +122,7 @@ CREATE TABLE "public"."FavoriteStore" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Category" (
+CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
 
@@ -134,7 +130,7 @@ CREATE TABLE "public"."Category" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Size" (
+CREATE TABLE "Size" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "sizeDetail" JSONB,
@@ -143,7 +139,7 @@ CREATE TABLE "public"."Size" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Product" (
+CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "content" TEXT,
@@ -158,13 +154,12 @@ CREATE TABLE "public"."Product" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."ProductDiscount" (
+CREATE TABLE "ProductDiscount" (
     "id" TEXT NOT NULL,
     "title" TEXT,
     "description" TEXT,
@@ -174,13 +169,12 @@ CREATE TABLE "public"."ProductDiscount" (
     "productId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "revokedAt" TIMESTAMP(3),
-    "isRevoked" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "ProductDiscount_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."ProductStock" (
+CREATE TABLE "ProductStock" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "sizeId" TEXT NOT NULL,
@@ -190,7 +184,7 @@ CREATE TABLE "public"."ProductStock" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Cart" (
+CREATE TABLE "Cart" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -200,7 +194,7 @@ CREATE TABLE "public"."Cart" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."CartItem" (
+CREATE TABLE "CartItem" (
     "id" TEXT NOT NULL,
     "cartId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -213,7 +207,7 @@ CREATE TABLE "public"."CartItem" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Order" (
+CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
@@ -221,18 +215,17 @@ CREATE TABLE "public"."Order" (
     "email" TEXT NOT NULL,
     "subtotal" INTEGER NOT NULL,
     "usePoint" INTEGER NOT NULL DEFAULT 0,
-    "status" "public"."OrderStatus" NOT NULL DEFAULT 'WaitingPayment',
+    "status" "OrderStatus" NOT NULL DEFAULT 'WaitingPayment',
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."OrderItem" (
+CREATE TABLE "OrderItem" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -244,25 +237,25 @@ CREATE TABLE "public"."OrderItem" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."Payment" (
+CREATE TABLE "Payment" (
     "id" TEXT NOT NULL,
     "price" INTEGER NOT NULL,
-    "status" "public"."PaymentStatus" NOT NULL DEFAULT 'Pending',
+    "status" "PaymentStatus" NOT NULL DEFAULT 'Pending',
     "orderId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."Review" (
+CREATE TABLE "Review" (
     "id" TEXT NOT NULL,
     "rating" DOUBLE PRECISION NOT NULL,
     "content" TEXT NOT NULL,
@@ -276,12 +269,12 @@ CREATE TABLE "public"."Review" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Inquiry" (
+CREATE TABLE "Inquiry" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "isSecret" BOOLEAN NOT NULL DEFAULT false,
-    "status" "public"."InquiryStatus" NOT NULL DEFAULT 'WaitingAnswer',
+    "status" "InquiryStatus" NOT NULL DEFAULT 'WaitingAnswer',
     "userId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -291,7 +284,7 @@ CREATE TABLE "public"."Inquiry" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."InquiryReply" (
+CREATE TABLE "InquiryReply" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "inquiryId" TEXT NOT NULL,
@@ -303,10 +296,10 @@ CREATE TABLE "public"."InquiryReply" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Notification" (
+CREATE TABLE "Notification" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "type" "public"."NotificationType" NOT NULL,
+    "type" "NotificationType" NOT NULL,
     "isChecked" BOOLEAN NOT NULL DEFAULT false,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -316,133 +309,133 @@ CREATE TABLE "public"."Notification" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "User_email_password_isDeleted_idx" ON "public"."User"("email", "password", "isDeleted");
+CREATE INDEX "User_email_password_deletedAt_idx" ON "User"("email", "password", "deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "RefreshToken_token_key" ON "public"."RefreshToken"("token");
+CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Grade_name_key" ON "public"."Grade"("name");
+CREATE UNIQUE INDEX "Grade_name_key" ON "Grade"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Store_name_key" ON "public"."Store"("name");
+CREATE UNIQUE INDEX "Store_name_key" ON "Store"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Store_userId_key" ON "public"."Store"("userId");
+CREATE UNIQUE INDEX "Store_userId_key" ON "Store"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Category_name_key" ON "public"."Category"("name");
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Size_name_key" ON "public"."Size"("name");
+CREATE UNIQUE INDEX "Size_name_key" ON "Size"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProductStock_productId_sizeId_key" ON "public"."ProductStock"("productId", "sizeId");
+CREATE UNIQUE INDEX "ProductStock_productId_sizeId_key" ON "ProductStock"("productId", "sizeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Cart_userId_key" ON "public"."Cart"("userId");
+CREATE UNIQUE INDEX "Cart_userId_key" ON "Cart"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CartItem_cartId_productId_sizeId_key" ON "public"."CartItem"("cartId", "productId", "sizeId");
+CREATE UNIQUE INDEX "CartItem_cartId_productId_sizeId_key" ON "CartItem"("cartId", "productId", "sizeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Payment_orderId_key" ON "public"."Payment"("orderId");
+CREATE UNIQUE INDEX "Payment_orderId_key" ON "Payment"("orderId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Review_orderItemId_key" ON "public"."Review"("orderItemId");
+CREATE UNIQUE INDEX "Review_orderItemId_key" ON "Review"("orderItemId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InquiryReply_inquiryId_key" ON "public"."InquiryReply"("inquiryId");
+CREATE UNIQUE INDEX "InquiryReply_inquiryId_key" ON "InquiryReply"("inquiryId");
 
 -- AddForeignKey
-ALTER TABLE "public"."User" ADD CONSTRAINT "User_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "public"."Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."RefreshToken" ADD CONSTRAINT "RefreshToken_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "public"."Device"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "Device"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Device" ADD CONSTRAINT "Device_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Device" ADD CONSTRAINT "Device_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."PointHistory" ADD CONSTRAINT "PointHistory_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "public"."Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "PointHistory" ADD CONSTRAINT "PointHistory_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."PointHistory" ADD CONSTRAINT "PointHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PointHistory" ADD CONSTRAINT "PointHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Store" ADD CONSTRAINT "Store_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Store" ADD CONSTRAINT "Store_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."FavoriteStore" ADD CONSTRAINT "FavoriteStore_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "FavoriteStore" ADD CONSTRAINT "FavoriteStore_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."FavoriteStore" ADD CONSTRAINT "FavoriteStore_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "public"."Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "FavoriteStore" ADD CONSTRAINT "FavoriteStore_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Product" ADD CONSTRAINT "Product_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "public"."Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Store"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "public"."Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."ProductDiscount" ADD CONSTRAINT "ProductDiscount_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductDiscount" ADD CONSTRAINT "ProductDiscount_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."ProductStock" ADD CONSTRAINT "ProductStock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProductStock" ADD CONSTRAINT "ProductStock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."ProductStock" ADD CONSTRAINT "ProductStock_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "public"."Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductStock" ADD CONSTRAINT "ProductStock_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Cart" ADD CONSTRAINT "Cart_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Cart" ADD CONSTRAINT "Cart_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "public"."Cart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "Cart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CartItem" ADD CONSTRAINT "CartItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."CartItem" ADD CONSTRAINT "CartItem_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "public"."Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "public"."Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."OrderItem" ADD CONSTRAINT "OrderItem_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "public"."Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Payment" ADD CONSTRAINT "Payment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "public"."Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Review" ADD CONSTRAINT "Review_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "public"."OrderItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Inquiry" ADD CONSTRAINT "Inquiry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Inquiry" ADD CONSTRAINT "Inquiry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Inquiry" ADD CONSTRAINT "Inquiry_productId_fkey" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Inquiry" ADD CONSTRAINT "Inquiry_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."InquiryReply" ADD CONSTRAINT "InquiryReply_inquiryId_fkey" FOREIGN KEY ("inquiryId") REFERENCES "public"."Inquiry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "InquiryReply" ADD CONSTRAINT "InquiryReply_inquiryId_fkey" FOREIGN KEY ("inquiryId") REFERENCES "Inquiry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."InquiryReply" ADD CONSTRAINT "InquiryReply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "InquiryReply" ADD CONSTRAINT "InquiryReply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
