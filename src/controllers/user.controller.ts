@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { userService } from '../services/user.service.js';
 import { HttpException } from '../utils/http-exception.js';
 
@@ -11,11 +11,11 @@ class UserController {
         return next(
           new HttpException({
             status: STATUS_CODE.UNAUTHORIZED,
-            message: MESSAGE.userNotFound,
-            code: SEND_BIRD_CODE.UserNotFound,
+            message: MESSAGE.unauthorized,
           }),
         );
       }
+
       const userData = await userService.getById(req.user.id);
       res.status(STATUS_CODE.OK).json(userData);
     } catch (err) {

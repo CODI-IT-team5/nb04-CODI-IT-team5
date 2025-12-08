@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import type { ZodTypeAny } from 'zod';
 import { z } from 'zod';
 
-import { SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
+import { STATUS_CODE } from '../constants/constant.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
@@ -49,9 +49,7 @@ export function validateMiddleware(schema: ValidationSchemas) {
             message = `${firstError.path.join('.')}: ${firstError.message}`;
           }
         }
-        next(
-          new HttpException({ status: STATUS_CODE.BAD_REQUEST, message: message, code: SEND_BIRD_CODE.InvalidValue }),
-        );
+        next(new HttpException({ status: STATUS_CODE.BAD_REQUEST, message: message }));
       } else {
         next(err);
       }

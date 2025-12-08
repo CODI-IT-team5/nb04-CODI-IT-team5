@@ -1,4 +1,4 @@
-import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { userRepository } from '../repositories/user.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 
@@ -9,7 +9,6 @@ class UserService {
       throw new HttpException({
         status: STATUS_CODE.NOT_FOUND,
         message: MESSAGE.userNotFound,
-        code: SEND_BIRD_CODE.UserNotFound,
       });
     }
 
@@ -17,7 +16,6 @@ class UserService {
       id: user.id,
       name: user.name,
       email: user.email,
-      // password: user.password.slice(0, 10) + '...',
       type: user.type,
       points: user.points,
       createdAt: user.createdAt,
