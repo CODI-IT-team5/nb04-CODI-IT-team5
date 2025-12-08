@@ -53,6 +53,7 @@ model User {
 }
 
 enum DeletedTokenReason {
+  REPLACED // 새 로그인으로 기존 토큰 대체됨
   LOGOUT
   PASSWORD_CHANGE
   DELETED_USER
@@ -62,7 +63,7 @@ enum DeletedTokenReason {
 
 model RefreshToken {
   id         String              @id @default(cuid())
-  token      String              @unique
+  jti        String              @unique
   deviceId   String
   device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   reason     DeletedTokenReason? // 토큰 무효화 이유
@@ -70,7 +71,7 @@ model RefreshToken {
   expiresAt  DateTime // 만료 날짜
   updatedAt  DateTime            @updatedAt
   lastUsedAt DateTime // 마지막 사용 시간
-  deletedAt  DateTime? // 무묘화 된 시간
+  deletedAt  DateTime? // 무효화 된 시간
 }
 
 model Device {
@@ -78,13 +79,15 @@ model Device {
   userId        String
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   ip            String?
-  userAgent     String? // 기기 정보
+  userAgent     String         @default("") // 기기 정보
   deviceName    String?
   createdAt     DateTime       @default(now())
   lastUsedAt    DateTime
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
   refreshTokens RefreshToken[]
+
+  @@unique([userId, userAgent, deletedAt])
 }
 
 enum PointHistoryType {

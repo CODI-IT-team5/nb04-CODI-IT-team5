@@ -2,7 +2,7 @@
 CREATE TYPE "UserRole" AS ENUM ('BUYER', 'SELLER');
 
 -- CreateEnum
-CREATE TYPE "DeletedTokenReason" AS ENUM ('LOGOUT', 'PASSWORD_CHANGE', 'DELETED_USER', 'EXPIRED', 'DEVICE_LIMIT');
+CREATE TYPE "DeletedTokenReason" AS ENUM ('REPLACED', 'LOGOUT', 'PASSWORD_CHANGE', 'DELETED_USER', 'EXPIRED', 'DEVICE_LIMIT');
 
 -- CreateEnum
 CREATE TYPE "PointHistoryType" AS ENUM ('EARN', 'USE', 'EXPIRE');
@@ -41,7 +41,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "RefreshToken" (
     "id" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
+    "jti" TEXT NOT NULL,
     "deviceId" TEXT NOT NULL,
     "reason" "DeletedTokenReason",
     "issuedAt" TIMESTAMP(3) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE "Device" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "ip" TEXT,
-    "userAgent" TEXT,
+    "userAgent" TEXT NOT NULL DEFAULT '',
     "deviceName" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUsedAt" TIMESTAMP(3) NOT NULL,
@@ -315,7 +315,10 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE INDEX "User_email_password_deletedAt_idx" ON "User"("email", "password", "deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
+CREATE UNIQUE INDEX "RefreshToken_jti_key" ON "RefreshToken"("jti");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Device_userId_userAgent_deletedAt_key" ON "Device"("userId", "userAgent", "deletedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Grade_name_key" ON "Grade"("name");
