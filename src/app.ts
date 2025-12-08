@@ -1,5 +1,7 @@
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import type { Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
 
@@ -12,6 +14,7 @@ import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
 
 const app = express();
+app.use(cookieParser());
 
 app.use(express.json());
 app.use(loggerMiddleware); // 로그 저장
@@ -21,12 +24,23 @@ app.use(compression({ threshold: config.app.compression_threshold, level: config
 app.use(limiter); // API 요청 제한
 app.use(helmet()); // 보안 헤더 적용
 
-app.get('/health', (req, res) => {
+// 서버 상태 테스트용
+app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
+
+// ----------------------------------------------------------
+// sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.
+// ----------------------------------------------------------
+app.get('/notifications/sse', (req: Request, res: Response) => {
+  req.on('close', () => {
+    res.end();
+  });
+});
+// ----------------------------------------------------------
 
 app.use(errorMiddleware);
 

@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import type { StringValue } from 'ms';
+import ms from 'ms';
 
 dotenv.config();
 
@@ -16,11 +17,13 @@ export const config = {
     rateLimitMax: Number(process.env['RATE_LIMIT_MAX']) || 100, // 시간 제한당 허용 요청 수
     compression_threshold: Number(process.env['COMPRESSION_THRESHOLD']) || 1024, // gzip 최소 크기
     compression_level: Number(process.env['COMPRESSION_LEVEL']) || 6, // gzip 압축 레벨
+    cookieMaxAge: ms((process.env['REFRESH_TOKEN_EXPIRES_IN'] as StringValue) ?? '7d'),
   },
   auth: {
     accessTokenSecretKey: process.env['ACCESS_TOKEN_SECRET_KEY'] ?? 'default-access-token-secret', // 엑세스 토큰 서명키
     refreshTokenSecretKey: process.env['REFRESH_TOKEN_SECRET_KEY'] ?? 'default-refresh-token-secret', // 리프레시 토큰 서명키
     accessTokenExpiresIn: (process.env['ACCESS_TOKEN_EXPIRES_IN'] as StringValue) ?? '1h', // 엑세스 토큰 만료 시간
     refreshTokenExpiresIn: (process.env['REFRESH_TOKEN_EXPIRES_IN'] as StringValue) ?? '7d', // 리프레시 토큰 만료 시간
+    maxDevice: Number(process.env['MAX_DEVICE']) || 3,
   },
 };

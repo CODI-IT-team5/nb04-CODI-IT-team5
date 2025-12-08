@@ -43,6 +43,7 @@
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.2",
     "prisma-extension-soft-delete": "^2.0.1",
+    "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

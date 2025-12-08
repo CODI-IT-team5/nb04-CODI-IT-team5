@@ -16,11 +16,4 @@ export const authDto = {
         .max(100, '비밀번호는 100자를 초과할 수 없습니다'),
     }),
   },
-  refreshToken: {
-    body: z.object({
-      refreshToken: z.string().jwt(),
-    }),
-  },
 };
-
-export type Login = z.infer<typeof authDto.login.body>;

@@ -1,12 +1,12 @@
 
-@refreshToken = {{login.response.cookies['refreshToken']}
-@accessToken = {{login.response.body.accessToken}}
+@refreshToken = {{auth.response.cookies['refreshToken']}
+@accessToken = {{auth.response.body.accessToken}}
 
 ### 로그인
-# @name login
+# @name auth
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
-User-Agent: rest-client-test33
+User-Agent: rest-client-test
 
 {
   "email": "{{user}}",
@@ -19,8 +19,8 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 ### 엑세스 토큰 재발급
+# @name auth
 POST {{baseUrl}}/auth/refresh
-Authorization: Bearer {{accessToken}}
 Cookie: refreshToken={{refreshToken}}
 Content-Type: application/json
 
