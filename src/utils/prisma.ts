@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { DeletedTokenReason, PrismaClient } from '@prisma/client';
 import { createSoftDeleteExtension } from 'prisma-extension-soft-delete';
 
-const prisma = new PrismaClient().$extends(
+const basePrisma = new PrismaClient().$extends(
   createSoftDeleteExtension({
     models: {
       User: true,
@@ -22,5 +22,22 @@ const prisma = new PrismaClient().$extends(
     },
   }),
 );
+
+// 리프레시 토큰 소프트삭제 확장
+const prisma = basePrisma.$extends({
+  model: {
+    refreshToken: {
+      async deleteWithReason(args: { where: { jti: string }; reason: DeletedTokenReason }) {
+        return await basePrisma.refreshToken.update({
+          where: args.where,
+          data: {
+            reason: args.reason,
+            deletedAt: new Date(),
+          },
+        });
+      },
+    },
+  },
+});
 
 export default prisma;
