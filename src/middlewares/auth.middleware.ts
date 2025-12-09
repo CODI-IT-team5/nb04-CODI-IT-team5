@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/config.js';
 import type { AccessTokenPayload } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import logger, { getLogMeta } from '../utils/logger.js';
 
 export const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
@@ -14,9 +14,7 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
     logger.warn(
       {
         event: 'auth_fail',
-        ip: req.ip,
-        method: req.method,
-        path: req.originalUrl,
+        ...getLogMeta(req),
       },
       '인증 실패: no token',
     );
@@ -31,9 +29,7 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
       logger.warn(
         {
           event: 'auth_fail',
-          ip: req.ip,
-          method: req.method,
-          path: req.originalUrl,
+          ...getLogMeta(req),
         },
         '인증 실패: invalid payload',
       );
@@ -45,9 +41,7 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
       {
         event: 'auth_success',
         userId: decoded.userId,
-        ip: req.ip,
-        method: req.method,
-        path: req.originalUrl,
+        ...getLogMeta(req),
       },
       '인증 성공',
     );
@@ -56,12 +50,10 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
     logger.warn(
       {
         event: 'auth_fail',
-        ip: req.ip,
-        method: req.method,
-        path: req.originalUrl,
+        ...getLogMeta(req),
         error: err instanceof Error ? err.message : String(err),
       },
-      `인증 실패: token verify error`,
+      '인증 실패: token verify error',
     );
 
     return next(HttpException.tokenError());
