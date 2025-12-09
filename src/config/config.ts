@@ -27,9 +27,10 @@ export const config = {
     maxDevice: Number(process.env['MAX_DEVICE']) || 3,
   },
   aws: {
-    accessKeyId: process.env['AWS_ACCESS_KEY_ID'],
-    secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY'],
+    // 환경변수가 없으면 'test-key' 같은 임시 문자열이 들어가도록 설정
+    accessKeyId: process.env['AWS_ACCESS_KEY_ID'] || 'test-access-key',
+    secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY'] || 'test-secret-key',
     region: process.env['AWS_REGION'] || 'ap-northeast-2',
-    bucketName: process.env['AWS_BUCKET_NAME'],
+    bucketName: process.env['AWS_BUCKET_NAME'] || 'test-bucket-name',
   },
 };

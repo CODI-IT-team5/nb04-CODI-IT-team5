@@ -44,13 +44,4 @@ jobs:
         run: npm run build
 
       - name: 서버 실행 확인 (5초)
-        env:
-          AWS_ACCESS_KEY_ID: 'test-key'
-          AWS_SECRET_ACCESS_KEY: 'test-secret'
-          AWS_REGION: 'ap-northeast-2'
-          AWS_BUCKET_NAME: 'test-bucket'
-          ACCESS_TOKEN_SECRET_KEY: 'test-secret'
-          REFRESH_TOKEN_SECRET_KEY: 'test-secret'
-          PORT: 3000
-
         run: npm run start & sleep 5 && kill $!
