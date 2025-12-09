@@ -40,7 +40,6 @@ export class HttpException extends Error {
     });
   }
 
-
   // 이메일 또는 비밀번호 틀림
   static unauthorized() {
     return new HttpException({
