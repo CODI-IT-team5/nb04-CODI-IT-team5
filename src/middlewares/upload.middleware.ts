@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/config.js';
 import { HttpException } from '../utils/http-exception.js';
-import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 
 // S3 클라이언트 생성
 const s3 = new S3Client({
