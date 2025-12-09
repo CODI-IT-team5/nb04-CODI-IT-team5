@@ -32,6 +32,15 @@ export class HttpException extends Error {
     });
   }
 
+  // 잘못된 요청 (Bad Request)
+  static badRequest(message: string) {
+    return new HttpException({
+      status: STATUS_CODE.BAD_REQUEST,
+      message: message,
+    });
+  }
+
+
   // 이메일 또는 비밀번호 틀림
   static unauthorized() {
     return new HttpException({

@@ -46,10 +46,7 @@ export const uploadMiddleware = multer({
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new HttpException({
-        status: STATUS_CODE.BAD_REQUEST,
-        message: '이미지 파일만 업로드 가능합니다.'
-      }));
+      cb(HttpException.badRequest('이미지 파일만 업로드 가능합니다.'));
     }
   },
   limits: {
