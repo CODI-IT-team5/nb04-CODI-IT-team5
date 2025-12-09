@@ -3,9 +3,9 @@ name: PR 체크
 on:
   pull_request:
     branches:
-    - main
-    - deploy
-    - dev
+      - main
+      - deploy
+      - dev
 
 jobs:
   check:
@@ -17,21 +17,21 @@ jobs:
       - name: 노드 세팅
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.x
 
       - name: 패키지 설치
         run: npm install
-        
+
       - name: Prettier 체크
         run: npm run format:check
-        
+
       - name: ESLint 체크
         run: npm run lint
 
         # 테스트 코드 작성되면 테스트까지 추가하기
-        
+
       - name: 빌드
         run: npm run build
-        
+
       - name: 서버 실행 확인 (5초)
-        run: npm run start & sleep 5 && kill $!  
+        run: npm run start & sleep 5 && kill $!
