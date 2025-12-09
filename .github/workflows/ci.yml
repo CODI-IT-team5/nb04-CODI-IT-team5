@@ -21,7 +21,7 @@ jobs:
 
       - name: 노드 모듈 캐시
         id: cache
-        uses: actions/cache@3
+        uses: actions/cache@v4
         with:
           path: "node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
