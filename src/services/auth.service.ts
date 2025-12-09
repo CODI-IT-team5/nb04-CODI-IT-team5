@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/config.js';
-import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { authRepository } from '../repositories/auth.repository.js';
 import type { BaseDevice, BaseLogin, LoginData, loginUpdateData } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
@@ -53,15 +52,15 @@ class AuthService {
     try {
       decoded = jwt.verify(refreshToken, config.auth.refreshTokenSecretKey);
     } catch {
-      throw tokenError();
+      throw HttpException.tokenError();
     }
     if (!decoded || typeof decoded === 'string' || !decoded.jti) {
-      throw tokenError();
+      throw HttpException.tokenError();
     }
     const storedRefreshToken = await authRepository.findRefreshTokenByJti(decoded.jti);
 
     if (!storedRefreshToken) {
-      throw notFound();
+      throw HttpException.notFound();
     }
 
     const newAccessToken = jwt.sign({ userId: decoded.userId }, config.auth.accessTokenSecretKey, {
@@ -73,7 +72,7 @@ class AuthService {
   logout = async (refreshToken: string) => {
     const decoded = jwt.verify(refreshToken, config.auth.refreshTokenSecretKey);
     if (!decoded || typeof decoded === 'string' || !decoded.jti) {
-      throw tokenError();
+      throw HttpException.tokenError();
     }
     const data = {
       jti: decoded.jti,
@@ -88,10 +87,10 @@ export const authService = new AuthService();
 // 이메일 확인 및 비밀번호 검증
 const verifyUser = async (data: BaseLogin) => {
   const user = await authRepository.findUserByEmail(data.email);
-  if (!user) throw unauthorized();
+  if (!user) throw HttpException.unauthorized();
   const isPasswordValid = await bcrypt.compare(data.password, user.password);
   if (!isPasswordValid) {
-    throw unauthorized();
+    throw HttpException.unauthorized();
   }
   return user;
 };
@@ -115,7 +114,7 @@ const deviceLimit = async (userId: string) => {
   if (count < config.auth.maxDevice) return;
 
   const oldestDevice = await authRepository.findLastUsedDevice(userId);
-  if (!oldestDevice) throw notFound();
+  if (!oldestDevice) throw HttpException.notFound();
 
   await authRepository.deleteDevice(oldestDevice.id);
 
@@ -141,7 +140,7 @@ const generateTokens = async (data: loginUpdateData) => {
   });
 
   const decoded = jwt.decode(refreshToken) as { exp: number; iat: number } | null;
-  if (!decoded || !decoded.exp) throw tokenError();
+  if (!decoded || !decoded.exp) throw HttpException.tokenError();
 
   return {
     accessToken,
@@ -150,28 +149,4 @@ const generateTokens = async (data: loginUpdateData) => {
     refreshTokenIssuedAt: new Date(decoded.iat * 1000),
     refreshTokenExpiresAt: new Date(decoded.exp * 1000),
   };
-};
-
-// 이메일 또는 비밀번호 틀림
-const unauthorized = () => {
-  return new HttpException({
-    status: STATUS_CODE.UNAUTHORIZED,
-    message: MESSAGE.invalidCredentials,
-  });
-};
-
-// 찾을 수 없음
-const notFound = () => {
-  return new HttpException({
-    status: STATUS_CODE.NOT_FOUND,
-    message: MESSAGE.notFound,
-  });
-};
-
-// 토큰 에러
-const tokenError = () => {
-  return new HttpException({
-    status: STATUS_CODE.UNAUTHORIZED,
-    message: MESSAGE.invalidToken,
-  });
 };
