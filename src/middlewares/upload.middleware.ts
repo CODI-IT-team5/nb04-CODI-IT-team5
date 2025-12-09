@@ -11,8 +11,8 @@ import { HttpException } from '../utils/http-exception.js';
 // S3 클라이언트 생성
 const s3 = new S3Client({
   credentials: {
-    accessKeyId: config.aws.accessKeyId,
-    secretAccessKey: config.aws.secretAccessKey,
+    accessKeyId: config.aws.accessKeyId!,
+    secretAccessKey: config.aws.secretAccessKey!,
   },
   region: config.aws.region,
 });
@@ -29,7 +29,7 @@ const getFormattedDate = () => {
 export const uploadMiddleware = multer({
   storage: multerS3({
     s3: s3,
-    bucket: config.aws.bucketName,
+    bucket: config.aws.bucketName!,
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: (req, file, cb) => {
       const date = getFormattedDate();

@@ -17,6 +17,8 @@ export const MESSAGE = {
   userAready: '이미 존재하는 유저입니다',
   logoutSuccess: '성공적으로 로그아웃되었습니다',
 
+  uploadSuccess: '업로드 성공',
+
   refreshTokenNotFound: '리프레시 토큰을 찾을 수 없습니다',
   userNotFound: '유저를 찾을 수 없습니다',
   notFound: '요청한 리소스를 찾을 수 없습니다',
