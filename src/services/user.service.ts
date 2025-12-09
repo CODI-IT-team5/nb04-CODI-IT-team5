@@ -1,4 +1,3 @@
-import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { userRepository } from '../repositories/user.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 
@@ -6,10 +5,7 @@ class UserService {
   getById = async (userId: string) => {
     const user = await userRepository.getById(userId);
     if (!user) {
-      throw new HttpException({
-        status: STATUS_CODE.NOT_FOUND,
-        message: MESSAGE.userNotFound,
-      });
+      throw HttpException.userNotFound();
     }
 
     const result = {

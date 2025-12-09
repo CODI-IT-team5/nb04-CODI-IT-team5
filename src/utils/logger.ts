@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import fs from 'fs';
 import path from 'path';
 import pino from 'pino';
@@ -35,3 +36,9 @@ const logger = pino(
 );
 
 export default logger;
+
+export const getLogMeta = (req: Request) => ({
+  ip: req.ip,
+  method: req.method,
+  path: req.originalUrl,
+});
