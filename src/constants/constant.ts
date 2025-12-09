@@ -1,3 +1,4 @@
+// TODO: 이름 컨벤션 통일하기
 export const STATUS_CODE = {
   OK: 200, // 요청 성공
   CREATED: 201, // 요청 성공으로 새로운 리소스 생성
@@ -9,14 +10,6 @@ export const STATUS_CODE = {
   CONFLICT: 409, // 요청이 서버 상태와 충돌
   TOO_MANY_REQUESTS: 429, // 너무 많은 요청 보냄
   INTERNAL_SERVER_ERROR: 500, // 서버 에러
-};
-
-export const SEND_BIRD_CODE = {
-  ResourceNotFound: 400201, // 요청의 resourceId 매개 변수로 식별된 리소스를 찾을 수 없습니다.
-  InternalError: 500901, // 서버에서 요청을 처리하려고 하는 동안 예기치 않은 예외가 발생합니다. 요청을 다시 시도하십시오.
-  InvalidValue: 400111, // 요청이 잘못된 값을 지정합니다.
-  InvalidApiToken: 400401, // 요청에 제공된 API 토큰은 유효하지 않은 값을 지정합니다.
-  UserNotFound: 400301,
 };
 
 export const MESSAGE = {

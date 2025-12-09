@@ -1,70 +1,34 @@
+import { DeletedTokenReason } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/config.js';
-import { MESSAGE, SEND_BIRD_CODE, STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { authRepository } from '../repositories/auth.repository.js';
-import type { CreateRefreshTokenInput, LoginInput } from '../types/auth.type.js';
+import type { BaseDevice, BaseLogin, LoginData, loginUpdateData } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
 
 class AuthService {
-  login = async (data: LoginInput) => {
-    const user = await authRepository.findUserByEmail(data.email);
-    if (!user) {
-      throw new HttpException({
-        status: STATUS_CODE.BAD_REQUEST,
-        message: MESSAGE.invalidCredentials,
-        code: SEND_BIRD_CODE.ResourceNotFound,
-      });
-    }
-    const isPasswordValid = await bcrypt.compare(data.password, user.password);
-    if (!isPasswordValid) {
-      throw new HttpException({
-        status: STATUS_CODE.BAD_REQUEST,
-        message: MESSAGE.invalidCredentials,
-        code: SEND_BIRD_CODE.ResourceNotFound,
-      });
-    }
+  login = async (inputData: LoginData) => {
+    const { email, password, userAgent, ip } = inputData;
 
-    const accessToken = jwt.sign({ userId: user.id }, config.auth.accessTokenSecretKey, {
-      expiresIn: config.auth.accessTokenExpiresIn,
+    const user = await verifyUser({ email, password }); // 유저 찾기, 비밀번호 비교
+    const device = await findOrCreateDevice({ userId: user.id, userAgent, ip }); // 기기 찾기 또는 만들기
+    const tokens = await generateTokens({ userId: user.id, deviceId: device.id }); // 엑세스 토큰 만들기
+
+    await authRepository.createRefreshToken({
+      jti: tokens.jti,
+      deviceId: device.id,
+      issuedAt: tokens.refreshTokenIssuedAt,
+      expiresAt: tokens.refreshTokenExpiresAt,
     });
-    const refreshToken = jwt.sign({ userId: user.id }, config.auth.refreshTokenSecretKey, {
-      expiresIn: config.auth.refreshTokenExpiresIn,
-    });
-
-    const decoded = jwt.decode(refreshToken) as { exp: number; iat: number } | null;
-
-    if (!decoded || !decoded.exp) {
-      throw new HttpException({
-        status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-        message: MESSAGE.serverError,
-        code: SEND_BIRD_CODE.InternalError,
-      });
-    }
-
-    const refreshTokenExpiresAt = new Date(decoded.exp * 1000);
-    const refreshTokenIssuedAt = new Date(decoded.iat * 1000);
-
-    const createRefreshTokenInput: CreateRefreshTokenInput = {
-      token: refreshToken,
+    await authRepository.login({
+      deviceId: device.id,
       userId: user.id,
-      issuedAt: refreshTokenIssuedAt,
-      expiresAt: refreshTokenExpiresAt,
-    };
-    try {
-      await authRepository.createRefreshToken(createRefreshTokenInput);
-    } catch (err) {
-      logger.error({ message: '로그인 서비스 에러', error: err, email: data.email });
-      throw new HttpException({
-        status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-        message: MESSAGE.serverError,
-        code: SEND_BIRD_CODE.InternalError,
-      });
-    }
+    });
 
-    const result = {
+    return {
       user: {
         id: user.id,
         email: user.email,
@@ -79,10 +43,135 @@ class AuthService {
           minAmount: user.grade.minAmount,
         },
       },
-      accessToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
+  };
 
-    return result;
+  refresh = async (refreshToken: string) => {
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, config.auth.refreshTokenSecretKey);
+    } catch {
+      throw tokenError();
+    }
+    if (!decoded || typeof decoded === 'string' || !decoded.jti) {
+      throw tokenError();
+    }
+    const storedRefreshToken = await authRepository.findRefreshTokenByJti(decoded.jti);
+
+    if (!storedRefreshToken) {
+      throw notFound();
+    }
+
+    const newAccessToken = jwt.sign({ userId: decoded.userId }, config.auth.accessTokenSecretKey, {
+      expiresIn: config.auth.accessTokenExpiresIn,
+    });
+    return { accessToken: newAccessToken };
+  };
+
+  logout = async (refreshToken: string) => {
+    const decoded = jwt.verify(refreshToken, config.auth.refreshTokenSecretKey);
+    if (!decoded || typeof decoded === 'string' || !decoded.jti) {
+      throw tokenError();
+    }
+    const data = {
+      jti: decoded.jti,
+      reason: DeletedTokenReason.LOGOUT,
+    };
+    return await authRepository.deleteRefreshToken(data);
   };
 }
+
 export const authService = new AuthService();
+
+// 이메일 확인 및 비밀번호 검증
+const verifyUser = async (data: BaseLogin) => {
+  const user = await authRepository.findUserByEmail(data.email);
+  if (!user) throw unauthorized();
+  const isPasswordValid = await bcrypt.compare(data.password, user.password);
+  if (!isPasswordValid) {
+    throw unauthorized();
+  }
+  return user;
+};
+
+// 디바이스 찾기 또는 생성
+const findOrCreateDevice = async (data: BaseDevice) => {
+  const { userId, userAgent, ip } = data;
+  let device = await authRepository.findDeviceByUserAgent({ userId, userAgent, ip });
+  if (!device) {
+    await deviceLimit(userId);
+    device = await authRepository.createDevice({ userId, userAgent, ip });
+    return device;
+  }
+
+  await authRepository.deleteRefreshTokenByDeviceId({ deviceId: device.id, reason: DeletedTokenReason.REPLACED });
+  return device;
+};
+
+const deviceLimit = async (userId: string) => {
+  const count = await authRepository.findDeviceCount(userId);
+  if (count < config.auth.maxDevice) return;
+
+  const oldestDevice = await authRepository.findLastUsedDevice(userId);
+  if (!oldestDevice) throw notFound();
+
+  await authRepository.deleteDevice(oldestDevice.id);
+
+  const token = oldestDevice.refreshTokens?.[0];
+  if (token) {
+    await authRepository.deleteRefreshToken({
+      jti: token.jti,
+      reason: DeletedTokenReason.DEVICE_LIMIT,
+    });
+  }
+};
+
+// 토큰 생성
+const generateTokens = async (data: loginUpdateData) => {
+  const { userId, deviceId } = data;
+  const jti = uuidv4();
+
+  const accessToken = jwt.sign({ userId }, config.auth.accessTokenSecretKey, {
+    expiresIn: config.auth.accessTokenExpiresIn,
+  });
+  const refreshToken = jwt.sign({ userId, deviceId, jti }, config.auth.refreshTokenSecretKey, {
+    expiresIn: config.auth.refreshTokenExpiresIn,
+  });
+
+  const decoded = jwt.decode(refreshToken) as { exp: number; iat: number } | null;
+  if (!decoded || !decoded.exp) throw tokenError();
+
+  return {
+    accessToken,
+    refreshToken,
+    jti,
+    refreshTokenIssuedAt: new Date(decoded.iat * 1000),
+    refreshTokenExpiresAt: new Date(decoded.exp * 1000),
+  };
+};
+
+// 이메일 또는 비밀번호 틀림
+const unauthorized = () => {
+  return new HttpException({
+    status: STATUS_CODE.UNAUTHORIZED,
+    message: MESSAGE.invalidCredentials,
+  });
+};
+
+// 찾을 수 없음
+const notFound = () => {
+  return new HttpException({
+    status: STATUS_CODE.NOT_FOUND,
+    message: MESSAGE.notFound,
+  });
+};
+
+// 토큰 에러
+const tokenError = () => {
+  return new HttpException({
+    status: STATUS_CODE.UNAUTHORIZED,
+    message: MESSAGE.invalidToken,
+  });
+};
