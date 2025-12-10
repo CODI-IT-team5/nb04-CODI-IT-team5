@@ -1,4 +1,5 @@
 import { Router } from 'express';
+
 import inquiryController from '../controllers/inquiryController.js';
 import { authenticate } from '../middlewares/auth.js';
 

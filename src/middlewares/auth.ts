@@ -1,9 +1,10 @@
-import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { UnauthorizedError, ForbiddenError } from '../utils/errors.js';
 import { UserRole } from '@prisma/client';
-import prisma from '../utils/prisma.js';
+import type { NextFunction,Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+
 import { config } from '../config/config.js';
+import { ForbiddenError,UnauthorizedError } from '../utils/errors.js';
+import prisma from '../utils/prisma.js';
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

@@ -1,10 +1,10 @@
-import reviewRepository from '../repositories/reviewRepository.js';
 import type { CreateReviewData, UpdateReviewData } from '../repositories/reviewRepository.js';
+import reviewRepository from '../repositories/reviewRepository.js';
+import { BadRequestError,ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import prisma from '../utils/prisma.js';
-import { NotFoundError, ForbiddenError, ConflictError, BadRequestError } from '../utils/errors.js';
 
 export class ReviewService {
-  // 리뷰 작성 
+  // 리뷰 작성
   async createReview(data: CreateReviewData) {
     if (data.rating < 0 || data.rating > 5) {
       throw new BadRequestError('별점은 0~5 사이의 값이어야 합니다.');
@@ -22,17 +22,14 @@ export class ReviewService {
       throw new NotFoundError('주문 항목을 찾을 수 없습니다.');
     }
 
-    
     if (orderItem.order.userId !== data.userId) {
       throw new ForbiddenError('본인이 구매한 상품만 리뷰를 작성할 수 있습니다.');
     }
 
-    
     if (orderItem.productId !== data.productId) {
       throw new BadRequestError('주문 항목과 상품이 일치하지 않습니다.');
     }
 
-    
     const existingReview = await reviewRepository.findByOrderItemId(data.orderItemId);
 
     if (existingReview) {

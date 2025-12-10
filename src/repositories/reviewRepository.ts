@@ -1,5 +1,6 @@
-import prisma from '../utils/prisma.js';
 import type { Review } from '@prisma/client';
+
+import prisma from '../utils/prisma.js';
 
 export interface CreateReviewData {
   rating: number;

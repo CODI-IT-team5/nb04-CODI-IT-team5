@@ -1,9 +1,9 @@
-import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
-import type { CreateInquiryReplyData, UpdateInquiryReplyData } from '../repositories/inquiryReplyRepository.js';
-import inquiryRepository from '../repositories/inquiryRepository.js';
-import prisma from '../utils/prisma.js';
-import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors.js';
 import { InquiryStatus } from '@prisma/client';
+
+import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
+import inquiryRepository from '../repositories/inquiryRepository.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
+import prisma from '../utils/prisma.js';
 
 export class InquiryReplyService {
   async createReply(inquiryId: string, userId: string, content: string) {

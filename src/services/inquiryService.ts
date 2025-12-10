@@ -1,17 +1,11 @@
-import inquiryRepository from '../repositories/inquiryRepository.js';
-import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiryRepository.js';
-import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
-import prisma from '../utils/prisma.js';
-import {
-  NotFoundError,
-  ForbiddenError,
-  BadRequestError,
-  ConflictError,
-} from '../utils/errors.js';
 import { InquiryStatus, UserRole } from '@prisma/client';
 
-export class InquiryService {
+import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiryRepository.js';
+import inquiryRepository from '../repositories/inquiryRepository.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
+import prisma from '../utils/prisma.js';
 
+export class InquiryService {
   async createInquiry(data: CreateInquiryData) {
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
@@ -23,7 +17,6 @@ export class InquiryService {
 
     return inquiryRepository.create(data);
   }
-
 
   async getInquiryById(inquiryId: string, userId: string, userType: UserRole) {
     const inquiry = await inquiryRepository.findById(inquiryId);
@@ -48,7 +41,6 @@ export class InquiryService {
     return inquiry;
   }
 
-
   async getMyInquiries(userId: string, userType: UserRole) {
     if (userType === UserRole.BUYER) {
       return inquiryRepository.findByUserId(userId);
@@ -65,7 +57,6 @@ export class InquiryService {
     }
   }
 
-
   async getProductInquiries(productId: string) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -77,7 +68,6 @@ export class InquiryService {
 
     return inquiryRepository.findByProductId(productId);
   }
-
 
   async updateInquiry(inquiryId: string, userId: string, data: UpdateInquiryData) {
     const inquiry = await inquiryRepository.findById(inquiryId);
@@ -96,7 +86,6 @@ export class InquiryService {
 
     return inquiryRepository.update(inquiryId, data);
   }
-
 
   async deleteInquiry(inquiryId: string, userId: string) {
     const inquiry = await inquiryRepository.findById(inquiryId);

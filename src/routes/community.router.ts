@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import inquiryRoutes from './inquiryRoutes.js';
+
 import inquiryReplyRoutes from './inquiryReplyRoutes.js';
+import inquiryRoutes from './inquiryRoutes.js';
 import productRoutes from './productRoutes.js';
 import reviewRoutes from './reviewRoutes.js';
 

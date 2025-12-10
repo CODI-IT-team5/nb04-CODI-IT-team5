@@ -1,7 +1,7 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction,Request, Response } from 'express';
+
 import inquiryReplyService from '../services/inquiryReplyService.js';
 import { sendSuccess } from '../utils/response.js';
-
 
 export class InquiryReplyController {
   // 답변 등록

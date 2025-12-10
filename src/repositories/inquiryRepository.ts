@@ -1,6 +1,7 @@
-import prisma from '../utils/prisma.js';
 import type { Inquiry } from '@prisma/client';
 import { InquiryStatus } from '@prisma/client';
+
+import prisma from '../utils/prisma.js';
 
 export interface CreateInquiryData {
   title: string;
