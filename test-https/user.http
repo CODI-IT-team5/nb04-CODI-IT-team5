@@ -1,0 +1,54 @@
+@refreshToken = {{auth.response.cookies['refreshToken']}
+@accessToken = {{auth.response.body.accessToken}}
+@newUserEmail = "test"
+@newUserPassword = "test"
+
+### 회원가입
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "name": "테스트유저",
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}",
+  "type": "BUYER"
+}
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}"
+}
+
+### 내 정보 조회
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### 내 정보 수정
+PATCH  {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "password": "", // 변경할 비밀번호
+  "currentPassword": "{{newUserPassword}}", // 현재 비밀번호
+  "image": "",
+}
+
+### 관심 스토어 조회
+GET {{baseUrl}}/api/users/me/likes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### 회원 탈퇴
+DELETE {{baseUrl}}/api/users/delete
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json

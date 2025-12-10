@@ -29,13 +29,13 @@ app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.
 // ----------------------------------------------------------
-app.get('/notifications/sse', (req: Request, res: Response) => {
+app.get('/api/notifications/sse', (req: Request, res: Response) => {
   req.on('close', () => {
     res.end();
   });
