@@ -1,0 +1,95 @@
+import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
+import type { CreateInquiryReplyData, UpdateInquiryReplyData } from '../repositories/inquiryReplyRepository.js';
+import inquiryRepository from '../repositories/inquiryRepository.js';
+import prisma from '../utils/prisma.js';
+import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors.js';
+import { InquiryStatus } from '@prisma/client';
+
+export class InquiryReplyService {
+  async createReply(inquiryId: string, userId: string, content: string) {
+    const inquiry = await inquiryRepository.findById(inquiryId);
+
+    if (!inquiry) {
+      throw new NotFoundError('문의를 찾을 수 없습니다.');
+    }
+
+    const store = await prisma.store.findUnique({
+      where: { userId },
+    });
+
+    if (!store) {
+      throw new NotFoundError('스토어를 찾을 수 없습니다.');
+    }
+
+    // 판매자 검증: 자신의 스토어 상품에 대한 문의만 답변 가능
+    const inquiryWithProduct = inquiry as typeof inquiry & {
+      product?: { storeId: string };
+    };
+    if (inquiryWithProduct.product?.storeId !== store.id) {
+      throw new ForbiddenError('자신의 상품에 대한 문의만 답변할 수 있습니다.');
+    }
+
+    // 중복 답변 방지
+    const existingReply = await inquiryReplyRepository.findByInquiryId(inquiryId);
+
+    if (existingReply) {
+      throw new ConflictError('이미 답변이 등록된 문의입니다.');
+    }
+
+    const reply = await inquiryReplyRepository.create({
+      content,
+      inquiryId,
+      userId,
+    });
+
+    // 문의 상태 업데이트: WaitingAnswer → CompletedAnswer
+    await inquiryRepository.updateStatus(inquiryId, InquiryStatus.CompletedAnswer);
+
+    return reply;
+  }
+
+  // 답변 상세 조회
+  async getReplyById(replyId: string) {
+    const reply = await inquiryReplyRepository.findById(replyId);
+
+    if (!reply) {
+      throw new NotFoundError('답변을 찾을 수 없습니다.');
+    }
+
+    return reply;
+  }
+
+  // 답변 수정
+  async updateReply(replyId: string, userId: string, content: string) {
+    const reply = await inquiryReplyRepository.findById(replyId);
+
+    if (!reply) {
+      throw new NotFoundError('답변을 찾을 수 없습니다.');
+    }
+
+    if (reply.userId !== userId) {
+      throw new ForbiddenError('본인의 답변만 수정할 수 있습니다.');
+    }
+
+    return inquiryReplyRepository.update(replyId, { content });
+  }
+
+  async deleteReply(replyId: string, userId: string) {
+    const reply = await inquiryReplyRepository.findById(replyId);
+
+    if (!reply) {
+      throw new NotFoundError('답변을 찾을 수 없습니다.');
+    }
+
+    if (reply.userId !== userId) {
+      throw new ForbiddenError('본인의 답변만 삭제할 수 있습니다.');
+    }
+
+    // 문의 상태 복구: CompletedAnswer → WaitingAnswer
+    await inquiryRepository.updateStatus(reply.inquiryId, InquiryStatus.WaitingAnswer);
+
+    return inquiryReplyRepository.delete(replyId);
+  }
+}
+
+export default new InquiryReplyService();
