@@ -1,4 +1,4 @@
-import type { NextFunction,Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 import reviewService from '../services/reviewService.js';
 import { sendSuccess } from '../utils/response.js';
