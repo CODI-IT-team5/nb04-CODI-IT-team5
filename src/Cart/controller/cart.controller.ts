@@ -1,9 +1,9 @@
 // src/cart/cart.controller.ts
 
-import type { Request, Response, NextFunction } from "express";
-import * as cartService from "../service/cart.service.js";
-import type { PatchCartInput } from "../dtos/cart.dto.js";
-import { getCartWithItems } from "../repository/cart.repository.js";
+import type { Request, Response, NextFunction } from 'express';
+import * as cartService from '../service/cart.service.js';
+import type { PatchCartInput } from '../dtos/cart.dto.js';
+import { getCartWithItems } from '../repository/cart.repository.js';
 
 // 공통 401 응답 헬퍼 (선택이지만 편해서 추가)
 function getUserIdOr401(req: Request, res: Response): string | null {
@@ -11,8 +11,8 @@ function getUserIdOr401(req: Request, res: Response): string | null {
   if (!user) {
     res.status(401).json({
       statusCode: 401,
-      message: "인증이 필요합니다.",
-      error: "Unauthorized",
+      message: '인증이 필요합니다.',
+      error: 'Unauthorized',
     });
     return null;
   }
@@ -28,15 +28,12 @@ export async function createCart(req: Request, res: Response) {
   if (!cart) {
     return res.status(500).json({
       statusCode: 500,
-      message: "장바구니 생성에 실패했습니다.",
+      message: '장바구니 생성에 실패했습니다.',
     });
   }
 
   // 총 quantity 계산 (items의 quantity 합)
-  const totalQuantity = cart.items.reduce(
-    (sum: number, item: { quantity: number }) => sum + item.quantity,
-    0
-  );
+  const totalQuantity = cart.items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
 
   return res.status(201).json({
     id: cart.id,
@@ -70,8 +67,8 @@ export async function deleteCartItem(req: Request, res: Response) {
   if (!cartItemId) {
     return res.status(400).json({
       statusCode: 400,
-      message: "잘못된 요청입니다.",
-      error: "Bad Request",
+      message: '잘못된 요청입니다.',
+      error: 'Bad Request',
     });
   }
 
@@ -93,16 +90,13 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
     if (!cart || !cart.items || cart.items.length === 0) {
       return res.status(404).json({
         statusCode: 404,
-        message: "장바구니에 아이템이 없습니다.",
-        error: "Not Found",
+        message: '장바구니에 아이템이 없습니다.',
+        error: 'Not Found',
       });
     }
 
     // quantity = 아이템 수량 합
-    const totalQuantity = cart.items.reduce(
-      (sum: number, item: { quantity: number }) => sum + item.quantity,
-      0
-    );
+    const totalQuantity = cart.items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
 
     // Swagger 스펙 맞춰 quantity 필드만 추가해서 응답
     return res.status(200).json({

@@ -1,6 +1,6 @@
 // src/cart/cart.repository.ts
-import prisma  from "../lib/prisma.js";
-import type { PatchCartInput } from "../dtos/cart.dto.js";
+import prisma from '../lib/prisma.js';
+import type { PatchCartInput } from '../dtos/cart.dto.js';
 
 export async function findCartByUserId(userId: string) {
   return prisma.cart.findUnique({
@@ -93,7 +93,7 @@ export async function upsertCartItems(userId: string, input: PatchCartInput) {
   // 스펙상 PATCH 응답은 CartItem 배열 형식이라 생각하고 items만 반환
   const items = await prisma.cartItem.findMany({
     where: { cartId: cart.id },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
   });
 
   return items;
@@ -115,6 +115,6 @@ export async function deleteCartItem(userId: string, cartItemId: string) {
 
   return prisma.cartItem.findMany({
     where: { cartId: cart.id },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: 'asc' },
   });
 }
