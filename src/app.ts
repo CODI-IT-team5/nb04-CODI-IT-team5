@@ -31,12 +31,10 @@ app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
-
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
 app.use('/api', communityRoutes);
-
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.
