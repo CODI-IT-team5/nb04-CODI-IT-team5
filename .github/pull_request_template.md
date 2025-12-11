@@ -1,10 +1,9 @@
 ---
 name: Pull Request
 about: PR 템플릿
-title: "[TYPE] 제목"
+title: '[TYPE] 제목'
 labels: ''
 assignees: ''
-
 ---
 
 ## 📝 변경 사항 요약 (Summary of Changes)
