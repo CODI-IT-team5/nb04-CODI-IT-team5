@@ -1,12 +1,11 @@
 @refreshToken = {{auth.response.cookies['refreshToken']}
 @accessToken = {{auth.response.body.accessToken}}
-@newUserEmail = "test"
-@newUserPassword = "test"
+@newUserEmail = test@test.com
+@newUserPassword = testtest
 
 ### 회원가입
 POST {{baseUrl}}/api/users
 Content-Type: application/json
-User-Agent: rest-client-test
 
 {
   "name": "테스트유저",
@@ -19,7 +18,6 @@ User-Agent: rest-client-test
 # @name auth
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
-User-Agent: rest-client-test
 
 {
   "email": "{{newUserEmail}}",
@@ -37,18 +35,43 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "",
-  "password": "", // 변경할 비밀번호
-  "currentPassword": "{{newUserPassword}}", // 현재 비밀번호
-  "image": "",
+  "name": "변경  테스트",
+  "password": "{{newUserPassword}}",
+  "image": "https://test.url",
+  "currentPassword": "{{newUserPassword}}"
+}
+
+### 내 정보 수정 undefined 테스트
+PATCH  {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "undefined 테스트",
+  "currentPassword": "{{newUserPassword}}"
+}
+
+
+### 회원 탈퇴
+DELETE {{baseUrl}}/api/users/delete
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+# ---------------------------------------
+# 관심 스토어가 시딩 계정에만 있어서 다시 로그인
+# ---------------------------------------
+
+### 기존 시딩 계정으로 다시 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
 }
 
 ### 관심 스토어 조회
 GET {{baseUrl}}/api/users/me/likes
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-### 회원 탈퇴
-DELETE {{baseUrl}}/api/users/delete
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json

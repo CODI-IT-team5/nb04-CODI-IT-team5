@@ -18,3 +18,36 @@ interface Grade {
   rate: number;
   minAmount: number;
 }
+
+export interface UpdateUser {
+  userId: string;
+  name?: string | undefined;
+  password?: string | undefined;
+  image?: string | undefined;
+}
+
+export interface UpdateUserInput extends UpdateUser {
+  currentPassword?: string;
+}
+
+export interface likeStores {
+  storeId: string;
+  userId: string;
+  store: {
+    id: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    address: string;
+    detailAddress: string | null;
+    phoneNumber: string;
+    content: string;
+    image: string | null;
+  };
+}
+
+export interface deleteUser {
+  userId: string;
+  refreshToken: string;
+}

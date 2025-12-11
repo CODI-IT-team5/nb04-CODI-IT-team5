@@ -17,11 +17,6 @@ User-Agent: rest-client-test
   "password": "{{password}}"
 }
 
-### 내정보 조회
-GET {{baseUrl}}/api/users/me
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
 ### 엑세스 토큰 재발급
 # @name auth
 POST {{baseUrl}}/api/auth/refresh
