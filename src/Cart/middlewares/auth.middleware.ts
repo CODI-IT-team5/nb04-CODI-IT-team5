@@ -23,6 +23,11 @@ declare module "express-serve-static-core" {
   }
 }
 
+/**
+ * 인증 미들웨어
+ * - Authorization: Bearer <token> 형식의 액세스 토큰을 검증
+ * - 성공 시 req.user에 { id, email, type } 주입
+ */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
@@ -30,7 +35,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         statusCode: 401,
-        message: "인증 정보가 없습니다. 다시 로그인 해주세요.",
+        message: "인증이 필요합니다.",
+        error: "Unauthorized",
       });
     }
 
@@ -38,12 +44,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
     let decoded: TokenPayload;
     try {
-      decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as unknown as TokenPayload;
+      decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as TokenPayload;
     } catch (error) {
       console.error("[authMiddleware] jwt.verify error:", error);
       return res.status(401).json({
         statusCode: 401,
         message: "유효하지 않은 토큰이거나 만료된 토큰입니다.",
+        error: "Unauthorized",
       });
     }
 
@@ -51,6 +58,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       return res.status(401).json({
         statusCode: 401,
         message: "유효하지 않은 토큰입니다.",
+        error: "Unauthorized",
       });
     }
 
@@ -79,7 +87,8 @@ export function requireSeller(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({
       statusCode: 401,
-      message: "인증되지 않은 사용자입니다.",
+      message: "인증이 필요합니다.",
+      error: "Unauthorized",
     });
   }
 
@@ -87,6 +96,7 @@ export function requireSeller(req: Request, res: Response, next: NextFunction) {
     return res.status(403).json({
       statusCode: 403,
       message: "판매자만 접근 가능한 기능입니다.",
+      error: "Forbidden",
     });
   }
 
@@ -101,7 +111,8 @@ export function requireBuyer(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({
       statusCode: 401,
-      message: "인증되지 않은 사용자입니다.",
+      message: "인증이 필요합니다.",
+      error: "Unauthorized",
     });
   }
 
@@ -109,6 +120,7 @@ export function requireBuyer(req: Request, res: Response, next: NextFunction) {
     return res.status(403).json({
       statusCode: 403,
       message: "구매자만 접근 가능한 기능입니다.",
+      error: "Forbidden",
     });
   }
 
