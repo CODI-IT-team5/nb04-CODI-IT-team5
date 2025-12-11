@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,53 +17,109 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String
-  type          UserRole  @default(BUYER) // API 명세: "BUYER"
-  
-  points        Int       @default(0)
-  image         String?   // 프로필 이미지
-  
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  name     String
+  type     UserRole @default(BUYER)
+  image    String? // 프로필 이미지
+
+  points      Int @default(0)
+  totalAmount Int @default(0) // 누적 구매 금액
+
   // 등급 (Grade)
-  gradeId       String?
-  grade         Grade?    @relation(fields: [gradeId], references: [id])
+  gradeId String
+  grade   Grade  @relation(fields: [gradeId], references: [id])
 
   // 관계 설정
-  store         Store?          // 판매자: 본인 스토어 (1:1)
-  cart          Cart?           // 구매자: 장바구니 (1:1)
-  
-  orders        Order[]         // 주문 내역
-  reviews       Review[]        // 작성한 리뷰
-  inquiries     Inquiry[]       // 작성한 상품 문의
+  store Store? // 판매자: 본인 스토어 (1:1)
+  cart  Cart? // 구매자: 장바구니 (1:1)
+
+  orders         Order[] // 주문 내역
+  reviews        Review[] // 작성한 리뷰
+  inquiries      Inquiry[] // 작성한 상품 문의
   inquiryReplies InquiryReply[] // 판매자: 작성한 답변
-  
   favoriteStores FavoriteStore[] // 관심 스토어 목록
-  notifications  Notification[]  // 알림 목록
+  notifications  Notification[] // 알림 목록
+  pointHistories PointHistory[]
+  devices        Device[]
 
-  refreshTokens RefreshToken[]   // 인증 토큰
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+  deletedAt   DateTime?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  @@index([email, password, deletedAt])
 }
 
-model Grade {
-  id        String @id // 예: "grade_green"
-  name      String // 예: "green"
-  rate      Int    // 적립률 (예: 5)
-  minAmount Int    // 등급 달성 최소 금액
-
-  users     User[]
+enum DeletedTokenReason {
+  REPLACED // 새 로그인으로 기존 토큰 대체됨
+  LOGOUT
+  PASSWORD_CHANGE
+  DELETED_USER
+  EXPIRED // 만료 시간 지남
+  DEVICE_LIMIT // 로그인 가능 수 제한 넘김
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
+  id         String              @id @default(cuid())
+  jti        String              @unique
+  deviceId   String
+  device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  reason     DeletedTokenReason? // 토큰 무효화 이유
+  issuedAt   DateTime // 토큰 발급 시간
+  expiresAt  DateTime // 만료 날짜
+  updatedAt  DateTime            @updatedAt
+  lastUsedAt DateTime // 마지막 사용 시간
+  deletedAt  DateTime? // 무효화 된 시간
+}
+
+model Device {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip            String?
+  userAgent     String         @default("") // 기기 정보
+  deviceName    String?
+  createdAt     DateTime       @default(now())
+  lastUsedAt    DateTime
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  refreshTokens RefreshToken[]
+
+  @@unique([userId, userAgent, deletedAt])
+}
+
+enum PointHistoryType {
+  EARN // 적립
+  USE // 사용
+  EXPIRE // 소멸
+}
+
+model PointHistory {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  point       Int
+  type        PointHistoryType
+
+  createdAt DateTime  @default(now())
+  expiredAt DateTime? // 만료 날짜
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+  userId  String
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model Grade {
+  id        String   @id // 예: "grade_green"
+  name      String   @unique // 예: "green"
+  rate      Int // 적립률 (예: 5)
+  minAmount Int // 등급 달성 최소 금액
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
 }
 
 // ==========================================
@@ -77,23 +127,24 @@ model RefreshToken {
 // ==========================================
 
 model Store {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  content       String   @db.Text
-  image         String?
-  
+  id      String  @id @default(cuid())
+  name    String  @unique
+  content String  @db.Text
+  image   String?
+
   address       String
-  detailAddress String
+  detailAddress String?
   phoneNumber   String
 
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
+  userId String @unique // 판매자
+  user   User   @relation(fields: [userId], references: [id])
 
-  products      Product[]
-  likedBy       FavoriteStore[]
+  products Product[]
+  likedBy  FavoriteStore[] // 관심 스토어
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model FavoriteStore {
@@ -111,20 +162,20 @@ model FavoriteStore {
 // ==========================================
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique // 예: "top", "bottom"
-  products  Product[]
+  id       String    @id @default(cuid())
+  name     String    @unique // 예: "top", "bottom"
+  products Product[]
 }
 
 model Size {
-  id        String    @id @default(cuid()) // API 예시가 CUID임
-  name      String    @unique // 예: "L" (조회용)
-  
+  id   String @id @default(cuid()) // API 예시가 CUID임
+  name String @unique // 예: "L" (조회용)
+
   // API 명세: size: { ko: "L", en: "Large" }
   // 다국어 지원을 위해 JSON 타입 사용 (PostgreSQL 지원)
-  sizeDetail Json?    
+  sizeDetail Json?
 
-  stocks     ProductStock[]
+  stocks     ProductStock[] // 재고
   cartItems  CartItem[]
   orderItems OrderItem[]
 }
@@ -134,49 +185,62 @@ model Size {
 // ==========================================
 
 model Product {
-  id                String    @id @default(cuid())
-  name              String
-  content           String?   @db.Text
-  price             Int
-  image             String?
-  
-  discountRate      Int       @default(0)
-  discountStartTime DateTime?
-  discountEndTime   DateTime?
-  
-  isSoldOut         Boolean   @default(false)
-  
+  id      String  @id @default(cuid())
+  name    String
+  content String? @db.Text
+  price   Int // 정가
+  image   String?
+
+  isSoldOut Boolean @default(false)
+
   // 대시보드 및 정렬용 통계 필드
-  salesCount        Int       @default(0) // 판매량 (대시보드 Top5용)
-  reviewCount       Int       @default(0)
-  reviewSum         Int       @default(0)
+  salesCount    Int @default(0) // 판매량 (대시보드 Top5용)
+  reviewsCount  Int @default(0) // 리뷰 수
+  reviewsRating Int @default(0) // 별점 평균
 
-  storeId           String
-  store             Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
-  categoryId        String?
-  category          Category? @relation(fields: [categoryId], references: [id])
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
-  stocks            ProductStock[] 
-  reviews           Review[]
-  inquiries         Inquiry[]
-  
-  cartItems         CartItem[]
-  orderItems        OrderItem[]
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  stocks    ProductStock[]
+  reviews   Review[]
+  inquiries Inquiry[]
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  productDiscounts ProductDiscount[]
+}
+
+model ProductDiscount {
+  id                String   @id @default(cuid())
+  title             String?
+  description       String?
+  discountRate      Int      @default(0) // 할인율
+  discountStartTime DateTime // 할인 시작 날짜
+  discountEndTime   DateTime // 할인 종료 날짜
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
 }
 
 model ProductStock {
   id        String  @id @default(cuid())
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  sizeId    String  // Size ID가 CUID로 변경됨
-  size      Size    @relation(fields: [sizeId], references: [id])
-  
-  quantity  Int     @default(0)
+
+  sizeId String // Size ID가 CUID로 변경됨
+  size   Size   @relation(fields: [sizeId], references: [id])
+
+  quantity Int @default(0)
 
   @@unique([productId, sizeId])
 }
@@ -195,27 +259,22 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  sizeId    String
-  size      Size     @relation(fields: [sizeId], references: [id])
-  
-  quantity  Int      @default(1)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sizeId String
+  size   Size   @relation(fields: [sizeId], references: [id])
+
+  quantity Int @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 하나의 카트에 같은 상품+사이즈는 한 줄만
   @@unique([cartId, productId, sizeId])
-
-  // 조회/통계 시 성능용 인덱스
-  @@index([cartId])
-  @@index([productId])
 }
 
 // ==========================================
@@ -223,146 +282,150 @@ model CartItem {
 // ==========================================
 
 enum OrderStatus {
-  WaitingPayment   // 결제 대기
-  CompletedPayment // 결제 완료 (또는 Preparing 이전 상태로 쓸 수도 있음)
-  Preparing        // 상품 준비중
-  Shipping         // 배송중
-  Delivered        // 배송완료
-  Cancelled        // 주문 취소
-  Refunded         // 환불 완료
+  WaitingPayment // 결제 대기
+  CompletedPayment // 결제 완료
+  Processing // 상품 준비 중
+  Shipping // 배송 중
+  Delivered // 배송 완료
+  Cancelled // 취소 완료
+  Refunded // 반품 완료
+  // 배송 시작
+  // 취소 접수
+  // 반품 접수
+  // 반품 철회
+  // 취소 불가
+  // 반품 불가
+  // 구매 확정
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // 주문자 정보 스냅샷
-  name          String
-  phoneNumber   String
-  address       String
-  
+  name        String
+  phoneNumber String
+  address     String
+  email       String
+
   // 금액 정보
-  subtotal      Int         // 할인 적용 후 "상품 총액" (포인트 사용 전)
-  usePoint      Int         @default(0) // 사용한 포인트
-  totalQuantity Int         @default(0) // 주문 상품 총 수량
+  subtotal Int // 할인 적용 + 포인트 사용 후 총 상품 금액
+  usePoint Int @default(0) // 사용한 포인트
 
-  status        OrderStatus @default(WaitingPayment)
-  
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
-  
-  orderItems    OrderItem[]
-  payment       Payment?
+  status OrderStatus @default(WaitingPayment)
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  @@index([userId])
-  @@index([createdAt])
+  orderItems OrderItem[]
+  payment    Payment?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  pointHistories PointHistory[]
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  
-  sizeId      String
-  size        Size     @relation(fields: [sizeId], references: [id])
-  
-  quantity    Int
-  price       Int      // 구매 시점 단가 스냅샷 (할인 반영된 최종 단가)
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  sizeId String
+  size   Size   @relation(fields: [sizeId], references: [id])
+
+  quantity Int // 수량
+
+  // 주문 시점 스냅샷
+  productName String
+  price       Int // 구매 시점 단가 스냅샷
 
   // 리뷰 작성 여부 및 연결
-  isReviewed  Boolean  @default(false)
-  review      Review?  // 1:1 관계
+  isReviewed Boolean @default(false)
+  review     Review? // 1:1 관계
 
-  createdAt   DateTime @default(now())
-
-  @@index([orderId])
-  @@index([productId])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 enum PaymentStatus {
-  Pending           // 결제 시도 전/중
-  CompletedPayment  // 결제 성공
-  Failed            // 결제 실패
-  Refunded          // 결제 환불
+  Pending // 보류 중
+  CompletedPayment // 결제 완료
+  Failed // 실패
+  Refunded // 환불
 }
 
 model Payment {
-  id          String        @id @default(cuid())
-  price       Int           // 최종 결제 금액 (subtotal - usePoint)
-  status      PaymentStatus @default(Pending)
-
-  orderId     String        @unique
-  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
+  id        String        @id @default(cuid())
+  price     Int // 최종 결제 금액
+  status    PaymentStatus @default(Pending)
+  orderId   String        @unique
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
 }
-
 
 // ==========================================
 // 7. 커뮤니티 (Review, Inquiry)
 // ==========================================
 
 model Review {
-  id          String   @id @default(cuid())
-  rating      Float    // 4.5 등 소수점 지원
-  content     String   @db.Text
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  rating  Float // 4.5 등 소수점 지원
+  content String @db.Text
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   // 주문 아이템과 1:1 연결 (Verified Purchase)
-  orderItemId String   @unique
+  orderItemId String    @unique
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum InquiryStatus {
-  Pending          // 답변 대기
-  CompletedAnswer  // 답변 완료
+  WaitingAnswer // 답변 대기
+  CompletedAnswer // 답변 완료
 }
 
 model Inquiry {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text
-  isSecret  Boolean  @default(false)
-  status    InquiryStatus @default(Pending)
+  id       String        @id @default(cuid())
+  title    String
+  content  String        @db.Text
+  isSecret Boolean       @default(false)
+  status   InquiryStatus @default(WaitingAnswer)
 
-  userId    String   // 문의 작성자
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String // 문의 작성자
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  reply     InquiryReply? 
+  reply InquiryReply? // 답변
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model InquiryReply {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  
-  inquiryId String   @unique 
-  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  content String @db.Text
 
-  userId    String   // 답변 작성자 (판매자)
-  user      User     @relation(fields: [userId], references: [id])
+  inquiryId String  @unique
+  inquiry   Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  userId String // 답변 작성자 (판매자)
+  user   User   @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -372,13 +435,21 @@ model InquiryReply {
 // 8. 알림 (Notification)
 // ==========================================
 
-model Notification {
-  id        String   @id @default(cuid())
-  content   String
-  isChecked Boolean  @default(false) // 읽음 여부
+enum NotificationType {
+  PRODUCT_SOLDOUT_FOR_BUYER
+  INQUIRY_REPLIED_FOR_BUYER
+  PRODUCT_SOLDOUT_FOR_SELLER
+  NEW_INQUIRY_FOR_SELLER
+}
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Notification {
+  id        String           @id @default(cuid())
+  content   String
+  type      NotificationType
+  isChecked Boolean          @default(false) // 읽음 여부
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

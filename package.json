@@ -31,7 +31,7 @@
   "homepage": "https://github.com/CODI-IT-team5/nb04-CODI-IT-team5#readme",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.947.0",
-    "@prisma/client": "^6.19.1",
+    "@prisma/client": "^6.19.0",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -66,7 +66,7 @@
     "globals": "^16.5.0",
     "jiti": "^2.6.1",
     "prettier": "^3.7.3",
-    "prisma": "^6.19.1",
+    "prisma": "^6.19.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.0"

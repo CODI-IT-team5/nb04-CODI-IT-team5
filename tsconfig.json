@@ -40,5 +40,15 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+      "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",          // ← ESM
+    "moduleResolution": "NodeNext",// ← ESM 해석
+    "verbatimModuleSyntax": true,  // ← 계속 true 유지
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src"
   }
 }
