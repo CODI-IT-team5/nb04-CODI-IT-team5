@@ -19,6 +19,8 @@ export const MESSAGE = {
   userDeleted: '회원탈퇴를 성공했습니다',
   invalidPassword: '현재 비밀번호가 올바르지 않습니다',
 
+  uploadSuccess: '업로드 성공',
+
   refreshTokenNotFound: '리프레시 토큰을 찾을 수 없습니다',
   userNotFound: '유저를 찾을 수 없습니다',
   notFound: '요청한 리소스를 찾을 수 없습니다',
