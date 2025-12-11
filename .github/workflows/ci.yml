@@ -1,0 +1,47 @@
+name: PR 체크
+
+on:
+  pull_request:
+    branches:
+      - main
+      - deploy
+      - dev
+
+jobs:
+  check:
+    name: 코드 품질 및 실행 확인
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 노드 세팅
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: 노드 모듈 캐시
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: 'node_modules'
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: 모듈 설치
+        # 이전의 cache가 없다면 의존성을 설치
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Prettier 체크
+        run: npm run format:check
+
+      - name: ESLint 체크
+        run: npm run lint
+
+        # 테스트 코드 작성되면 테스트까지 추가하기
+
+      - name: 빌드
+        run: npm run build
+
+      - name: 서버 실행 확인 (5초)
+        run: npm run start & sleep 5 && kill $!

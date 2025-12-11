@@ -9,6 +9,7 @@ import { config } from './config/config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
+import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
 import communityRoutes from './routes/community.router.js';
 import logger from './utils/logger.js';
@@ -30,10 +31,12 @@ app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
-// 모든 API를 /api 아래로 통합
+
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
+app.use('/api/s3', s3Router);
 app.use('/api', communityRoutes);
+
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.
