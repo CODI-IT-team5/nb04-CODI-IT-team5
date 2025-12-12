@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { STATUS_CODE } from '../constants/constant.js';
 import inquiryService from '../services/inquiryService.js';
-import { sendSuccess } from '../utils/response.js';
 
 export class InquiryController {
   // 문의 등록
@@ -19,7 +19,7 @@ export class InquiryController {
         productId: productId as string,
       });
 
-      sendSuccess(res, inquiry, 201, '문의가 등록되었습니다.');
+      res.status(STATUS_CODE.CREATED).json(inquiry);
     } catch (error) {
       next(error);
     }
@@ -33,7 +33,7 @@ export class InquiryController {
 
       const inquiries = await inquiryService.getMyInquiries(userId, userType);
 
-      sendSuccess(res, inquiries);
+      res.status(STATUS_CODE.OK).json(inquiries);
     } catch (error) {
       next(error);
     }
@@ -48,7 +48,7 @@ export class InquiryController {
 
       const inquiry = await inquiryService.getInquiryById(inquiryId as string, userId, userType);
 
-      sendSuccess(res, inquiry);
+      res.status(STATUS_CODE.OK).json(inquiry);
     } catch (error) {
       next(error);
     }
@@ -83,7 +83,7 @@ export class InquiryController {
         isSecret,
       });
 
-      sendSuccess(res, inquiry, 200, '문의가 수정되었습니다.');
+      res.status(STATUS_CODE.OK).json(inquiry);
     } catch (error) {
       next(error);
     }
@@ -97,7 +97,7 @@ export class InquiryController {
 
       await inquiryService.deleteInquiry(inquiryId as string, userId);
 
-      sendSuccess(res, null, 200, '문의가 삭제되었습니다.');
+      res.status(STATUS_CODE.OK).json({ message: '문의가 삭제되었습니다.' });
     } catch (error) {
       next(error);
     }

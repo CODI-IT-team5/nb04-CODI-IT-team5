@@ -2,17 +2,16 @@ import { InquiryStatus, UserRole } from '@prisma/client';
 
 import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiryRepository.js';
 import inquiryRepository from '../repositories/inquiryRepository.js';
-import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
-import prisma from '../utils/prisma.js';
+import productRepository from '../repositories/productRepository.js';
+import storeRepository from '../repositories/storeRepository.js';
+import { HttpException } from '../utils/http-exception.js';
 
 export class InquiryService {
   async createInquiry(data: CreateInquiryData) {
-    const product = await prisma.product.findUnique({
-      where: { id: data.productId },
-    });
+    const product = await productRepository.findById(data.productId);
 
     if (!product) {
-      throw new NotFoundError('상품을 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     return inquiryRepository.create(data);
@@ -22,7 +21,7 @@ export class InquiryService {
     const inquiry = await inquiryRepository.findById(inquiryId);
 
     if (!inquiry) {
-      throw new NotFoundError('문의를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     // 비밀글 권한 체크
@@ -34,7 +33,10 @@ export class InquiryService {
       const isSeller = userType === UserRole.SELLER && inquiryWithProduct.product?.store?.userId === userId;
 
       if (!isAuthor && !isSeller) {
-        throw new ForbiddenError('비밀글은 작성자와 판매자만 조회할 수 있습니다.');
+        throw new HttpException({
+          status: 403,
+          message: '비밀글은 작성자와 판매자만 조회할 수 있습니다.',
+        });
       }
     }
 
@@ -45,12 +47,10 @@ export class InquiryService {
     if (userType === UserRole.BUYER) {
       return inquiryRepository.findByUserId(userId);
     } else {
-      const store = await prisma.store.findUnique({
-        where: { userId },
-      });
+      const store = await storeRepository.findByUserId(userId);
 
       if (!store) {
-        throw new NotFoundError('스토어를 찾을 수 없습니다.');
+        throw HttpException.notFound();
       }
 
       return inquiryRepository.findByStoreId(store.id);
@@ -58,12 +58,10 @@ export class InquiryService {
   }
 
   async getProductInquiries(productId: string) {
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-    });
+    const product = await productRepository.findById(productId);
 
     if (!product) {
-      throw new NotFoundError('상품을 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     return inquiryRepository.findByProductId(productId);
@@ -73,15 +71,21 @@ export class InquiryService {
     const inquiry = await inquiryRepository.findById(inquiryId);
 
     if (!inquiry) {
-      throw new NotFoundError('문의를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     if (inquiry.userId !== userId) {
-      throw new ForbiddenError('본인의 문의만 수정할 수 있습니다.');
+      throw new HttpException({
+        status: 403,
+        message: '본인의 문의만 수정할 수 있습니다.',
+      });
     }
 
     if (inquiry.status === InquiryStatus.CompletedAnswer) {
-      throw new ConflictError('답변이 완료된 문의는 수정할 수 없습니다.');
+      throw new HttpException({
+        status: 409,
+        message: '답변이 완료된 문의는 수정할 수 없습니다.',
+      });
     }
 
     return inquiryRepository.update(inquiryId, data);
@@ -91,11 +95,14 @@ export class InquiryService {
     const inquiry = await inquiryRepository.findById(inquiryId);
 
     if (!inquiry) {
-      throw new NotFoundError('문의를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     if (inquiry.userId !== userId) {
-      throw new ForbiddenError('본인의 문의만 삭제할 수 있습니다.');
+      throw new HttpException({
+        status: 403,
+        message: '본인의 문의만 삭제할 수 있습니다.',
+      });
     }
 
     return inquiryRepository.delete(inquiryId);

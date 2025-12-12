@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { STATUS_CODE } from '../constants/constant.js';
 import reviewService from '../services/reviewService.js';
-import { sendSuccess } from '../utils/response.js';
 
 export class ReviewController {
   // 리뷰 작성
@@ -19,7 +19,7 @@ export class ReviewController {
         orderItemId: orderItemId as string,
       });
 
-      sendSuccess(res, review, 201, '리뷰가 작성되었습니다.');
+      res.status(STATUS_CODE.CREATED).json(review);
     } catch (error) {
       next(error);
     }
@@ -32,7 +32,7 @@ export class ReviewController {
 
       const review = await reviewService.getReviewById(reviewId as string);
 
-      sendSuccess(res, review);
+      res.status(STATUS_CODE.OK).json(review);
     } catch (error) {
       next(error);
     }
@@ -45,7 +45,7 @@ export class ReviewController {
 
       const result = await reviewService.getProductReviews(productId as string);
 
-      sendSuccess(res, result);
+      res.status(STATUS_CODE.OK).json(result);
     } catch (error) {
       next(error);
     }
@@ -58,7 +58,7 @@ export class ReviewController {
 
       const reviews = await reviewService.getMyReviews(userId);
 
-      sendSuccess(res, reviews);
+      res.status(STATUS_CODE.OK).json(reviews);
     } catch (error) {
       next(error);
     }
@@ -76,7 +76,7 @@ export class ReviewController {
         content,
       });
 
-      sendSuccess(res, review, 200, '리뷰가 수정되었습니다.');
+      res.status(STATUS_CODE.OK).json(review);
     } catch (error) {
       next(error);
     }
@@ -90,7 +90,7 @@ export class ReviewController {
 
       await reviewService.deleteReview(reviewId as string, userId);
 
-      sendSuccess(res, null, 200, '리뷰가 삭제되었습니다.');
+      res.status(STATUS_CODE.OK).json({ message: '리뷰가 삭제되었습니다.' });
     } catch (error) {
       next(error);
     }

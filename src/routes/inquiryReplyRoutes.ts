@@ -1,29 +1,30 @@
 import { Router } from 'express';
 
 import inquiryReplyController from '../controllers/inquiryReplyController.js';
-import { authenticate, requireSeller } from '../middlewares/auth.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { requireSeller } from '../middlewares/role.middleware.js';
 
 const router = Router();
 
 router.post(
   '/:inquiryId/replies',
-  authenticate,
+  authMiddleware,
   requireSeller,
   inquiryReplyController.createReply.bind(inquiryReplyController),
 );
 
-router.get('/:replyId/replies', authenticate, inquiryReplyController.getReplyById.bind(inquiryReplyController));
+router.get('/:replyId/replies', authMiddleware, inquiryReplyController.getReplyById.bind(inquiryReplyController));
 
 router.patch(
   '/:replyId/replies',
-  authenticate,
+  authMiddleware,
   requireSeller,
   inquiryReplyController.updateReply.bind(inquiryReplyController),
 );
 
 router.delete(
   '/:replyId/replies',
-  authenticate,
+  authMiddleware,
   requireSeller,
   inquiryReplyController.deleteReply.bind(inquiryReplyController),
 );

@@ -2,23 +2,21 @@ import { InquiryStatus } from '@prisma/client';
 
 import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
 import inquiryRepository from '../repositories/inquiryRepository.js';
-import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
-import prisma from '../utils/prisma.js';
+import storeRepository from '../repositories/storeRepository.js';
+import { HttpException } from '../utils/http-exception.js';
 
 export class InquiryReplyService {
   async createReply(inquiryId: string, userId: string, content: string) {
     const inquiry = await inquiryRepository.findById(inquiryId);
 
     if (!inquiry) {
-      throw new NotFoundError('문의를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
-    const store = await prisma.store.findUnique({
-      where: { userId },
-    });
+    const store = await storeRepository.findByUserId(userId);
 
     if (!store) {
-      throw new NotFoundError('스토어를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     // 판매자 검증: 자신의 스토어 상품에 대한 문의만 답변 가능
@@ -26,14 +24,20 @@ export class InquiryReplyService {
       product?: { storeId: string };
     };
     if (inquiryWithProduct.product?.storeId !== store.id) {
-      throw new ForbiddenError('자신의 상품에 대한 문의만 답변할 수 있습니다.');
+      throw new HttpException({
+        status: 403,
+        message: '자신의 상품에 대한 문의만 답변할 수 있습니다.',
+      });
     }
 
     // 중복 답변 방지
     const existingReply = await inquiryReplyRepository.findByInquiryId(inquiryId);
 
     if (existingReply) {
-      throw new ConflictError('이미 답변이 등록된 문의입니다.');
+      throw new HttpException({
+        status: 409,
+        message: '이미 답변이 등록된 문의입니다.',
+      });
     }
 
     const reply = await inquiryReplyRepository.create({
@@ -53,7 +57,7 @@ export class InquiryReplyService {
     const reply = await inquiryReplyRepository.findById(replyId);
 
     if (!reply) {
-      throw new NotFoundError('답변을 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     return reply;
@@ -64,11 +68,14 @@ export class InquiryReplyService {
     const reply = await inquiryReplyRepository.findById(replyId);
 
     if (!reply) {
-      throw new NotFoundError('답변을 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     if (reply.userId !== userId) {
-      throw new ForbiddenError('본인의 답변만 수정할 수 있습니다.');
+      throw new HttpException({
+        status: 403,
+        message: '본인의 답변만 수정할 수 있습니다.',
+      });
     }
 
     return inquiryReplyRepository.update(replyId, { content });
@@ -78,11 +85,14 @@ export class InquiryReplyService {
     const reply = await inquiryReplyRepository.findById(replyId);
 
     if (!reply) {
-      throw new NotFoundError('답변을 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
     if (reply.userId !== userId) {
-      throw new ForbiddenError('본인의 답변만 삭제할 수 있습니다.');
+      throw new HttpException({
+        status: 403,
+        message: '본인의 답변만 삭제할 수 있습니다.',
+      });
     }
 
     // 문의 상태 복구: CompletedAnswer → WaitingAnswer

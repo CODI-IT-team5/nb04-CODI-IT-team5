@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { STATUS_CODE } from '../constants/constant.js';
 import inquiryReplyService from '../services/inquiryReplyService.js';
-import { sendSuccess } from '../utils/response.js';
 
 export class InquiryReplyController {
   // 답변 등록
@@ -13,7 +13,7 @@ export class InquiryReplyController {
 
       const reply = await inquiryReplyService.createReply(inquiryId as string, userId, content as string);
 
-      sendSuccess(res, reply, 201, '답변이 등록되었습니다.');
+      res.status(STATUS_CODE.CREATED).json(reply);
     } catch (error) {
       next(error);
     }
@@ -26,7 +26,7 @@ export class InquiryReplyController {
 
       const reply = await inquiryReplyService.getReplyById(replyId as string);
 
-      sendSuccess(res, reply);
+      res.status(STATUS_CODE.OK).json(reply);
     } catch (error) {
       next(error);
     }
@@ -41,7 +41,7 @@ export class InquiryReplyController {
 
       const reply = await inquiryReplyService.updateReply(replyId as string, userId, content as string);
 
-      sendSuccess(res, reply, 200, '답변이 수정되었습니다.');
+      res.status(STATUS_CODE.OK).json(reply);
     } catch (error) {
       next(error);
     }
@@ -55,7 +55,7 @@ export class InquiryReplyController {
 
       await inquiryReplyService.deleteReply(replyId as string, userId);
 
-      sendSuccess(res, null, 200, '답변이 삭제되었습니다.');
+      res.status(STATUS_CODE.OK).json({ message: '답변이 삭제되었습니다.' });
     } catch (error) {
       next(error);
     }
