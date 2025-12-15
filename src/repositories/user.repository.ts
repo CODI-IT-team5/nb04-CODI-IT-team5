@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 import type { createUser } from '../dtos/user.dto.js';
 import type { UpdateUser } from '../types/user.type.js';
 import prisma from '../utils/prisma.js';
