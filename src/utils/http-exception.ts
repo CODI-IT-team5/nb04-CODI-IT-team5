@@ -55,4 +55,20 @@ export class HttpException extends Error {
       message: MESSAGE.emailAready,
     });
   }
+
+  // 권한 없음 (Forbidden)
+  static forbidden(message = MESSAGE.forbidden) {
+    return new HttpException({
+      status: STATUS_CODE.FORBIDDEN,
+      message: message,
+    });
+  }
+
+  // 리소스 충돌 (Conflict) - 예: 중복 리뷰 등
+  static conflict(message: string) {
+    return new HttpException({
+      status: STATUS_CODE.CONFLICT,
+      message: message,
+    });
+  }
 }

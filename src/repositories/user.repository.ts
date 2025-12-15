@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 import type { createUser } from '../dtos/user.dto.js';
 import type { UpdateUser } from '../types/user.type.js';
 import prisma from '../utils/prisma.js';
@@ -37,9 +35,9 @@ class UserRepository {
     return await prisma.user.update({
       where: { id: inputData.userId },
       data: {
-        name: inputData.name ?? Prisma.skip,
-        password: inputData.password ?? Prisma.skip,
-        image: inputData.image ?? Prisma.skip,
+        ...(inputData.name !== undefined && { name: inputData.name }),
+        ...(inputData.password !== undefined && { password: inputData.password }),
+        ...(inputData.image !== undefined && { image: inputData.image }),
       },
       include: { grade: true },
     });
