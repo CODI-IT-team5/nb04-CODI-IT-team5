@@ -1,9 +1,9 @@
 import { InquiryStatus, UserRole } from '@prisma/client';
 
-import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiryRepository.js';
-import inquiryRepository from '../repositories/inquiryRepository.js';
-import productRepository from '../repositories/productRepository.js';
-import storeRepository from '../repositories/storeRepository.js';
+import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiry.repository.js';
+import inquiryRepository from '../repositories/inquiry.repository.js';
+import productRepository from '../repositories/product.repository.js';
+import storeRepository from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 
 export class InquiryService {
@@ -33,10 +33,7 @@ export class InquiryService {
       const isSeller = userType === UserRole.SELLER && inquiryWithProduct.product?.store?.userId === userId;
 
       if (!isAuthor && !isSeller) {
-        throw new HttpException({
-          status: 403,
-          message: '비밀글은 작성자와 판매자만 조회할 수 있습니다.',
-        });
+        throw HttpException.forbidden('비밀글은 작성자와 판매자만 조회할 수 있습니다.');
       }
     }
 
@@ -75,17 +72,11 @@ export class InquiryService {
     }
 
     if (inquiry.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 문의만 수정할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 문의만 수정할 수 있습니다.');
     }
 
     if (inquiry.status === InquiryStatus.CompletedAnswer) {
-      throw new HttpException({
-        status: 409,
-        message: '답변이 완료된 문의는 수정할 수 없습니다.',
-      });
+      throw HttpException.conflict('답변이 완료된 문의는 수정할 수 없습니다.');
     }
 
     return inquiryRepository.update(inquiryId, data);
@@ -99,10 +90,7 @@ export class InquiryService {
     }
 
     if (inquiry.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 문의만 삭제할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 문의만 삭제할 수 있습니다.');
     }
 
     return inquiryRepository.delete(inquiryId);

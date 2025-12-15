@@ -1,8 +1,8 @@
 import { InquiryStatus } from '@prisma/client';
 
-import inquiryReplyRepository from '../repositories/inquiryReplyRepository.js';
-import inquiryRepository from '../repositories/inquiryRepository.js';
-import storeRepository from '../repositories/storeRepository.js';
+import inquiryRepository from '../repositories/inquiry.repository.js';
+import inquiryReplyRepository from '../repositories/inquiry-reply.repository.js';
+import storeRepository from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 
 export class InquiryReplyService {
@@ -24,20 +24,14 @@ export class InquiryReplyService {
       product?: { storeId: string };
     };
     if (inquiryWithProduct.product?.storeId !== store.id) {
-      throw new HttpException({
-        status: 403,
-        message: '자신의 상품에 대한 문의만 답변할 수 있습니다.',
-      });
+      throw HttpException.forbidden('자신의 상품에 대한 문의만 답변할 수 있습니다.');
     }
 
     // 중복 답변 방지
     const existingReply = await inquiryReplyRepository.findByInquiryId(inquiryId);
 
     if (existingReply) {
-      throw new HttpException({
-        status: 409,
-        message: '이미 답변이 등록된 문의입니다.',
-      });
+      throw HttpException.conflict('이미 답변이 등록된 문의입니다.');
     }
 
     const reply = await inquiryReplyRepository.create({
@@ -72,10 +66,7 @@ export class InquiryReplyService {
     }
 
     if (reply.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 답변만 수정할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 답변만 수정할 수 있습니다.');
     }
 
     return inquiryReplyRepository.update(replyId, { content });
@@ -89,10 +80,7 @@ export class InquiryReplyService {
     }
 
     if (reply.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 답변만 삭제할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 답변만 삭제할 수 있습니다.');
     }
 
     // 문의 상태 복구: CompletedAnswer → WaitingAnswer

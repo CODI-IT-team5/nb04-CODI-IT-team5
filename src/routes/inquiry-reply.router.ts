@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import inquiryReplyController from '../controllers/inquiryReplyController.js';
+import inquiryReplyController from '../controllers/inquiry-reply.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { requireSeller } from '../middlewares/role.middleware.js';
 

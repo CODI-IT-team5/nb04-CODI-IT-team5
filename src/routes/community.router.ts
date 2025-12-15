@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
-import inquiryReplyRoutes from './inquiryReplyRoutes.js';
-import inquiryRoutes from './inquiryRoutes.js';
-import productRoutes from './productRoutes.js';
-import reviewRoutes from './reviewRoutes.js';
+import inquiryRoutes from './inquiry.router.js';
+import inquiryReplyRoutes from './inquiry-reply.router.js';
+import productRoutes from './product.router.js';
+import reviewRoutes from './review.router.js';
 
 const router = Router();
 

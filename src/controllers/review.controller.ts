@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
-import reviewService from '../services/reviewService.js';
+import reviewService from '../services/review.service.js';
 
 export class ReviewController {
   // 리뷰 작성

@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
-import inquiryReplyService from '../services/inquiryReplyService.js';
+import inquiryReplyService from '../services/inquiry-reply.service.js';
 
 export class InquiryReplyController {
   // 답변 등록

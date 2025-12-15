@@ -1,7 +1,7 @@
-import orderItemRepository from '../repositories/orderItemRepository.js';
-import productRepository from '../repositories/productRepository.js';
-import type { CreateReviewData, UpdateReviewData } from '../repositories/reviewRepository.js';
-import reviewRepository from '../repositories/reviewRepository.js';
+import orderItemRepository from '../repositories/order-item.repository.js';
+import productRepository from '../repositories/product.repository.js';
+import type { CreateReviewData, UpdateReviewData } from '../repositories/review.repository.js';
+import reviewRepository from '../repositories/review.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 
 export class ReviewService {
@@ -18,10 +18,7 @@ export class ReviewService {
     }
 
     if (orderItem.order.userId !== data.userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인이 구매한 상품만 리뷰를 작성할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인이 구매한 상품만 리뷰를 작성할 수 있습니다.');
     }
 
     if (orderItem.productId !== data.productId) {
@@ -31,10 +28,7 @@ export class ReviewService {
     const existingReview = await reviewRepository.findByOrderItemId(data.orderItemId);
 
     if (existingReview) {
-      throw new HttpException({
-        status: 409,
-        message: '이미 리뷰를 작성한 주문 항목입니다.',
-      });
+      throw HttpException.conflict('이미 리뷰를 작성한 주문 항목입니다.');
     }
 
     return reviewRepository.create(data);
@@ -88,10 +82,7 @@ export class ReviewService {
     }
 
     if (review.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 리뷰만 수정할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 리뷰만 수정할 수 있습니다.');
     }
 
     return reviewRepository.update(reviewId, data);
@@ -106,10 +97,7 @@ export class ReviewService {
     }
 
     if (review.userId !== userId) {
-      throw new HttpException({
-        status: 403,
-        message: '본인의 리뷰만 삭제할 수 있습니다.',
-      });
+      throw HttpException.forbidden('본인의 리뷰만 삭제할 수 있습니다.');
     }
 
     return reviewRepository.delete(reviewId);
