@@ -4,9 +4,9 @@ import { STATUS_CODE } from '../constants/constant.js';
 import { metadataService } from '../services/metadata.service.js';
 
 class MeatadataController {
-  list = async (req: Request, res: Response, next: NextFunction) => {
+  gradeList = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await metadataService.list();
+      const result = await metadataService.gradeList();
       return res.status(STATUS_CODE.OK).json(result);
     } catch (err) {
       next(err);

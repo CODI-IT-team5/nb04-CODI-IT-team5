@@ -1,7 +1,7 @@
 import prisma from '../utils/prisma.js';
 
 class MetadataRepository {
-  list = async () => {
+  gradeList = async () => {
     return await prisma.grade.findMany();
   };
 }

@@ -2,8 +2,8 @@ import { metadataRepository } from '../repositories/metadata.repository.js';
 import { MetadataResponse } from '../serializes/metadata.serialize.js';
 
 class MetadataService {
-  list = async () => {
-    const results = await metadataRepository.list();
+  gradeList = async () => {
+    const results = await metadataRepository.gradeList();
     return MetadataResponse.getGrade(results);
   };
 }
