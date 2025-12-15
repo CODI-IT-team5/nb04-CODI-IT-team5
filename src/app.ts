@@ -9,6 +9,7 @@ import { config } from './config/config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
+import { metadataRouter } from './routes/metadata.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
 import logger from './utils/logger.js';
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/metadata', metadataRouter);
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.

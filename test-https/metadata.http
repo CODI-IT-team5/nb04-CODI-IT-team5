@@ -1,0 +1,2 @@
+### 등급 조회
+GET {{baseUrl}}/api/metadata/grade
