@@ -312,10 +312,22 @@ CREATE TABLE "Notification" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "User_email_password_deletedAt_idx" ON "User"("email", "password", "deletedAt");
+CREATE INDEX "User_deletedAt_idx" ON "User"("deletedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RefreshToken_jti_key" ON "RefreshToken"("jti");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_deletedAt_idx" ON "RefreshToken"("deletedAt");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_issuedAt_idx" ON "RefreshToken"("issuedAt");
+
+-- CreateIndex
+CREATE INDEX "Device_userId_lastUsedAt_idx" ON "Device"("userId", "lastUsedAt");
+
+-- CreateIndex
+CREATE INDEX "Device_deletedAt_idx" ON "Device"("deletedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Device_userId_userAgent_deletedAt_key" ON "Device"("userId", "userAgent", "deletedAt");

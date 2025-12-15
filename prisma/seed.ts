@@ -25,9 +25,9 @@ async function main() {
   const testPassword = 'test1234';
   const hashedPassword = await bcrypt.hash(testPassword, config.app.bcryptSaltRounds);
 
-  await prisma.user.createMany({
-    data: [
-      {
+  const [seller1, buyer1] = await Promise.all([
+    prisma.user.create({
+      data: {
         email: 'seller1@test.com',
         name: '셀러1',
         password: hashedPassword,
@@ -35,7 +35,9 @@ async function main() {
         type: UserRole.SELLER,
         gradeId: 'grade_green',
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: 'buyer1@test.com',
         name: '바이어1',
         password: hashedPassword,
@@ -43,9 +45,8 @@ async function main() {
         type: UserRole.BUYER,
         gradeId: 'grade_green',
       },
-    ],
-    skipDuplicates: true,
-  });
+    }),
+  ]);
 
   // ----------------------
   // 3. 카테고리
@@ -75,6 +76,30 @@ async function main() {
       { id: 'size_xl', name: 'XL', sizeDetail: { ko: '엑스라지', en: 'X-Large' } },
     ],
     skipDuplicates: true,
+  });
+
+  // ----------------------
+  // 5. 스토어
+  // ----------------------
+  const seller1Store = await prisma.store.create({
+    data: {
+      name: '셀러1 스토어',
+      content: '셀러1 스토어 소개',
+      address: '서울시 강남구',
+      detailAddress: '테헤란로 1',
+      phoneNumber: '010-1111-1111',
+      userId: seller1.id,
+    },
+  });
+
+  // ----------------------
+  // 6. 관심 스토어
+  // ----------------------
+  await prisma.favoriteStore.create({
+    data: {
+      userId: buyer1.id,
+      storeId: seller1Store.id,
+    },
   });
 }
 
