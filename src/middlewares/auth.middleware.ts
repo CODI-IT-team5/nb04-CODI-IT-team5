@@ -37,22 +37,22 @@ export const authMiddleware = async (req: Request, _res: Response, next: NextFun
       return next(HttpException.tokenError());
     }
 
-const user = await authRepository.findUserById(decoded.userId);
+    const user = await authRepository.findUserById(decoded.userId);
 
-      if (!user) {
-        logger.warn(
-          {
-            event: 'auth_fail',
-            userId: decoded.userId,
-            ...getLogMeta(req),
-          },
-          '인증 실패: user not found',
-        );
-        return next(HttpException.userNotFound());
-      }
+    if (!user) {
+      logger.warn(
+        {
+          event: 'auth_fail',
+          userId: decoded.userId,
+          ...getLogMeta(req),
+        },
+        '인증 실패: user not found',
+      );
+      return next(HttpException.userNotFound());
+    }
 
-      req.user = user;
-    
+    req.user = user;
+
     logger.info(
       {
         event: 'auth_success',
