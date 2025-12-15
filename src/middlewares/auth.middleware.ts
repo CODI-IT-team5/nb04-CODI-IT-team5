@@ -38,9 +38,21 @@ export const authMiddleware = async (req: Request, _res: Response, next: NextFun
     }
 
     const user = await authRepository.findUserById(decoded.userId);
-    if (!user) return next(HttpException.userNotFound());
 
-    req.user = { id: decoded.userId };
+    if (!user) {
+      logger.warn(
+        {
+          event: 'auth_fail',
+          userId: decoded.userId,
+          ...getLogMeta(req),
+        },
+        '인증 실패: user not found',
+      );
+      return next(HttpException.userNotFound());
+    }
+
+    req.user = user;
+
     logger.info(
       {
         event: 'auth_success',
