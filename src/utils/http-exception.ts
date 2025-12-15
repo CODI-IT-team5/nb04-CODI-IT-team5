@@ -41,10 +41,18 @@ export class HttpException extends Error {
   }
 
   // 이메일 또는 비밀번호 틀림
-  static unauthorized() {
+  static unauthorized(message?: string) {
     return new HttpException({
       status: STATUS_CODE.UNAUTHORIZED,
-      message: MESSAGE.invalidCredentials,
+      message: message ?? MESSAGE.invalidCredentials,
+    });
+  }
+
+  // 사용할 수 없는 이메일 입니다 (이미존재)
+  static unavailableEmail() {
+    return new HttpException({
+      status: STATUS_CODE.CONFLICT,
+      message: MESSAGE.emailAready,
     });
   }
 

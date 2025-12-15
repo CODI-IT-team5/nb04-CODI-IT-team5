@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { config } from '../config/config.js';
+import { authRepository } from '../repositories/auth.repository.js';
 import type { AccessTokenPayload } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger, { getLogMeta } from '../utils/logger.js';
-import prisma from '../utils/prisma.js';
 
 export const authMiddleware = async (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
@@ -37,25 +37,22 @@ export const authMiddleware = async (req: Request, _res: Response, next: NextFun
       return next(HttpException.tokenError());
     }
 
-    // 사용자 정보 조회
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, email: true, type: true },
-    });
+const user = await authRepository.findUserById(decoded.userId);
 
-    if (!user) {
-      logger.warn(
-        {
-          event: 'auth_fail',
-          userId: decoded.userId,
-          ...getLogMeta(req),
-        },
-        '인증 실패: user not found',
-      );
-      return next(HttpException.tokenError());
-    }
+      if (!user) {
+        logger.warn(
+          {
+            event: 'auth_fail',
+            userId: decoded.userId,
+            ...getLogMeta(req),
+          },
+          '인증 실패: user not found',
+        );
+        return next(HttpException.userNotFound());
+      }
 
-    req.user = user;
+      req.user = user;
+    
     logger.info(
       {
         event: 'auth_success',

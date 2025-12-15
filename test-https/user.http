@@ -1,0 +1,77 @@
+@refreshToken = {{auth.response.cookies['refreshToken']}
+@accessToken = {{auth.response.body.accessToken}}
+@newUserEmail = test@test.com
+@newUserPassword = testtest
+
+### 회원가입
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": "테스트유저",
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}",
+  "type": "BUYER"
+}
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}"
+}
+
+### 내 정보 조회
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### 내 정보 수정
+PATCH  {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "변경  테스트",
+  "password": "{{newUserPassword}}",
+  "image": "https://test.url",
+  "currentPassword": "{{newUserPassword}}"
+}
+
+### 내 정보 수정 undefined 테스트
+PATCH  {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "undefined 테스트",
+  "currentPassword": "{{newUserPassword}}"
+}
+
+
+### 회원 탈퇴
+DELETE {{baseUrl}}/api/users/delete
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+# ---------------------------------------
+# 관심 스토어가 시딩 계정에만 있어서 다시 로그인
+# ---------------------------------------
+
+### 기존 시딩 계정으로 다시 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 관심 스토어 조회
+GET {{baseUrl}}/api/users/me/likes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json

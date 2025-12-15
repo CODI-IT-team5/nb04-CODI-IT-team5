@@ -14,8 +14,10 @@ export const STATUS_CODE = {
 
 export const MESSAGE = {
   userAuthenticated: '사용자가 성공적으로 인증되었습니다',
-  userAready: '이미 존재하는 유저입니다',
+  emailAready: '이미 존재하는 유저입니다',
   logoutSuccess: '성공적으로 로그아웃되었습니다',
+  userDeleted: '회원탈퇴를 성공했습니다',
+  invalidPassword: '현재 비밀번호가 올바르지 않습니다',
 
   uploadSuccess: '업로드 성공',
 
