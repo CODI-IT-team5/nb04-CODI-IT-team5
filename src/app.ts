@@ -13,6 +13,7 @@ import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
+import { cartRouter } from './routes/cart.router.js';
 
 const app = express();
 app.use(cookieParser());
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
 app.use('/api/s3', s3Router);
+app.use('/cart', cartRouter);
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.

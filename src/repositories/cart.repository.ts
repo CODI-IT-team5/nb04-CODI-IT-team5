@@ -1,5 +1,5 @@
 // src/cart/cart.repository.ts
-import prisma from '../lib/prisma.js';
+import prisma from '../utils/prisma.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
 
 export async function findCartByUserId(userId: string) {

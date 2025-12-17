@@ -1,9 +1,9 @@
 // src/cart/cart.controller.ts
 
 import type { Request, Response, NextFunction } from 'express';
-import * as cartService from '../service/cart.service.js';
+import * as cartService from '../services/cart.service.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
-import { getCartWithItems } from '../repository/cart.repository.js';
+import { getCartWithItems } from '../repositories/cart.repository.js';
 
 // 공통 401 응답 헬퍼 (선택이지만 편해서 추가)
 function getUserIdOr401(req: Request, res: Response): string | null {

@@ -1,9 +1,9 @@
 ### 공통 변수 설정
-@baseUrl = http://localhost:3000/api
+@baseUrl = http://localhost:4000
 
 # 로그인 응답에서 자동으로 토큰/쿠키 추출
-@refreshToken = {{auth.response.cookies.refreshToken}}
-@accessToken = {{auth.response.body.accessToken}}
+@refreshToken = {{auth.response.cookies['refreshToken']}
+@accessToken = {{auth.response.body.accessToken}}}
 
 # 테스트용 상품/사이즈/장바구니아이템/주문 ID (필요 시 교체)
 @productId = product1
@@ -12,38 +12,29 @@
 @orderId = order1
 
 
-### =========================
-### 1. 인증 - 로그인
-### =========================
+### 1. 로그인
 # @name auth
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
-User-Agent: rest-client
+User-Agent: rest-client-test
 
 {
-  "email": "buyer1@test.com",
-  "password": "password1234"
+  "email": "{{user}}",
+  "password": "{{password}}"
 }
-
-
-### =========================
-### 2. 장바구니 Cart API
-### =========================
 
 ### 2-1. 장바구니 생성
 POST {{baseUrl}}/cart
 Authorization: Bearer {{accessToken}}
+Content-Type: application/json
 
+{}
 
-
-### 2-2. 장바구니 전체 조회
+### 2-2. 장바구니 조회
 GET {{baseUrl}}/cart
 Authorization: Bearer {{accessToken}}
 
-
-
-### 2-3. 장바구니 상품 추가/수정 (PATCH)
-# - 같은 productId + sizeId 조합 요청 시 수량 덮어쓰기/합산은 구현 로직에 따름
+### 2-3. 장바구니 상품 추가/수정
 PATCH {{baseUrl}}/cart
 Content-Type: application/json
 Authorization: Bearer {{accessToken}}
@@ -51,32 +42,21 @@ Authorization: Bearer {{accessToken}}
 {
   "productId": "{{productId}}",
   "sizes": [
-    {
-      "sizeId": "{{sizeId}}",
-      "quantity": 2
-    }
+    { "sizeId": "{{sizeId}}", "quantity": 2 }
   ]
 }
 
-
-
-### 2-4. 장바구니 다시 조회 (추가된 아이템 확인)
+### 2-4. 장바구니 재조회 -> 여기서 items[0].id 복사해서 cartItemId 갱신
 GET {{baseUrl}}/cart
 Authorization: Bearer {{accessToken}}
 
-
-
-### 2-5. 장바구니 아이템 상세 조회
-# 위 조회에서 받은 cartItemId를 아래 변수에 덮어쓰면 됨
+### 2-5. 장바구니 아이템 상세
 GET {{baseUrl}}/cart/{{cartItemId}}
 Authorization: Bearer {{accessToken}}
-
-
 
 ### 2-6. 장바구니 아이템 삭제
 DELETE {{baseUrl}}/cart/{{cartItemId}}
 Authorization: Bearer {{accessToken}}
-
 
 
 ### =========================
