@@ -2,11 +2,12 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { config } from '../config/config.js';
+import { authRepository } from '../repositories/auth.repository.js';
 import type { AccessTokenPayload } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger, { getLogMeta } from '../utils/logger.js';
 
-export const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const accessToken = authHeader && authHeader.split(' ')[1];
 
@@ -36,7 +37,22 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
       return next(HttpException.tokenError());
     }
 
-    req.user = { id: decoded.userId };
+    const user = await authRepository.findUserById(decoded.userId);
+
+    if (!user) {
+      logger.warn(
+        {
+          event: 'auth_fail',
+          userId: decoded.userId,
+          ...getLogMeta(req),
+        },
+        '인증 실패: user not found',
+      );
+      return next(HttpException.userNotFound());
+    }
+
+    req.user = user;
+
     logger.info(
       {
         event: 'auth_success',
