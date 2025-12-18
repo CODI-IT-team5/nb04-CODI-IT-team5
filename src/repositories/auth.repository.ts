@@ -31,6 +31,12 @@ class AuthRepository {
     });
   };
 
+  findUserById = async (id: string) => {
+    return await prisma.user.findUnique({
+      where: { id },
+    });
+  };
+
   findDeviceByUserAgent = async (data: BaseDevice) => {
     return await prisma.device.findFirst({
       where: {

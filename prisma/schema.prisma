@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["strictUndefinedChecks"]
 }
 
 datasource db {
@@ -49,7 +50,7 @@ model User {
   lastLoginAt DateTime?
   deletedAt   DateTime?
 
-  @@index([email, password, deletedAt])
+  @@index([deletedAt])
 }
 
 enum DeletedTokenReason {
@@ -72,6 +73,9 @@ model RefreshToken {
   updatedAt  DateTime            @updatedAt
   lastUsedAt DateTime // 마지막 사용 시간
   deletedAt  DateTime? // 무효화 된 시간
+
+  @@index([deletedAt])
+  @@index([issuedAt])
 }
 
 model Device {
@@ -88,6 +92,8 @@ model Device {
   refreshTokens RefreshToken[]
 
   @@unique([userId, userAgent, deletedAt])
+  @@index([userId, lastUsedAt])
+  @@index([deletedAt])
 }
 
 enum PointHistoryType {
