@@ -1,25 +1,14 @@
 import express from 'express';
-
 import { notificationController } from '../controllers/notification.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 export const notificationRouter = express.Router();
 
-// GET /api/notifications/sse
-// 로그인한 사용자만 SSE 연결을 생성할 수 있도록 authMiddleware 적용
+// SSE 연결
 notificationRouter.get('/sse', authMiddleware, notificationController.subscribe);
-
-import { notificationService } from '../services/notification.service.js';
-
-notificationRouter.post('/test', (req, res) => {
-  const { userId, message } = req.body;
-
-  // 서비스의 발송 메서드 강제 호출
-  notificationService.sendNotification(userId, {
-    type: 'TEST',
-    content: message,
-    createdAt: new Date(),
-  });
-
-  res.send('알림 발송 시도 완료');
-});
+// 내 알림 목록 조회
+notificationRouter.get('/', authMiddleware, notificationController.getList);
+// (테스트용) 알림 생성
+notificationRouter.post('/', authMiddleware, notificationController.create);
+// 알림 읽음 처리
+notificationRouter.patch('/:alarmId/check', authMiddleware, notificationController.check);
