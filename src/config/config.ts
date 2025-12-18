@@ -1,13 +1,37 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { URL } from 'url';
 import type { StringValue } from 'ms';
 import ms from 'ms';
 
 dotenv.config();
 
+function getPortFromVscodeSettings(): string | undefined {
+  try {
+    const settingsPath = path.resolve(process.cwd(), '.vscode', 'settings.json');
+    if (!fs.existsSync(settingsPath)) return undefined;
+    const raw = fs.readFileSync(settingsPath, 'utf8');
+    const json = JSON.parse(raw);
+    const base = json?.['rest-client.environmentVariables']?.$shared?.baseUrl;
+    if (!base || typeof base !== 'string') return undefined;
+    try {
+      const u = new URL(base);
+      return u.port || undefined;
+    } catch {
+      return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+const vscodePort = getPortFromVscodeSettings();
+
 export const config = {
   app: {
     node_env: process.env['NODE_ENV'] || 'development', // 실행 환경 (dev/prod)
-    port: process.env['PORT'] || 3001, // 서버 포트
+    port: process.env['PORT'] || vscodePort || 3001, // 서버 포트
     cors_origin: process.env['CORS_ORIGIN'] || 'http://localhost:3000', // CORS 허용 도메인
     cors_credentials: process.env['CORS_CREDENTIALS'] === 'true', // 쿠키 포함 요청 허용 여부
     app_name: process.env['APP_NAME'] || 'app_name', // 서비스 이름
