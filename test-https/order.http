@@ -1,19 +1,18 @@
-@orderId = <PUT_ORDER_ID_HERE>
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = {{auth.response.body.accessToken}}
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWo5YmZnaTgwMDAxOXpvejBvdDExa2EwIiwiaWF0IjoxNzY2MDQyOTA3LCJleHAiOjE3NjYwNDY1MDd9.CHHPH4BPpLVyrClt-6RDxUAZIbi8KjIsEevhPANQtjA
 
 ### 주문 목록 조회
-GET {{baseUrl}}/orders?limit=10&page=1
+GET {{baseUrl}}/api/orders?limit=10&page=1
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 ### 주문 상세 조회
-GET {{baseUrl}}/orders/{{orderId}}
+GET {{baseUrl}}/api/orders/{{orderId}}
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 ### 주문 생성
-POST {{baseUrl}}/orders
+POST {{baseUrl}}/api/orders
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
