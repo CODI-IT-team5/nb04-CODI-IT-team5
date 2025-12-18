@@ -1,0 +1,18 @@
+@baseUrl = http://localhost:3001
+@accessToken = "로그인 후에 발급 받은 토큰 넣어주세요" 
+@myUserId = "마찬가지로 UserId 넣어주세요(email 아닙니다)"
+
+### 1. SSE 연결 시도 (이 요청은 계속 로딩 중이어야 정상입니다!!)
+# 연결해두고 아래 '2. 알림 발송'을 눌러보세요.
+GET {{baseUrl}}/api/notifications/sse
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### 2. [테스트용] 나에게 알림 강제 발송
+POST {{baseUrl}}/api/notifications/test
+Content-Type: application/json
+
+{
+  "userId": "{{myUserId}}",
+  "message": "실시간 알림 테스트 성공입니다!"
+}
