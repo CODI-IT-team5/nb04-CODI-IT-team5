@@ -1,6 +1,7 @@
 
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWo5YmZnaTgwMDAxOXpvejBvdDExa2EwIiwiaWF0IjoxNzY2MDQyOTA3LCJleHAiOjE3NjYwNDY1MDd9.CHHPH4BPpLVyrClt-6RDxUAZIbi8KjIsEevhPANQtjA
+@accessToken = {{auth.response.body.accessToken}}
+
 
 ### 서버 상태 확인
 GET {{baseUrl}}/health

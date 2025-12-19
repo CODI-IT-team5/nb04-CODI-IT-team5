@@ -1,5 +1,8 @@
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWo5YmZnaTgwMDAxOXpvejBvdDExa2EwIiwiaWF0IjoxNzY2MDQyOTA3LCJleHAiOjE3NjYwNDY1MDd9.CHHPH4BPpLVyrClt-6RDxUAZIbi8KjIsEevhPANQtjA
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWpiNGw0cDYwMDAxOXp6amh5bjM5djJyIiwiaWF0IjoxNzY2MTExODk0LCJleHAiOjE3NjYxMTU0OTR9.rGi5HuhxMVhfujnBhM69oAIt0eVUYWZLLapsacdYIjk
+@sweaterId = cmjc7d7wh000e9zja0frqnk94
+@hoodieId = cmjc7d7wq000g9zjafx0hwebf
+@orderId = {{createOrder.response.body.id}}
 
 ### 주문 목록 조회
 GET {{baseUrl}}/api/orders?limit=10&page=1
@@ -12,6 +15,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 ### 주문 생성
+# @name createOrder
 POST {{baseUrl}}/api/orders
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -22,15 +26,32 @@ Content-Type: application/json
 	"address": "서울시 강남구 예시로 1",
 	"orderItems": [
 		{
-			"productId": "<PRODUCT_ID_1>",
-			"sizeId": "<SIZE_ID_1>",
+			"productId": "{{sweaterId}}",
+			"sizeId": "size_s",
 			"quantity": 1
 		},
 		{
-			"productId": "<PRODUCT_ID_2>",
-			"sizeId": "<SIZE_ID_2>",
+			"productId": "{{hoodieId}}",
+			"sizeId": "size_m",
 			"quantity": 2
 		}
 	],
 	"usePoint": 0
+}
+
+### 주문 취소 (WaitingPayment 상태만 가능)
+DELETE {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### 주문 정보 수정 (이름/전화번호/배송지)
+### 프론트에 사용하지 X
+PATCH {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+	"name": "김수정",
+	"phone": "010-9876-5432",
+	"address": "서울시 서초구 수정로 2"
 }

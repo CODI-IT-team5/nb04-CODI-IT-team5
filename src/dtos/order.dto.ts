@@ -23,3 +23,9 @@ export const createOrderDto = z.object({
   orderItems: z.array(createOrderItemDto).min(1),
   usePoint: z.number().int().min(0).optional(),
 });
+
+export const updateOrderDto = z.object({
+  name: z.string().min(1).optional(),
+  phone: z.string().min(1).optional(),
+  address: z.string().min(1).optional(),
+});

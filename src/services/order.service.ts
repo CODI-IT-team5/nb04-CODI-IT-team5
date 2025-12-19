@@ -38,6 +38,41 @@ export const orderService = {
                   image: true,
                   createdAt: true,
                   updatedAt: true,
+                  store: {
+                    select: {
+                      id: true,
+                      userId: true,
+                      name: true,
+                      address: true,
+                      phoneNumber: true,
+                      content: true,
+                      image: true,
+                      createdAt: true,
+                      updatedAt: true,
+                    },
+                  },
+                  stocks: {
+                    select: {
+                      id: true,
+                      productId: true,
+                      sizeId: true,
+                      quantity: true,
+                      size: true,
+                    },
+                  },
+                  productDiscounts: {
+                    where: {
+                      revokedAt: null,
+                      discountStartTime: { lte: new Date() },
+                      discountEndTime: { gte: new Date() },
+                    },
+                    select: {
+                      discountRate: true,
+                      discountStartTime: true,
+                      discountEndTime: true,
+                    },
+                    take: 1,
+                  },
                 },
               },
               size: true,
@@ -48,8 +83,14 @@ export const orderService = {
       }),
     ]);
 
+    // totalQuantity를 orderItems로부터 계산
+    const dataWithTotalQuantity = data.map((order) => ({
+      ...order,
+      totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+    }));
+
     return {
-      data,
+      data: dataWithTotalQuantity,
       meta: {
         total,
         page: safePage,
@@ -59,6 +100,7 @@ export const orderService = {
     };
   },
 
+  // 프론트에서는 사용되지 않는 부분.
   async getOrderById({ userId, orderId }: { userId: string; orderId: string }) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId },
@@ -74,6 +116,41 @@ export const orderService = {
                 image: true,
                 createdAt: true,
                 updatedAt: true,
+                store: {
+                  select: {
+                    id: true,
+                    userId: true,
+                    name: true,
+                    address: true,
+                    phoneNumber: true,
+                    content: true,
+                    image: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                },
+                stocks: {
+                  select: {
+                    id: true,
+                    productId: true,
+                    sizeId: true,
+                    quantity: true,
+                    size: true,
+                  },
+                },
+                productDiscounts: {
+                  where: {
+                    revokedAt: null,
+                    discountStartTime: { lte: new Date() },
+                    discountEndTime: { gte: new Date() },
+                  },
+                  select: {
+                    discountRate: true,
+                    discountStartTime: true,
+                    discountEndTime: true,
+                  },
+                  take: 1,
+                },
               },
             },
             size: true,
@@ -84,7 +161,12 @@ export const orderService = {
     });
 
     if (!order) {throw HttpException.notFound(); }; 
-    return order;
+    
+    // totalQuantity를 orderItems로부터 계산
+    return {
+      ...order,
+      totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+    };
   },
 
   async createOrder(input: {
@@ -176,7 +258,37 @@ export const orderService = {
         include: {
           orderItems: {
             include: {
-              product: { select: { id: true, storeId: true, name: true, price: true, image: true } },
+              product: {
+                select: {
+                  id: true,
+                  storeId: true,
+                  name: true,
+                  price: true,
+                  image: true,
+                  store: {
+                    select: {
+                      id: true,
+                      userId: true,
+                      name: true,
+                      address: true,
+                      phoneNumber: true,
+                      content: true,
+                      image: true,
+                      createdAt: true,
+                      updatedAt: true,
+                    },
+                  },
+                  stocks: {
+                    select: {
+                      id: true,
+                      productId: true,
+                      sizeId: true,
+                      quantity: true,
+                      size: true,
+                    },
+                  },
+                },
+              },
               size: true,
             },
           },
@@ -194,5 +306,93 @@ export const orderService = {
 
       return order;
     });
+  },
+
+  async deleteOrder({ userId, orderId }: { userId: string; orderId: string }) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, userId },
+    });
+
+    if (!order) throw HttpException.notFound();
+    if (order.status !== 'WaitingPayment') {
+      throw HttpException.badRequest('결제 대기 상태인 주문만 취소할 수 있습니다.');
+    }
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'Cancelled' },
+    });
+
+    return null;
+  },
+
+  async updateOrder(input: {
+    userId: string;
+    orderId: string;
+    name?: string;
+    phone?: string;
+    address?: string;
+  }) {
+    const { userId, orderId, name, phone, address } = input;
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, userId },
+    });
+
+    if (!order) throw HttpException.notFound();
+
+    const updateData: { name?: string; phoneNumber?: string; address?: string } = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phoneNumber = phone;
+    if (address) updateData.address = address;
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: updateData,
+      include: {
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                storeId: true,
+                name: true,
+                price: true,
+                image: true,
+                store: {
+                  select: {
+                    id: true,
+                    userId: true,
+                    name: true,
+                    address: true,
+                    phoneNumber: true,
+                    content: true,
+                    image: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                },
+                stocks: {
+                  select: {
+                    id: true,
+                    productId: true,
+                    sizeId: true,
+                    quantity: true,
+                    size: true,
+                  },
+                },
+              },
+            },
+            size: true,
+          },
+        },
+        payment: true,
+      },
+    });
+
+    return {
+      ...updated,
+      totalQuantity: updated.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+    };
   },
 };

@@ -21,6 +21,7 @@ export const orderController = {
     }
   },
 
+  // 프론트에서는 사용되지 않는 부분.
   async getOrderById(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.id;
@@ -43,6 +44,37 @@ export const orderController = {
 
       const result = await orderService.createOrder({ userId, ...req.body });
       return res.status(201).json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async deleteOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: '인증이 필요합니다.', path: req.originalUrl });
+
+      const { orderId } = req.params;
+      if (!orderId) return res.status(400).json({ message: 'orderId가 필요합니다.', path: req.originalUrl });
+
+      await orderService.deleteOrder({ userId, orderId });
+      return res.status(200).json({ message: '주문이 성공적으로 취소되고 포인트가 복구되었습니다.' });
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async updateOrder(req: Request, res: Response, next: NextFunction) {
+    // 프론트에서는 사용되지 않는 부분.
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: '인증이 필요합니다.', path: req.originalUrl });
+
+      const { orderId } = req.params;
+      if (!orderId) return res.status(400).json({ message: 'orderId가 필요합니다.', path: req.originalUrl });
+
+      const result = await orderService.updateOrder({ userId, orderId, ...req.body });
+      return res.status(200).json(result);
     } catch (err) {
       return next(err);
     }
