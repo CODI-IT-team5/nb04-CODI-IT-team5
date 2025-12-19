@@ -336,6 +336,9 @@ CREATE UNIQUE INDEX "Device_userId_userAgent_deletedAt_key" ON "Device"("userId"
 CREATE UNIQUE INDEX "Grade_name_key" ON "Grade"("name");
 
 -- CreateIndex
+CREATE INDEX "Grade_minAmount_idx" ON "Grade"("minAmount");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Store_name_key" ON "Store"("name");
 
 -- CreateIndex
