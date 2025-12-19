@@ -10,11 +10,11 @@ class MetadataService {
     return MetadataResponse.getGrade(results);
   };
 
-  updateTotalAmount = async (inputData: UpdateGradeServiceInput) => {
-    const user = await userRepository.getById(inputData.userId);
+  updateTotalAmount = async (input: UpdateGradeServiceInput) => {
+    const user = await userRepository.getById(input.userId);
     if (!user) throw HttpException.userNotFound();
 
-    const newTotalAmount = user.totalAmount + inputData.deltaAmount;
+    const newTotalAmount = user.totalAmount + input.deltaAmount;
 
     //TODO: 캐시에서 가져오는 걸로 변경하기
     const grades = await metadataRepository.gradeList();
@@ -34,7 +34,7 @@ class MetadataService {
 
     if (!newGrade) throw HttpException.notFound();
     const result = await metadataRepository.updateTotalAmountAndGrade({
-      userId: inputData.userId,
+      userId: input.userId,
       newTotalAmount,
       newGradeId: newGrade.id,
     });
