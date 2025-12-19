@@ -14,6 +14,7 @@ import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
+import { dashboardRouter } from './routes/dashboard.router.js';
 
 const app = express();
 app.use(cookieParser());
@@ -34,6 +35,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/dashboard', dashboardRouter);
 app.use('/api', communityRoutes);
 
 // ----------------------------------------------------------
