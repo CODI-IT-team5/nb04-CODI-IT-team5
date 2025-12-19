@@ -35,7 +35,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
-app.use('/cart', cartRouter);
+app.use('/api/cart', cartRouter);
 app.use('/api', communityRoutes);
 
 // ----------------------------------------------------------

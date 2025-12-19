@@ -17,6 +17,6 @@ export async function patchCart(userId: string, input: PatchCartInput) {
 }
 
 export async function removeCartItem(userId: string, cartItemId: string) {
-  const items = await cartRepository.deleteCartItem(userId, cartItemId);
-  return items;
+  const deletedCount = await cartRepository.deleteCartItem(userId, cartItemId);
+  return deletedCount;
 }

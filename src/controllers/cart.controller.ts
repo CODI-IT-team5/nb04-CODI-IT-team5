@@ -3,7 +3,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as cartService from '../services/cart.service.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
-import { getCartWithItems } from '../repositories/cart.repository.js';
+import { getCartWithItems, getCartItemWithDetails } from '../repositories/cart.repository.js';
 
 // 공통 401 응답 헬퍼 (선택이지만 편해서 추가)
 function getUserIdOr401(req: Request, res: Response): string | null {
@@ -41,7 +41,27 @@ export async function createCart(req: Request, res: Response) {
     quantity: totalQuantity,
     createdAt: cart.createdAt,
     updatedAt: cart.updatedAt,
-    items: cart.items,
+    items: cart.items.map((item) => ({
+      ...item,
+      // sizeDetail를 스펙의 size로 매핑
+      size: item.size
+        ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null }
+        : item.size,
+      product: item.product
+        ? {
+            ...item.product,
+            // 현재 유효한 할인 하나를 평탄화
+            discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
+            discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
+            discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
+            // stocks의 sizeDetail도 매핑
+            stocks: item.product.stocks?.map((s: any) => ({
+              ...s,
+              size: s.size?.sizeDetail ?? null,
+            })),
+          }
+        : item.product,
+    })),
   });
 }
 
@@ -72,7 +92,14 @@ export async function deleteCartItem(req: Request, res: Response) {
     });
   }
 
-  await cartService.removeCartItem(userId, cartItemId);
+  const deletedCount = await cartService.removeCartItem(userId, cartItemId);
+  if (!deletedCount) {
+    return res.status(404).json({
+      statusCode: 404,
+      message: '장바구니에 아이템이 없습니다.',
+      error: 'Not Found',
+    });
+  }
 
   // 스펙상 204 No Content
   return res.status(204).send();
@@ -105,8 +132,81 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
       quantity: totalQuantity,
       createdAt: cart.createdAt,
       updatedAt: cart.updatedAt,
-      items: cart.items,
+      items: cart.items.map((item) => ({
+        ...item,
+        size: item.size
+          ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null }
+          : item.size,
+        product: item.product
+          ? {
+              ...item.product,
+              discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
+              discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
+              discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
+              stocks: item.product.stocks?.map((s: any) => ({
+                ...s,
+                size: s.size?.sizeDetail ?? null,
+              })),
+            }
+          : item.product,
+      })),
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// GET /api/cart/:cartItemId : 장바구니 아이템 상세 조회
+export async function getCartItem(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = getUserIdOr401(req, res);
+    if (!userId) return;
+
+    const { cartItemId } = req.params;
+    if (!cartItemId) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: '잘못된 요청입니다.',
+        error: 'Bad Request',
+      });
+    }
+
+    const item = await getCartItemWithDetails(userId, cartItemId);
+    if (!item) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: '장바구니에 아이템이 없습니다.',
+        error: 'Not Found',
+      });
+    }
+
+    const transformed = {
+      ...item,
+      size: item.size ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null } : item.size,
+      product: item.product
+        ? {
+            ...item.product,
+            discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
+            discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
+            discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
+            stocks: item.product.stocks?.map((s: any) => ({
+              ...s,
+              size: s.size?.sizeDetail ?? null,
+            })),
+          }
+        : item.product,
+      cart: item.cart
+        ? {
+            id: item.cart.id,
+            buyerId: item.cart.userId,
+            quantity: item.cart.items?.reduce((sum: number, it: any) => sum + (it.quantity ?? 0), 0) ?? 0,
+            createdAt: item.cart.createdAt,
+            updatedAt: item.cart.updatedAt,
+          }
+        : item.cart,
+    };
+
+    return res.status(200).json(transformed);
   } catch (error) {
     next(error);
   }

@@ -19,3 +19,5 @@ cartRouter.patch(
 );
 
 cartRouter.delete('/:cartItemId', authMiddleware, cartController.deleteCartItem);
+
+cartRouter.get('/:cartItemId', authMiddleware, cartController.getCartItem);

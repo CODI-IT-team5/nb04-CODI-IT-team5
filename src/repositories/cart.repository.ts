@@ -22,12 +22,48 @@ export async function getCartWithItems(userId: string) {
       items: {
         include: {
           product: {
-            include: {
-              store: true,
+            select: {
+              id: true,
+              storeId: true,
+              name: true,
+              price: true,
+              image: true,
+              createdAt: true,
+              updatedAt: true,
+              store: {
+                select: {
+                  id: true,
+                  userId: true,
+                  name: true,
+                  address: true,
+                  phoneNumber: true,
+                  content: true,
+                  image: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
               stocks: {
-                include: {
+                select: {
+                  id: true,
+                  productId: true,
+                  sizeId: true,
+                  quantity: true,
                   size: true,
                 },
+              },
+              productDiscounts: {
+                where: {
+                  revokedAt: null,
+                  discountStartTime: { lte: new Date() },
+                  discountEndTime: { gte: new Date() },
+                },
+                select: {
+                  discountRate: true,
+                  discountStartTime: true,
+                  discountEndTime: true,
+                },
+                take: 1,
               },
             },
           },
@@ -103,18 +139,75 @@ export async function upsertCartItems(userId: string, input: PatchCartInput) {
 export async function deleteCartItem(userId: string, cartItemId: string) {
   const cart = await findCartByUserId(userId);
   if (!cart) {
-    return null;
+    return 0;
   }
 
-  await prisma.cartItem.deleteMany({
+  const result = await prisma.cartItem.deleteMany({
     where: {
       id: cartItemId,
       cartId: cart.id, // 내 카트에 속한 아이템만 삭제
     },
   });
 
-  return prisma.cartItem.findMany({
-    where: { cartId: cart.id },
-    orderBy: { createdAt: 'asc' },
+  return result.count;
+}
+
+// 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId)
+export async function getCartItemWithDetails(userId: string, cartItemId: string) {
+  const cart = await findCartByUserId(userId);
+  if (!cart) return null;
+
+  return prisma.cartItem.findFirst({
+    where: { id: cartItemId, cartId: cart.id },
+    include: {
+      product: {
+        select: {
+          id: true,
+          storeId: true,
+          name: true,
+          price: true,
+          image: true,
+          createdAt: true,
+          updatedAt: true,
+          store: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              address: true,
+              phoneNumber: true,
+              content: true,
+              image: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          stocks: {
+            select: {
+              id: true,
+              productId: true,
+              sizeId: true,
+              quantity: true,
+              size: true,
+            },
+          },
+          productDiscounts: {
+            where: {
+              revokedAt: null,
+              discountStartTime: { lte: new Date() },
+              discountEndTime: { gte: new Date() },
+            },
+            select: {
+              discountRate: true,
+              discountStartTime: true,
+              discountEndTime: true,
+            },
+            take: 1,
+          },
+        },
+      },
+      size: true,
+      cart: true,
+    },
   });
 }
