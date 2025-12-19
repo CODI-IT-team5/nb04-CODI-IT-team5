@@ -1,20 +1,41 @@
-import { InquiryStatus, UserRole } from '@prisma/client';
+import { InquiryStatus, NotificationType, UserRole } from '@prisma/client';
 
 import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiry.repository.js';
 import inquiryRepository from '../repositories/inquiry.repository.js';
 import productRepository from '../repositories/product.repository.js';
 import storeRepository from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
+import logger from '../utils/logger.js';
+import { notificationService } from './notification.service.js';
 
 export class InquiryService {
   async createInquiry(data: CreateInquiryData) {
-    const product = await productRepository.findById(data.productId);
+    const productForCheck = await productRepository.findById(data.productId);
 
-    if (!product) {
+    if (!productForCheck) {
       throw HttpException.notFound();
     }
 
-    return inquiryRepository.create(data);
+    const inquiry = await inquiryRepository.create(data);
+
+    // 문의 생성 후 판매자에게 알림 전송
+    try {
+      const product = await productRepository.findByIdWithStoreOwner(inquiry.productId);
+      const sellerId = product?.store?.userId;
+
+      if (sellerId) {
+        await notificationService.createNotification({
+          userId: sellerId,
+          type: NotificationType.NEW_INQUIRY_FOR_SELLER,
+          content: '판매 중인 상품에 새로운 문의가 등록되었습니다.',
+          url: `/seller/inquiries/${inquiry.id}`,
+        });
+      }
+    } catch (error) {
+      logger.error(error as Error, '새 문의 알림 전송 실패:');
+    }
+
+    return inquiry;
   }
 
   async getInquiryById(inquiryId: string, userId: string, userType: UserRole) {
