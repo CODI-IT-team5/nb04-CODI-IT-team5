@@ -13,8 +13,8 @@ Content-Type: application/json
 User-Agent: rest-client-test
 
 {
-  "email": "{{user}}",
-  "password": "{{password}}"
+  "email": "buyer1@test.com",
+  "password": "test1234"
 }
 
 ### 엑세스 토큰 재발급
