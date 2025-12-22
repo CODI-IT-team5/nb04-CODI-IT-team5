@@ -1,6 +1,7 @@
 import { NotificationType } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
-import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
+
+import { STATUS_CODE } from '../constants/constant.js';
 import { notificationService } from '../services/notification.service.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';

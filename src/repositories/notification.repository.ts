@@ -1,4 +1,5 @@
-import { NotificationType, Prisma } from '@prisma/client';
+import { NotificationType } from '@prisma/client';
+
 import prisma from '../utils/prisma.js';
 
 type CreateNotificationInput = {

@@ -1,5 +1,6 @@
 import type { NotificationType } from '@prisma/client';
 import type { Response } from 'express';
+
 import { notificationRepository } from '../repositories/notification.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
@@ -46,10 +47,10 @@ class NotificationService {
   async createNotification(data: CreateNotificationInput) {
     // 1. DB에 알림 저장
     const savedNotification = await notificationRepository.create(data);
-    
+
     // 2. 실시간으로 SSE 전송
     this.sendNotification(data.userId, savedNotification);
-    
+
     // 3. 저장된 알림 데이터 반환
     return savedNotification;
   }
