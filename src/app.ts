@@ -9,6 +9,7 @@ import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
 import communityRoutes from './routes/community.router.js';
+import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
@@ -34,6 +35,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/metadata', metadataRouter);
 app.use('/api', communityRoutes);
 app.use('/api/notifications', notificationRouter);
 
