@@ -324,6 +324,9 @@ CREATE INDEX "RefreshToken_deletedAt_idx" ON "RefreshToken"("deletedAt");
 CREATE INDEX "RefreshToken_issuedAt_idx" ON "RefreshToken"("issuedAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "RefreshToken_deviceId_deletedAt_key" ON "RefreshToken"("deviceId", "deletedAt");
+
+-- CreateIndex
 CREATE INDEX "Device_userId_lastUsedAt_idx" ON "Device"("userId", "lastUsedAt");
 
 -- CreateIndex
