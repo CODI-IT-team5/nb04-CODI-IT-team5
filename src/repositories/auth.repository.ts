@@ -1,9 +1,9 @@
+
 import type {
   BaseDevice,
   CreateRefreshTokenInput,
   DeleteRefreshTokenData,
-  DeleteRefreshTokenDataByDeviceId,
-  loginUpdateData,
+  loginUpdateData
 } from '../types/auth.type.js';
 import prisma from '../utils/prisma.js';
 
@@ -43,6 +43,7 @@ class AuthRepository {
         userId: data.userId,
         userAgent: data.userAgent ?? 'unknown', // TODO: unknown 나중에 한 번 더 고민해보기
       },
+      include: { refreshTokens: true }
     });
   };
 
@@ -123,27 +124,11 @@ class AuthRepository {
   };
 
   deleteRefreshToken = async (inputData: DeleteRefreshTokenData) => {
-    return await prisma.refreshToken.deleteWithReason({
-      where: {
-        jti: inputData.jti,
-      },
+    return await prisma.refreshToken.delete({
+      where: { jti: inputData.jti, },
       reason: inputData.reason,
-    });
-  };
-
-  // TODO: 프리즈마 확장으로 사용하고 싶은데 확장을 2개로 하면 에러 발생
-  // deleteWithReason에 where을 jti 또는 deviceId로 설정 가능한지 알아보기
-  deleteRefreshTokenByDeviceId = async (inputData: DeleteRefreshTokenDataByDeviceId) => {
-    return await prisma.refreshToken.updateMany({
-      where: {
-        deviceId: inputData.deviceId,
-      },
-      data: {
-        reason: inputData.reason,
-        deletedAt: new Date(),
-      },
-    });
-  };
+    })
+  }
 }
 
 export const authRepository = new AuthRepository();

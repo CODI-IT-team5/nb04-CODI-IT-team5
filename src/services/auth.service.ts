@@ -98,14 +98,21 @@ const verifyUser = async (data: BaseLogin) => {
 // 디바이스 찾기 또는 생성
 const findOrCreateDevice = async (data: BaseDevice) => {
   const { userId, userAgent, ip } = data;
-  let device = await authRepository.findDeviceByUserAgent({ userId, userAgent, ip });
+  const device = await authRepository.findDeviceByUserAgent({ userId, userAgent, ip });
+
   if (!device) {
     await deviceLimit(userId);
-    device = await authRepository.createDevice({ userId, userAgent, ip });
-    return device;
+    const newDevice = await authRepository.createDevice({ userId, userAgent, ip });
+    return newDevice;
   }
 
-  await authRepository.deleteRefreshTokenByDeviceId({ deviceId: device.id, reason: DeletedTokenReason.REPLACED });
+  const activeToken = device.refreshTokens[0];
+  if (activeToken?.jti) {
+    await authRepository.deleteRefreshToken({
+      jti: activeToken.jti,
+      reason: DeletedTokenReason.REPLACED,
+    });
+  }
   return device;
 };
 
