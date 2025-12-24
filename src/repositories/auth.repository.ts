@@ -1,11 +1,10 @@
-
 import type {
   BaseDevice,
   CreateRefreshTokenInput,
   DeleteRefreshTokenData,
-  loginUpdateData
+  loginUpdateData,
 } from '../types/auth.type.js';
-import prisma from '../utils/prisma.js';
+import prisma, { type ExtendedDeleteArgs } from '../utils/prisma.js';
 
 class AuthRepository {
   login = async (data: loginUpdateData) => {
@@ -43,7 +42,7 @@ class AuthRepository {
         userId: data.userId,
         userAgent: data.userAgent ?? 'unknown', // TODO: unknown 나중에 한 번 더 고민해보기
       },
-      include: { refreshTokens: true }
+      include: { refreshTokens: true },
     });
   };
 
@@ -125,10 +124,10 @@ class AuthRepository {
 
   deleteRefreshToken = async (inputData: DeleteRefreshTokenData) => {
     return await prisma.refreshToken.delete({
-      where: { jti: inputData.jti, },
+      where: { jti: inputData.jti },
       reason: inputData.reason,
-    })
-  }
+    } as ExtendedDeleteArgs<Parameters<typeof prisma.refreshToken.delete>[0]>);
+  };
 }
 
 export const authRepository = new AuthRepository();

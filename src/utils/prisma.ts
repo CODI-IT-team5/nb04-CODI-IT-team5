@@ -1,42 +1,96 @@
-import { DeletedTokenReason, Prisma, PrismaClient } from '@prisma/client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Prisma, PrismaClient } from '@prisma/client';
+import type { Operation } from '@prisma/client/runtime/binary';
 
-type UpdateDelegate<T> = {
-  update(
-    args: Prisma.Args<T, 'update'>
-  ): Prisma.Result<T, Prisma.Args<T, 'update'>, 'update'>;
-};
+import logger from './logger.js';
 
-export const softDelete = () => {
-  return {
-    async delete<T>(
-      this: T,
-      args: Prisma.Args<T, 'delete'> & { reason?: DeletedTokenReason}
-    ): Promise<Prisma.Result<T, Prisma.Args<T, 'update'>, 'update'>> {
-      const ctx =
-        Prisma.getExtensionContext(this) as unknown as UpdateDelegate<T>;
+export type ExtendedDeleteArgs<T> = T & { reason?: string };
 
-      return ctx.update({
-        where: args.where,
-        data: {
-          deletedAt: new Date(),
-          ...(args.reason ? { reason: args.reason } : {}),
+const SOFT_DELETE_MODELS = new Set([
+  'User',
+  'Device',
+  'RefreshToken',
+  'Store',
+  'Product',
+  'Order',
+  'OrderItem',
+  'Payment',
+]);
+
+const softDeleteExtension = Prisma.defineExtension((client) => {
+  return client.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({
+          model,
+          operation,
+          args,
+          query,
+        }: {
+          model: any;
+          operation: Operation;
+          args: any;
+          query: any;
+        }) {
+          logger.debug(
+            {
+              target: 'prisma',
+              event: 'query',
+              model,
+              operation,
+              args,
+              query,
+            },
+            'prisma query 확장',
+          );
+          if (!SOFT_DELETE_MODELS.has(model)) return query(args);
+
+          const modelObject = (client as any)[model];
+
+          if (['findMany', 'findFirst', 'findUnique', 'count', 'groupBy', 'aggregate'].includes(operation)) {
+            if (operation === 'findUnique') {
+              // Prisma's findUnique doesn't support additional filters, so switch to findFirst
+              return modelObject.findFirst(args);
+            }
+
+            args ||= {};
+            args.where ||= {};
+            args.where.deletedAt = null;
+          } else if (['update', 'updateMany', 'upsert'].includes(operation)) {
+            args ||= {};
+            args.where ||= {};
+            args.where.deletedAt = null;
+          } else if (['delete', 'deleteMany'].includes(operation)) {
+            if (operation === 'delete') {
+              logger.debug(
+                {
+                  target: 'prisma',
+                  event: 'soft-delete',
+                  model,
+                  where: args.where,
+                  reason: args.reason,
+                },
+                'Soft delete 실행 (delete -> update)',
+              );
+
+              return modelObject.update({
+                where: args.where,
+                data: {
+                  deletedAt: new Date(),
+                  ...(args.reason ? { reason: args.reason } : {}),
+                },
+              });
+            }
+          } else {
+            logger.debug(`SoftDeleteExtension: Operation '${operation}' 지원 안 됨`);
+          }
+          return query(args);
         },
-      } as Prisma.Args<T, 'update'>);
+      },
     },
-  };
-}
-
-const prisma = new PrismaClient().$extends({
-  model: {
-    user: softDelete(),
-    device: softDelete(),
-    refreshToken: softDelete(),
-    store: softDelete(),
-    product: softDelete(),
-    order: softDelete(),
-    orderItem: softDelete(),
-    payment: softDelete(),
-  },
+  });
 });
+
+const prisma = new PrismaClient().$extends(softDeleteExtension);
 
 export default prisma;
