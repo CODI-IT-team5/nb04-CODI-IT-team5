@@ -75,7 +75,7 @@ const upload = multer({
   },
 });
 
- // Multer 에러를 핸들링하는 커스텀 미들웨어
+// Multer 에러를 핸들링하는 커스텀 미들웨어
 export const uploadImage = (req: Request, res: Response, next: NextFunction) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof MulterError) {
