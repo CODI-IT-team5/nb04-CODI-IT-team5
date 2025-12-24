@@ -52,7 +52,7 @@ export class HttpException extends Error {
   static unavailableEmail() {
     return new HttpException({
       status: STATUS_CODE.CONFLICT,
-      message: MESSAGE.emailAready,
+      message: MESSAGE.emailAlready,
     });
   }
 
