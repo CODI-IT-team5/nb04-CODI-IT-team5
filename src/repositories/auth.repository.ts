@@ -4,18 +4,18 @@ import type {
   DeleteRefreshTokenData,
   loginUpdateData,
 } from '../types/auth.type.js';
-import prisma, { type ExtendedDeleteArgs } from '../utils/prisma.js';
+import prisma, { type ExtendedDeleteArgs, type ExtendedTransactionClient } from '../utils/prisma.js';
 
 class AuthRepository {
-  login = async (data: loginUpdateData) => {
-    await prisma.user.update({
-      where: { id: data.userId },
+  login = async (input: loginUpdateData, tx: ExtendedTransactionClient) => {
+    await tx.user.update({
+      where: { id: input.userId },
       data: {
         lastLoginAt: new Date(),
       },
     });
-    await prisma.device.update({
-      where: { id: data.deviceId },
+    await tx.device.update({
+      where: { id: input.deviceId },
       data: {
         lastUsedAt: new Date(),
       },
@@ -36,18 +36,18 @@ class AuthRepository {
     });
   };
 
-  findDeviceByUserAgent = async (data: BaseDevice) => {
-    return await prisma.device.findFirst({
+  findDeviceByUserAgent = async (input: BaseDevice, tx: ExtendedTransactionClient) => {
+    return await tx.device.findFirst({
       where: {
-        userId: data.userId,
-        userAgent: data.userAgent ?? 'unknown', // TODO: unknown 나중에 한 번 더 고민해보기
+        userId: input.userId,
+        userAgent: input.userAgent ?? 'unknown', // TODO: unknown 나중에 한 번 더 고민해보기
       },
       include: { refreshTokens: true },
     });
   };
 
-  findDeviceCount = async (userId: string) => {
-    return await prisma.device.count({
+  findDeviceCount = async (userId: string, tx: ExtendedTransactionClient) => {
+    return await tx.device.count({
       where: { userId },
     });
   };
@@ -66,31 +66,31 @@ class AuthRepository {
     });
   };
 
-  deleteDevice = async (deviceId: string) => {
-    return await prisma.device.delete({
+  deleteDevice = async (deviceId: string, tx: ExtendedTransactionClient) => {
+    return await tx.device.delete({
       where: { id: deviceId },
     });
   };
 
-  createDevice = async (data: BaseDevice) => {
-    return await prisma.device.create({
+  createDevice = async (input: BaseDevice, tx: ExtendedTransactionClient) => {
+    return await tx.device.create({
       data: {
-        user: { connect: { id: data.userId } },
-        userAgent: data.userAgent ?? 'unknown',
-        ip: data.ip,
+        user: { connect: { id: input.userId } },
+        userAgent: input.userAgent ?? 'unknown',
+        ip: input.ip,
         lastUsedAt: new Date(),
       },
     });
   };
 
-  createRefreshToken = async (inputData: CreateRefreshTokenInput) => {
+  createRefreshToken = async (input: CreateRefreshTokenInput, tx: ExtendedTransactionClient) => {
     // 새 토큰 생성
-    return await prisma.refreshToken.create({
+    return await tx.refreshToken.create({
       data: {
-        jti: inputData.jti,
-        device: { connect: { id: inputData.deviceId } },
-        issuedAt: inputData.issuedAt,
-        expiresAt: inputData.expiresAt,
+        jti: input.jti,
+        device: { connect: { id: input.deviceId } },
+        issuedAt: input.issuedAt,
+        expiresAt: input.expiresAt,
         lastUsedAt: new Date(),
       },
     });
@@ -124,6 +124,13 @@ class AuthRepository {
 
   deleteRefreshToken = async (inputData: DeleteRefreshTokenData) => {
     return await prisma.refreshToken.delete({
+      where: { jti: inputData.jti },
+      reason: inputData.reason,
+    } as ExtendedDeleteArgs<Parameters<typeof prisma.refreshToken.delete>[0]>);
+  };
+
+  deleteRefreshTokenWithTx = async (inputData: DeleteRefreshTokenData, tx: ExtendedTransactionClient) => {
+    return await tx.refreshToken.delete({
       where: { jti: inputData.jti },
       reason: inputData.reason,
     } as ExtendedDeleteArgs<Parameters<typeof prisma.refreshToken.delete>[0]>);

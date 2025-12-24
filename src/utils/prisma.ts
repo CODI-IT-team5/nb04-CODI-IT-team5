@@ -4,6 +4,9 @@ import type { Operation } from '@prisma/client/runtime/binary';
 
 import logger from './logger.js';
 
+export type ExtendedPrismaClient = typeof prisma;
+export type ExtendedTransactionClient = Parameters<Parameters<ExtendedPrismaClient['$transaction']>[0]>[0];
+
 export type ExtendedDeleteArgs<T> = T & { reason?: string };
 
 const SOFT_DELETE_MODELS = new Set([
