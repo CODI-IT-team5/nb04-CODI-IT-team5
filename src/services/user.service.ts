@@ -1,6 +1,5 @@
 import { DeletedTokenReason, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
 import { config } from '../config/config.js';
 import { MESSAGE } from '../constants/constant.js';
@@ -49,14 +48,12 @@ class UserService {
   };
 
   delete = async (input: deleteUser) => {
-    const decoded = jwt.verify(input.refreshToken, config.auth.refreshTokenSecretKey);
-    if (!decoded || typeof decoded === 'string' || !decoded.jti) throw HttpException.tokenError();
-
-    const jti = decoded.jti;
-
-    // RefreshToken 삭제와 User 삭제 트랜잭션
     return await prisma.$transaction(async (tx) => {
-      await authRepository.deleteRefreshTokenWithTx({ jti, reason: DeletedTokenReason.DELETED_USER }, tx);
+      // 사용자의 모든 디바이스 ID 조회
+      const deviceIds = await authRepository.findUserDeviceIds(input.userId, tx);
+      // 해당 디바이스들의 모든 RefreshToken 삭제
+      await authRepository.deleteRefreshTokensByDeviceIds(deviceIds, DeletedTokenReason.DELETED_USER, tx);
+      // 사용자 삭제
       return await userRepository.deleteWithTx(input.userId, tx);
     });
   };

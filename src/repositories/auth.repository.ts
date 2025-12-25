@@ -135,6 +135,23 @@ class AuthRepository {
       reason: inputData.reason,
     } as ExtendedDeleteArgs<Parameters<typeof prisma.refreshToken.delete>[0]>);
   };
+
+  findUserDeviceIds = async (userId: string, tx: ExtendedTransactionClient) => {
+    const devices = await tx.device.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    return devices.map((device) => device.id);
+  };
+
+  deleteRefreshTokensByDeviceIds = async (deviceIds: string[], reason: string, tx: ExtendedTransactionClient) => {
+    return await tx.refreshToken.deleteMany({
+      where: {
+        deviceId: { in: deviceIds },
+      },
+      reason,
+    } as ExtendedDeleteArgs<Parameters<typeof tx.refreshToken.deleteMany>[0]>);
+  };
 }
 
 export const authRepository = new AuthRepository();
