@@ -114,6 +114,12 @@ function handleDeleteOperation(
   client: PrismaClient,
   model: string,
 ): Promise<unknown> {
+  const modelDelegate = (client as unknown as Record<string, Record<string, unknown>>)[model];
+  const deletedAtData = {
+    deletedAt: new Date(),
+    ...(args.reason ? { reason: args.reason } : {}),
+  };
+
   if (operation === 'delete') {
     logger.debug(
       {
@@ -126,25 +132,46 @@ function handleDeleteOperation(
       'Delete를 soft delete로 변환 (deletedAt을 설정하는 update)',
     );
 
-    const modelDelegate = (client as unknown as Record<string, Record<string, unknown>>)[model];
     const update = modelDelegate?.['update'] as ((args: Record<string, unknown>) => Promise<unknown>) | undefined;
 
     if (typeof update === 'function') {
-      const updateArgs: Record<string, unknown> = {
+      return update({
         where: args.where,
-        data: {
-          deletedAt: new Date(),
-          ...(args.reason ? { reason: args.reason } : {}),
-        },
-      };
-      return update(updateArgs);
+        data: deletedAtData,
+      });
+    }
+  } else if (operation === 'deleteMany') {
+    logger.debug(
+      {
+        target: 'prisma',
+        event: 'soft-delete-many',
+        model,
+        where: args.where,
+        reason: args.reason,
+      },
+      'DeleteMany를 soft delete로 변환 (deletedAt을 설정하는 updateMany)',
+    );
+
+    const updateMany = modelDelegate?.['updateMany'] as
+      | ((args: Record<string, unknown>) => Promise<unknown>)
+      | undefined;
+
+    if (typeof updateMany === 'function') {
+      return updateMany({
+        where: args.where,
+        data: deletedAtData,
+      });
     }
   }
 
-  // deleteMany는 현재 soft delete에서 지원되지 않음
-  logger.warn({ target: 'prisma', operation, model }, 'Soft-delete 모델에서 deleteMany 작업 - 필요시 구현 고려');
+  // 이 지점에 도달하는 경우: modelDelegate가 없거나 update/updateMany 메서드를 찾을 수 없는 경우
+  // 정상적인 상황에서는 발생하지 않지만, 방어적으로 에러를 로깅하고 원래 쿼리를 실행
+  logger.error(
+    { target: 'prisma', operation, model },
+    'Soft delete 변환 실패: 모델 delegate 또는 메서드를 찾을 수 없음',
+  );
 
-  throw new Error(`작업 '${operation}'은 soft delete 모델에서 지원되지 않습니다. 'delete'를 사용하세요.`);
+  throw new Error(`${model} 모델에서 ${operation} 작업을 soft delete로 변환할 수 없습니다.`);
 }
 
 /**
