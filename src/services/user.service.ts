@@ -10,6 +10,7 @@ import { userRepository } from '../repositories/user.repository.js';
 import { UserResponse } from '../serializes/user.serialize.js';
 import type { deleteUser, UpdateUserInput } from '../types/user.type.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
 
 class UserService {
   getById = async (userId: string) => {
@@ -51,8 +52,13 @@ class UserService {
     const decoded = jwt.verify(input.refreshToken, config.auth.refreshTokenSecretKey);
     if (!decoded || typeof decoded === 'string' || !decoded.jti) throw HttpException.tokenError();
 
-    await authRepository.deleteRefreshToken({ jti: decoded.jti, reason: DeletedTokenReason.DELETED_USER });
-    return await userRepository.delete(input.userId);
+    const jti = decoded.jti;
+
+    // RefreshToken 삭제와 User 삭제 트랜잭션
+    return await prisma.$transaction(async (tx) => {
+      await authRepository.deleteRefreshTokenWithTx({ jti, reason: DeletedTokenReason.DELETED_USER }, tx);
+      return await userRepository.deleteWithTx(input.userId, tx);
+    });
   };
 
   getLikeStores = async (userId: string) => {
