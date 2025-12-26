@@ -1,12 +1,33 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { MESSAGE } from '../constants/constant.js';
-import type { HttpException } from '../utils/http-exception.js';
+import { ERROR_NAME, MESSAGE, STATUS_CODE } from '../constants/constant.js';
+import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
-export const errorMiddleware = (err: HttpException, req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || 500;
-  const message = status === 500 ? MESSAGE.serverError : err.message;
+interface ErrorWithStatus {
+  status?: number;
+  message?: string;
+}
+
+export const errorMiddleware = (err: Error | HttpException, req: Request, res: Response, _next: NextFunction) => {
+  // 기본값 설정 (500 서버 에러)
+  let status = STATUS_CODE.INTERNAL_SERVER_ERROR;
+  let message = MESSAGE.serverError;
+
+  if (err instanceof HttpException) {
+    status = err.status;
+    message = err.message;
+  } else {
+    const error = err as ErrorWithStatus;
+    if (error.status) {
+      status = error.status;
+      // 메시지가 있으면 쓰고, 없으면 기존 서버 에러 메시지 유지
+      message = error.message || message;
+    }
+  }
+
+  // 에러 이름 결정 (Swagger용)
+  const errorName = getErrorName(status);
 
   // 프로젝트 루트 경로
   const projectRoot = process.cwd();
@@ -18,19 +39,19 @@ export const errorMiddleware = (err: HttpException, req: Request, res: Response,
         return line.trim().replace(new RegExp(projectRoot, 'g'), '.');
       })
     : [];
-
+  // 로깅
   const logData = {
     timestamp: new Date().toISOString(),
     url: req.originalUrl,
     method: req.method,
     status,
-    message: err.message,
+    message, // 사용자에게 나가는 메시지
     request: {
-      body: req.body,
-      query: req.query,
-      params: req.params,
+      body: req.body, // 요청 본문
+      query: req.query, // 쿼리 스트링
+      params: req.params, // URL 파라미터
     },
-    stack: stackLines,
+    stack: stackLines, // 디버깅용 스택 트레이스
   };
 
   // 5xx 에러(서버 에러)는 error 레벨, 4xx 에러(클라이언트 에러)는 warn 레벨로 로깅
@@ -40,8 +61,30 @@ export const errorMiddleware = (err: HttpException, req: Request, res: Response,
     logger.warn(logData, `클라이언트 요청 에러 [${status}]`);
   }
 
+  // 응답 전송 (Swagger 규격 준수)
   res.status(status).json({
     message: message,
-    path: req.originalUrl,
+    statusCode: status,
+    error: errorName,
   });
 };
+
+// [보조 함수]
+function getErrorName(status: number): string {
+  switch (status) {
+    case STATUS_CODE.BAD_REQUEST:
+      return ERROR_NAME.BAD_REQUEST;
+    case STATUS_CODE.UNAUTHORIZED:
+      return ERROR_NAME.UNAUTHORIZED;
+    case STATUS_CODE.FORBIDDEN:
+      return ERROR_NAME.FORBIDDEN;
+    case STATUS_CODE.NOT_FOUND:
+      return ERROR_NAME.NOT_FOUND;
+    case STATUS_CODE.CONFLICT:
+      return ERROR_NAME.CONFLICT;
+    case STATUS_CODE.INTERNAL_SERVER_ERROR:
+      return ERROR_NAME.INTERNAL_SERVER_ERROR;
+    default:
+      return 'Error';
+  }
+}
