@@ -207,7 +207,11 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
         },
       },
       size: true,
-      cart: true,
+      cart: {
+        include: {
+          items: true,
+        },
+      },
     },
   });
 }

@@ -43,12 +43,9 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
-<<<<<<< HEAD
-app.use('/api/cart', cartRouter);
-=======
 app.use('/api/metadata', metadataRouter);
->>>>>>> dev
 app.use('/api', communityRoutes);
+app.use('/api/cart', cartRouter);
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.

@@ -1,9 +1,17 @@
 // src/cart/cart.controller.ts
 
 import type { Request, Response, NextFunction } from 'express';
+import type { Prisma } from '@prisma/client';
 import * as cartService from '../services/cart.service.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
 import { getCartWithItems, getCartItemWithDetails } from '../repositories/cart.repository.js';
+
+type SizeDetail = { ko?: string; en?: string; [key: string]: unknown };
+
+const toSizeDetail = (value: Prisma.JsonValue | null): SizeDetail | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as SizeDetail;
+};
 
 // 공통 401 응답 헬퍼 (선택이지만 편해서 추가)
 function getUserIdOr401(req: Request, res: Response): string | null {
@@ -45,7 +53,7 @@ export async function createCart(req: Request, res: Response) {
       ...item,
       // sizeDetail를 스펙의 size로 매핑
       size: item.size
-        ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null }
+        ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) }
         : item.size,
       product: item.product
         ? {
@@ -55,9 +63,9 @@ export async function createCart(req: Request, res: Response) {
             discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
             discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
             // stocks의 sizeDetail도 매핑
-            stocks: item.product.stocks?.map((s: any) => ({
+            stocks: item.product.stocks?.map((s) => ({
               ...s,
-              size: s.size?.sizeDetail ?? null,
+              size: s.size ? toSizeDetail(s.size.sizeDetail) : null,
             })),
           }
         : item.product,
@@ -135,7 +143,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
       items: cart.items.map((item) => ({
         ...item,
         size: item.size
-          ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null }
+          ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) }
           : item.size,
         product: item.product
           ? {
@@ -143,9 +151,9 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
               discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
               discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
               discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
-              stocks: item.product.stocks?.map((s: any) => ({
+              stocks: item.product.stocks?.map((s) => ({
                 ...s,
-                size: s.size?.sizeDetail ?? null,
+                size: s.size ? toSizeDetail(s.size.sizeDetail) : null,
               })),
             }
           : item.product,
@@ -182,16 +190,16 @@ export async function getCartItem(req: Request, res: Response, next: NextFunctio
 
     const transformed = {
       ...item,
-      size: item.size ? { id: item.size.id, size: (item.size as any).sizeDetail ?? null } : item.size,
+      size: item.size ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) } : item.size,
       product: item.product
         ? {
             ...item.product,
             discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
             discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
             discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
-            stocks: item.product.stocks?.map((s: any) => ({
+            stocks: item.product.stocks?.map((s) => ({
               ...s,
-              size: s.size?.sizeDetail ?? null,
+              size: s.size ? toSizeDetail(s.size.sizeDetail) : null,
             })),
           }
         : item.product,
@@ -199,7 +207,7 @@ export async function getCartItem(req: Request, res: Response, next: NextFunctio
         ? {
             id: item.cart.id,
             buyerId: item.cart.userId,
-            quantity: item.cart.items?.reduce((sum: number, it: any) => sum + (it.quantity ?? 0), 0) ?? 0,
+            quantity: item.cart.items?.reduce((sum, it) => sum + it.quantity, 0) ?? 0,
             createdAt: item.cart.createdAt,
             updatedAt: item.cart.updatedAt,
           }

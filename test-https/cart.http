@@ -1,8 +1,7 @@
 
 # 로그인 응답에서 자동으로 토큰/쿠키 추출
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWpjazcyYTMwMDAzOXpxM20zcWkybXJvIiwiaWF0IjoxNzY2OTg0OTIxLCJleHAiOjE3NjY5ODg1MjF9.ABdrMbV3UptnocifRvhSUNPtOFpF7S53F2TFxuwgknY
-
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWpxcGh2OTQwMDAxOXpkemZraGI4cmJ5IiwiaWF0IjoxNzY2OTkyNzAwLCJleHAiOjE3NjY5OTYzMDB9.WK6ZPVudq8HaJQV26fBPeEz_vvqbGSQ4KGrA26UTts0
 # 테스트용 상품/사이즈/장바구니아이템/주문 ID (필요 시 교체)
 @productId = PUT_PRODUCT_ID
 @sizeId = size_s
