@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/config.js';
 import { HttpException } from '../utils/http-exception.js';
+import logger from '../utils/logger.js';
 
 // 허용할 파일 확장자 및 MIME 타입 정의
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
@@ -86,7 +87,8 @@ export const uploadImage = (req: Request, res: Response, next: NextFunction) => 
           return next(HttpException.badRequest('하나의 파일만 업로드할 수 있습니다.'));
         default:
           // 기타 Multer 에러
-          return next(HttpException.badRequest(`파일 업로드 중 오류가 발생했습니다: ${err.message}`));
+          logger.error(err, 'Multer 파일 업로드 중 예기치 않은 오류 발생:');
+          return next(HttpException.badRequest('파일 업로드 중 오류가 발생했습니다.'));
       }
     } else if (err) {
       // fileFilter에서 발생한 HttpException 또는 기타 에러
