@@ -13,8 +13,10 @@ type CreateNotificationInput = {
 };
 
 class NotificationService {
-  // 접속중인 클라이언트들을 관리
-  private clients: Map<string, Response> = new Map();
+  // 한 유저가 여러 기기에서 접속할 수 있도록, Response 객체를 배열로 관리합니다.
+  private clients: Map<string, Response[]> = new Map();
+  // 동시 접속 허용 수
+  private readonly MAX_CONNECTIONS = 3;
 
   /**
    * 새로운 클라이언트를 추가합니다.
@@ -22,22 +24,47 @@ class NotificationService {
    * @param res - Express의 Response 객체
    */
   addClient(userId: string, res: Response): void {
-    this.clients.set(userId, res);
-    logger.info(`SSE: Client connected, userId: ${userId}. Total clients: ${this.clients.size}`);
+    const userClients = this.clients.get(userId) || [];
 
-    // 연결이 끊겼을 때 클라이언트 목록에서 제거
+    // 최대 연결 수 (3개) 초과 시 가장 오래된 연결을 종료하고 제거
+    if (userClients.length >= this.MAX_CONNECTIONS) {
+      const oldestClient = userClients.shift(); // 배열의 첫 번째 요소(가장 오래된 연결)를 제거
+      if (oldestClient) {
+        oldestClient.end();
+        logger.info(`SSE: Max connections reached for userId: ${userId}. Closing the oldest connection.`);
+      }
+    }
+
+    userClients.push(res);
+    this.clients.set(userId, userClients);
+    logger.info(`SSE: Client connected, userId: ${userId}. Total connections for user: ${userClients.length}`);
+
+    // 연결이 끊겼을 때 해당 클라이언트만 목록에서 제거
     res.on('close', () => {
-      this.removeClient(userId);
-      logger.info(`SSE: Client disconnected, userId: ${userId}. Total clients: ${this.clients.size}`);
+      this.removeClient(userId, res);
+      const conns = this.clients.get(userId)?.length || 0;
+      logger.info(`SSE: Client disconnected, userId: ${userId}. Remaining connections: ${conns}`);
     });
   }
 
   /**
-   * 클라이언트를 목록에서 제거합니다.
+   * 특정 클라이언트를 목록에서 제거합니다.
    * @param userId - 사용자 ID
+   * @param resToRemove - 제거할 Express의 Response 객체
    */
-  removeClient(userId: string): void {
-    this.clients.delete(userId);
+  removeClient(userId: string, resToRemove: Response): void {
+    const userClients = this.clients.get(userId);
+    if (!userClients) return;
+
+    // 제거할 res 객체를 제외한 새 배열을 생성
+    const filteredClients = userClients.filter((client) => client !== resToRemove);
+
+    if (filteredClients.length > 0) {
+      this.clients.set(userId, filteredClients);
+    } else {
+      // 해당 유저의 연결이 하나도 남지 않으면 Map에서 키를 삭제
+      this.clients.delete(userId);
+    }
   }
 
   /**
@@ -45,13 +72,8 @@ class NotificationService {
    * @param data - 생성할 알림 데이터
    */
   async createNotification(data: CreateNotificationInput) {
-    // 1. DB에 알림 저장
     const savedNotification = await notificationRepository.create(data);
-
-    // 2. 실시간으로 SSE 전송
     this.sendNotification(data.userId, savedNotification);
-
-    // 3. 저장된 알림 데이터 반환
     return savedNotification;
   }
 
@@ -69,40 +91,43 @@ class NotificationService {
    * @param notificationId - 읽음 처리할 알림 ID
    */
   async readNotification(userId: string, notificationId: string) {
-    // 1. 알림 존재 여부 확인
     const notification = await notificationRepository.findById(notificationId);
     if (!notification) {
       throw HttpException.notFound('알림을 찾을 수 없습니다.');
     }
 
-    // 2. 알림의 주인이 맞는지 권한 확인
     if (notification.userId !== userId) {
       throw HttpException.forbidden('해당 알림을 읽을 권한이 없습니다.');
     }
 
-    // 3. 읽음 처리 업데이트
     return notificationRepository.updateIsChecked(notificationId);
   }
 
   /**
    * 특정 사용자에게 알림을 보냅니다. (SSE 전송 전용)
+   * 해당 유저의 모든 연결된 기기에 알림을 전송합니다.
    * @param userId - 알림을 받을 사용자 ID
    * @param data - 전송할 데이터 (객체 형태)
    */
   sendNotification(userId: string, data: unknown): void {
-    const client = this.clients.get(userId);
+    const userClients = this.clients.get(userId);
 
-    if (client) {
-      try {
-        // SSE 형식에 맞춰 데이터 전송: "data: { ...JSON... }\n\n"
-        client.write(`data: ${JSON.stringify(data)}
+    if (userClients && userClients.length > 0) {
+      const message = `data: ${JSON.stringify(data)}
 
-`);
-        logger.info(`SSE: Sent notification to userId: ${userId}, data: ${JSON.stringify(data)}`);
-      } catch (error) {
-        logger.error(error as Error, `SSE: Error sending notification to userId: ${userId}`);
-        this.removeClient(userId);
-      }
+`;
+
+      // 해당 유저의 모든 클라이언트에게 알림 전송
+      userClients.forEach((client) => {
+        try {
+          client.write(message);
+        } catch (error) {
+          logger.error(error as Error, `SSE: Error sending notification to userId: ${userId}`);
+          // 오류 발생 시 해당 클라이언트만 제거
+          this.removeClient(userId, client);
+        }
+      });
+      logger.info(`SSE: Sent notification to userId: ${userId} (${userClients.length} clients)`);
     } else {
       logger.warn(`SSE: Client not found for userId: ${userId}. Notification not sent.`);
     }

@@ -112,6 +112,7 @@ async function main() {
 
   const testProduct = await prisma.product.create({
     data: {
+      id: 'testProductId',
       storeId: seller1Store.id,
       categoryId: topCategory!.id,
       name: '[테스트] 자켓',
@@ -121,7 +122,6 @@ async function main() {
     },
   });
   console.log(' 테스트용 상품 생성 완료!');
-  console.log(` Product ID: ${testProduct.id}`);
 }
 
 main()

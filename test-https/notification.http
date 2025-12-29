@@ -1,6 +1,6 @@
 ### 0. 공통 변수
 @baseUrl = http://localhost:3001
-@productId = cmjb9h7vj000edqp3wr4a1tk3
+@productId = testProductId
 
 # -----------------------------------------------------------------
 # 1. 판매자 로그인
@@ -102,3 +102,12 @@ Authorization: Bearer {{buyerToken}}
 # -----------------------------------------------------------------
 PATCH {{baseUrl}}/api/notifications/{{buyerNotificationId}}/check
 Authorization: Bearer {{buyerToken}}
+
+###
+
+# -----------------------------------------------------------------
+# 9. SSE 연결 테스트 (구매자)
+# -----------------------------------------------------------------
+GET {{baseUrl}}/api/notifications/sse
+Authorization: Bearer {{buyerToken}}
+Accept: text/event-stream
