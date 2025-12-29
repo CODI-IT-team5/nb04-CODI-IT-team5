@@ -10,8 +10,10 @@ import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
 import communityRoutes from './routes/community.router.js';
+import { metadataRouter } from './routes/metadata.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
+import { HttpException } from './utils/http-exception.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
 import { orderRouter } from './routes/order.router.js'
@@ -35,6 +37,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
+app.use('/api/metadata', metadataRouter);
 app.use('/api', communityRoutes);
 app.use('/api/orders', orderRouter);
 
@@ -47,6 +50,11 @@ app.get('/api/notifications/sse', (req: Request, res: Response) => {
   });
 });
 // ----------------------------------------------------------
+
+app.use((req, res, next) => {
+  // "경로를 찾을 수 없습니다"라는 404 에러를 강제로 발생시켜서 errorMiddleware로 넘김
+  next(HttpException.notFound());
+});
 
 app.use(errorMiddleware);
 
