@@ -444,8 +444,10 @@ model InquiryReply {
 // ==========================================
 
 enum NotificationType {
+  // [구매자용]
   PRODUCT_SOLDOUT_FOR_BUYER
   INQUIRY_REPLIED_FOR_BUYER
+  // [판매자용]
   PRODUCT_SOLDOUT_FOR_SELLER
   NEW_INQUIRY_FOR_SELLER
 }
@@ -455,7 +457,8 @@ model Notification {
   content   String
   type      NotificationType
   isChecked Boolean          @default(false) // 읽음 여부
-
+  url       String?          // 클릭 시 이동할 링크 (/product/123 등)
+  
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 

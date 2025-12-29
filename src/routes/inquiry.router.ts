@@ -5,6 +5,9 @@ import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// 상품 문의 등록
+router.post('/products/:productId/inquiries', authMiddleware, inquiryController.createInquiry.bind(inquiryController));
+
 router.get('/', authMiddleware, inquiryController.getMyInquiries.bind(inquiryController));
 
 router.get('/:inquiryId', authMiddleware, inquiryController.getInquiryById.bind(inquiryController));

@@ -101,6 +101,27 @@ async function main() {
       storeId: seller1Store.id,
     },
   });
+
+  // ----------------------
+  // 7. 상품 (Notification 테스트용)
+  // ----------------------
+
+  const topCategory = await prisma.category.findFirst({
+    where: { name: 'TOP' },
+  });
+
+  const testProduct = await prisma.product.create({
+    data: {
+      id: 'testProductId',
+      storeId: seller1Store.id,
+      categoryId: topCategory!.id,
+      name: '[테스트] 자켓',
+      price: 50000,
+      content: '이 상품에 문의를 남겨서 판매자 알림을 테스트해보세요.',
+      isSoldOut: false,
+    },
+  });
+  console.log(' 테스트용 상품 생성 완료!');
 }
 
 main()
