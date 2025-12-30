@@ -32,6 +32,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: 환경 변수 설정 (Prisma 생성용)
+        run: echo "DATABASE_URL=postgresql://dummy@localhost/dummy" > .env
+
       - name: Prisma Client 생성
         run: npx prisma generate
 

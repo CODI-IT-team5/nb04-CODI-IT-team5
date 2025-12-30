@@ -14,8 +14,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "npx prettier . --write",
-    "format:check": "npx prettier --check .",
-    "postinstall": "npx prisma generate"
+    "format:check": "npx prettier --check ."
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
