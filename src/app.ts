@@ -8,6 +8,7 @@ import { config } from './config/config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
+import { cartRouter } from './routes/cart.router.js';
 import communityRoutes from './routes/community.router.js';
 import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
@@ -16,7 +17,6 @@ import { userRouter } from './routes/user.router.js';
 import { HttpException } from './utils/http-exception.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
-import { cartRouter } from './routes/cart.router.js';
 
 const app = express();
 app.use(cookieParser());
