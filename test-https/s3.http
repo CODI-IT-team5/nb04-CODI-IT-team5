@@ -1,14 +1,52 @@
-### 환경 변수
+### test-https 상위 폴더에 test.jpg(정상 파일)와 fake.jpg(텍스트 파일)이 존재해야 합니다 !!
+### 환경 변수 설정
 @host = http://localhost:3001
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
 
-### 1. 이미지 업로드 테스트
+# -------------------------------------------------------
+# 1. [성공 케이스] 정상적인 JPG 이미지 업로드
+# -------------------------------------------------------
+# 예상 결과: 200 OK (업로드 성공)
 POST {{host}}/api/s3/upload
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Type: multipart/form-data; boundary={{boundary}}
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
+--{{boundary}}
 Content-Disposition: form-data; name="image"; filename="test.jpg"
 Content-Type: image/jpeg
 
-// 테스트 할 이미지를 프로젝트 폴더에 생성하고 테스트 진행
-< ./../test.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
+< ./test.jpg
+--{{boundary}}--
+
+###
+
+# -------------------------------------------------------
+# 2. [실패 케이스] 가짜 이미지 파일 (MIME Type 불일치)
+# -------------------------------------------------------
+# 시나리오: 확장자는 .jpg지만, 실제 타입(Content-Type)은 text/plain인 경우
+# 예상 결과: 400 Bad Request ("파일 확장자와 실제 파일 유형이 일치하지 않습니다.")
+POST {{host}}/api/s3/upload
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="fake.jpg"
+Content-Type: text/plain
+
+< ./fake.jpg
+--{{boundary}}--
+
+###
+
+# -------------------------------------------------------
+# 3. [실패 케이스] 허용되지 않은 확장자 (.txt)
+# -------------------------------------------------------
+# 시나리오: 그냥 대놓고 .txt 파일을 올리는 경우
+# 예상 결과: 400 Bad Request ("허용되지 않는 확장자입니다: txt")
+POST {{host}}/api/s3/upload
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="memo.txt"
+Content-Type: text/plain
+
+< ./fake.jpg
+--{{boundary}}--

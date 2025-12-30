@@ -108,6 +108,7 @@ async function main() {
   });
 
   // ----------------------
+<<<<<<< HEAD
   // 7. 상품 + 재고 (테스트용 더미)
   // ----------------------
   const topCategory = await prisma.category.findFirst({ where: { name: 'TOP' } });
@@ -177,6 +178,27 @@ async function main() {
   console.log(' - 스웨터:', sweater.id);
   console.log(' - 후디   :', hoodie.id);
   console.log('[seed] 사용 가능한 사이즈 ID: size_s, size_m (size_l는 후디 품절 케이스)');
+=======
+  // 7. 상품 (Notification 테스트용)
+  // ----------------------
+
+  const topCategory = await prisma.category.findFirst({
+    where: { name: 'TOP' },
+  });
+
+  const testProduct = await prisma.product.create({
+    data: {
+      id: 'testProductId',
+      storeId: seller1Store.id,
+      categoryId: topCategory!.id,
+      name: '[테스트] 자켓',
+      price: 50000,
+      content: '이 상품에 문의를 남겨서 판매자 알림을 테스트해보세요.',
+      isSoldOut: false,
+    },
+  });
+  console.log(' 테스트용 상품 생성 완료!');
+>>>>>>> dev
 }
 
 main()
