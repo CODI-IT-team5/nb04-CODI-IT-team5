@@ -1,10 +1,10 @@
 // src/cart/cart.controller.ts
 
 import type { Prisma } from '@prisma/client';
-import type { NextFunction,Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 import type { PatchCartInput } from '../dtos/cart.dto.js';
-import { getCartItemWithDetails,getCartWithItems } from '../repositories/cart.repository.js';
+import { getCartItemWithDetails, getCartWithItems } from '../repositories/cart.repository.js';
 import * as cartService from '../services/cart.service.js';
 
 type SizeDetail = { ko?: string; en?: string; [key: string]: unknown };
