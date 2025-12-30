@@ -52,9 +52,7 @@ export async function createCart(req: Request, res: Response) {
     items: cart.items.map((item) => ({
       ...item,
       // sizeDetail를 스펙의 size로 매핑
-      size: item.size
-        ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) }
-        : item.size,
+      size: item.size ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) } : item.size,
       product: item.product
         ? {
             ...item.product,
@@ -142,9 +140,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
       updatedAt: cart.updatedAt,
       items: cart.items.map((item) => ({
         ...item,
-        size: item.size
-          ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) }
-          : item.size,
+        size: item.size ? { id: item.size.id, size: toSizeDetail(item.size.sizeDetail) } : item.size,
         product: item.product
           ? {
               ...item.product,

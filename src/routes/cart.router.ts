@@ -11,12 +11,7 @@ cartRouter.post('/', authMiddleware, cartController.createCart);
 
 cartRouter.get('/', authMiddleware, cartController.getCart);
 
-cartRouter.patch(
-  '/',
-  authMiddleware,
-  validateMiddleware({ body: patchCartDto }),
-  cartController.patchCart,
-);
+cartRouter.patch('/', authMiddleware, validateMiddleware({ body: patchCartDto }), cartController.patchCart);
 
 cartRouter.delete('/:cartItemId', authMiddleware, cartController.deleteCartItem);
 
