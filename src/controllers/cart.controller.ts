@@ -42,7 +42,7 @@ export async function createCart(req: Request, res: Response) {
   }
 
   // 총 quantity 계산 (items의 quantity 합)
-  const totalQuantity = cart.items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+  const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return res.status(201).json({
     id: cart.id,
@@ -130,7 +130,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
     }
 
     // quantity = 아이템 수량 합
-    const totalQuantity = cart.items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+    const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
     // Swagger 스펙 맞춰 quantity 필드만 추가해서 응답
     return res.status(200).json({
