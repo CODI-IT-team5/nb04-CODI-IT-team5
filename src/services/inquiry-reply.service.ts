@@ -1,9 +1,11 @@
-import { InquiryStatus } from '@prisma/client';
+import { InquiryStatus, NotificationType } from '@prisma/client';
 
 import inquiryRepository from '../repositories/inquiry.repository.js';
 import inquiryReplyRepository from '../repositories/inquiry-reply.repository.js';
 import storeRepository from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
+import logger from '../utils/logger.js';
+import { notificationService } from './notification.service.js';
 
 export class InquiryReplyService {
   async createReply(inquiryId: string, userId: string, content: string) {
@@ -39,6 +41,18 @@ export class InquiryReplyService {
       inquiryId,
       userId,
     });
+
+    // 문의 작성자에게 답변 등록 알림 전송
+    try {
+      await notificationService.createNotification({
+        userId: inquiry.userId, // 문의를 작성한 유저의 ID
+        type: NotificationType.INQUIRY_REPLIED_FOR_BUYER,
+        content: '회원님의 문의에 답변이 등록되었습니다.',
+        url: `/inquiries/${inquiry.id}`,
+      });
+    } catch (error) {
+      logger.error(error as Error, '문의 답변 알림 전송 실패:');
+    }
 
     // 문의 상태 업데이트: WaitingAnswer → CompletedAnswer
     await inquiryRepository.updateStatus(inquiryId, InquiryStatus.CompletedAnswer);

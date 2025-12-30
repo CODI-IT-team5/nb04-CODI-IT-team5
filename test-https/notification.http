@@ -1,0 +1,113 @@
+### 0. 공통 변수
+@baseUrl = http://localhost:3001
+@productId = testProductId
+
+# -----------------------------------------------------------------
+# 1. 판매자 로그인
+# -----------------------------------------------------------------
+# @name sellerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "seller1@test.com",
+  "password": "test1234"
+}
+
+### 판매자 토큰 저장
+@sellerToken = {{sellerLogin.response.body.accessToken}}
+
+
+# -----------------------------------------------------------------
+# 2. 구매자 로그인
+# -----------------------------------------------------------------
+# @name buyerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 구매자 토큰 저장
+@buyerToken = {{buyerLogin.response.body.accessToken}}
+
+
+# -----------------------------------------------------------------
+# 3. 문의 남기기 (구매자 -> 판매자)
+# -----------------------------------------------------------------
+# @name createInquiry
+POST {{baseUrl}}/api/inquiries/products/{{productId}}/inquiries
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "title": "사이즈 문의합니다",
+  "content": "이거 정사이즈인가요?",
+  "isSecret": false
+}
+
+### 생성된 문의 ID 저장
+@inquiryId = {{createInquiry.response.body.id}}
+
+
+# -----------------------------------------------------------------
+# 4. 판매자 알림 확인 (새 문의 알림)
+# -----------------------------------------------------------------
+# @name checkSellerNoti
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{sellerToken}}
+
+### 가장 최근 알림 ID 저장
+@notificationId = {{checkSellerNoti.response.body.0.id}}
+
+
+# -----------------------------------------------------------------
+# 5. 알림 읽음 처리 (판매자)
+# -----------------------------------------------------------------
+PATCH {{baseUrl}}/api/notifications/{{notificationId}}/check
+Authorization: Bearer {{sellerToken}}
+
+### 
+
+# -----------------------------------------------------------------
+# 6. 문의에 답변 달기 (판매자 -> 구매자)
+# -----------------------------------------------------------------
+POST {{baseUrl}}/api/inquiries/{{inquiryId}}/replies
+Authorization: Bearer {{sellerToken}}
+Content-Type: application/json
+
+{
+  "content": "네 고객님, 해당 상품은 정사이즈입니다. 평소 입으시는 사이즈로 주문하시면 됩니다! 감사합니다.",
+  "isSecret": false
+}
+
+###
+
+# -----------------------------------------------------------------
+# 7. 구매자 알림 확인 (새 답변 알림 도착 여부)
+# -----------------------------------------------------------------
+# @name checkBuyerNoti
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{buyerToken}}
+
+### 구매자의 알림 ID 저장 (가장 최근 것)
+@buyerNotificationId = {{checkBuyerNoti.response.body.0.id}}
+
+###
+
+# -----------------------------------------------------------------
+# 8. 구매자 알림 읽음 처리
+# -----------------------------------------------------------------
+PATCH {{baseUrl}}/api/notifications/{{buyerNotificationId}}/check
+Authorization: Bearer {{buyerToken}}
+
+###
+
+# -----------------------------------------------------------------
+# 9. SSE 연결 테스트 (구매자)
+# -----------------------------------------------------------------
+GET {{baseUrl}}/api/notifications/sse
+Authorization: Bearer {{buyerToken}}
+Accept: text/event-stream
