@@ -16,7 +16,7 @@ import { userRouter } from './routes/user.router.js';
 import { HttpException } from './utils/http-exception.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
-import { orderRouter } from './routes/order.router.js'
+import { orderRouter } from './routes/order.router.js';
 
 const app = express();
 app.use(cookieParser());
@@ -38,8 +38,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
 app.use('/api/metadata', metadataRouter);
-app.use('/api', communityRoutes);
 app.use('/api/orders', orderRouter);
+app.use('/api', communityRoutes);
 
 // ----------------------------------------------------------
 // sse 연결이 안 되면 프론트에서 무한 요청 보내서 임시로 만들어놓음.
