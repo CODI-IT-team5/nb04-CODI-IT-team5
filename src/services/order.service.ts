@@ -95,12 +95,12 @@ export const orderService = {
     ]);
 
     // totalQuantity를 orderItems로부터 계산 및 응답 변환
-    const dataWithTotalQuantity = data.map((order) => ({
+    const dataWithTotalQuantity = data.map((order: (typeof data)[0]) => ({
       ...order,
       payments: order.payment, // payment → payments 필드명 변경
       payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
-      orderItems: order.orderItems.map((item) => ({
+      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
+      orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
       })),
@@ -187,8 +187,8 @@ export const orderService = {
       ...order,
       payments: order.payment, // payment → payments 필드명 변경
       payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
-      orderItems: order.orderItems.map((item) => ({
+      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
+      orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
       })),
@@ -413,7 +413,7 @@ export const orderService = {
       ...order,
       payments: order.payment,
       payment: undefined,
-      orderItems: order.orderItems.map((item) => ({
+      orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
       })),
