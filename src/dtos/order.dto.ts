@@ -12,7 +12,7 @@ export const orderIdParamDto = z.object({
 
 export const createOrderItemDto = z.object({
   productId: z.string().min(1),
-  sizeId: z.string().min(1),
+  sizeId: z.coerce.string().min(1),
   quantity: z.number().int().positive(),
 });
 

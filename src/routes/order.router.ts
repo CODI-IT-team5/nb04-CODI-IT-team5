@@ -1,9 +1,9 @@
 import express from 'express';
 
-import { authMiddleware } from '../middlewares/auth.middleware.js';
-import { validateMiddleware } from '../middlewares/validate.middleware.js';
 import { orderController } from '../controllers/order.controller.js';
 import { createOrderDto, getOrdersQueryDto, orderIdParamDto, updateOrderDto } from '../dtos/order.dto.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { validateMiddleware } from '../middlewares/validate.middleware.js';
 
 export const orderRouter = express.Router();
 

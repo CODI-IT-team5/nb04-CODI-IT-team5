@@ -1,7 +1,7 @@
 import type { OrderStatus, PaymentStatus } from '@prisma/client';
 
-import prisma from '../utils/prisma.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
 
 export type GetOrdersInput = {
   userId: string;
@@ -9,7 +9,17 @@ export type GetOrdersInput = {
   limit: number;
   page: number;
 };
+// size 구조 변환 헬퍼 함수
+function transformSize(size: { id: string; name: string; sizeDetail: unknown } | null) {
+  if (!size) return size;
 
+  const sizeDetail = size.sizeDetail as { en?: string; ko?: string } | null;
+
+  return {
+    id: size.id,
+    size: sizeDetail || { en: size.name || '', ko: size.name || '' },
+  };
+}
 export const orderService = {
   async getOrders({ userId, status, limit, page }: GetOrdersInput) {
     const take = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 50) : 10;
@@ -76,6 +86,7 @@ export const orderService = {
                 },
               },
               size: true,
+              review: true,
             },
           },
           payment: true,
@@ -83,10 +94,16 @@ export const orderService = {
       }),
     ]);
 
-    // totalQuantity를 orderItems로부터 계산
+    // totalQuantity를 orderItems로부터 계산 및 응답 변환
     const dataWithTotalQuantity = data.map((order) => ({
       ...order,
+      payments: order.payment, // payment → payments 필드명 변경
+      payment: undefined, // 기존 필드 제거
       totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+      orderItems: order.orderItems.map((item) => ({
+        ...item,
+        size: transformSize(item.size),
+      })),
     }));
 
     return {
@@ -154,18 +171,27 @@ export const orderService = {
               },
             },
             size: true,
+            review: true,
           },
         },
         payment: true,
       },
     });
 
-    if (!order) {throw HttpException.notFound(); }; 
-    
-    // totalQuantity를 orderItems로부터 계산
+    if (!order) {
+      throw HttpException.notFound();
+    }
+
+    // totalQuantity를 orderItems로부터 계산 및 응답 변환
     return {
       ...order,
+      payments: order.payment, // payment → payments 필드명 변경
+      payment: undefined, // 기존 필드 제거
       totalQuantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+      orderItems: order.orderItems.map((item) => ({
+        ...item,
+        size: transformSize(item.size),
+      })),
     };
   },
 
@@ -185,7 +211,7 @@ export const orderService = {
     }
 
     // 트랜잭션으로 “재고 확인 + 주문/결제 생성”을 한 번에 처리
-    return prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx) => {
       // 1) 재고 확인 + 단가 조회
       let subtotal = 0;
 
@@ -200,11 +226,11 @@ export const orderService = {
       for (const item of orderItems) {
         const stock = await tx.productStock.findFirst({
           where: { productId: item.productId, sizeId: item.sizeId },
-          include: { 
-            product: { 
-              select: { 
-                price: true, 
-                isSoldOut: true, 
+          include: {
+            product: {
+              select: {
+                price: true,
+                isSoldOut: true,
                 name: true,
                 productDiscounts: {
                   where: {
@@ -216,9 +242,9 @@ export const orderService = {
                     discountRate: true,
                   },
                   take: 1,
-                }
-              } 
-            } 
+                },
+              },
+            },
           },
         });
 
@@ -232,7 +258,7 @@ export const orderService = {
         if (activeDiscount) {
           unitPrice = Math.floor(unitPrice * (1 - activeDiscount.discountRate / 100));
         }
-        
+
         subtotal += unitPrice * item.quantity;
 
         computedItems.push({
@@ -249,9 +275,9 @@ export const orderService = {
         where: { id: userId },
         select: { email: true, points: true },
       });
-      
+
       if (!userRecord) throw HttpException.badRequest('유저를 찾을 수 없습니다.');
-      
+
       if (usePoint > userRecord.points) {
         throw HttpException.badRequest('보유 포인트보다 많은 포인트를 사용할 수 없습니다.');
       }
@@ -263,7 +289,7 @@ export const orderService = {
           data: { points: { decrement: usePoint } },
         });
       }
-      
+
       const finalPrice = Math.max(subtotal - usePoint, 0);
 
       const order = await tx.order.create({
@@ -327,6 +353,7 @@ export const orderService = {
                 },
               },
               size: true,
+              review: true,
             },
           },
           payment: true,
@@ -352,8 +379,8 @@ export const orderService = {
           where: { productId: ci.productId },
         });
 
-        const isAllSoldOut = allStocks.every(s => 
-          s.id === updatedStock.id ? updatedStock.quantity === 0 : s.quantity === 0
+        const isAllSoldOut = allStocks.every((s) =>
+          s.id === updatedStock.id ? updatedStock.quantity === 0 : s.quantity === 0,
         );
 
         if (isAllSoldOut) {
@@ -380,6 +407,17 @@ export const orderService = {
 
       return order;
     });
+
+    // payment → payments 응답 변환 및 size 구조 변환
+    return {
+      ...order,
+      payments: order.payment,
+      payment: undefined,
+      orderItems: order.orderItems.map((item) => ({
+        ...item,
+        size: transformSize(item.size),
+      })),
+    };
   },
 
   async deleteOrder({ userId, orderId }: { userId: string; orderId: string }) {
@@ -445,13 +483,7 @@ export const orderService = {
     });
   },
 
-  async updateOrder(input: {
-    userId: string;
-    orderId: string;
-    name?: string;
-    phone?: string;
-    address?: string;
-  }) {
+  async updateOrder(input: { userId: string; orderId: string; name?: string; phone?: string; address?: string }) {
     const { userId, orderId, name, phone, address } = input;
 
     const order = await prisma.order.findFirst({

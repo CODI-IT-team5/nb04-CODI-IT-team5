@@ -11,12 +11,12 @@ import { authRouter } from './routes/auth.router.js';
 import communityRoutes from './routes/community.router.js';
 import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
+import { orderRouter } from './routes/order.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { userRouter } from './routes/user.router.js';
 import { HttpException } from './utils/http-exception.js';
 import logger from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
-import { orderRouter } from './routes/order.router.js';
 
 const app = express();
 app.use(cookieParser());
