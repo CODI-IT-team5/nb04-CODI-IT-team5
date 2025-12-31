@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { ERROR_NAME, MESSAGE, STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
@@ -26,7 +26,7 @@ export const errorMiddleware = (err: Error | HttpException, req: Request, res: R
     }
   }
 
-  // 에러 이름 결정 (Swagger용)
+  // 에러 이름 결정 (자동 변환 로직 사용)
   const errorName = getErrorName(status);
 
   // 로깅
@@ -50,22 +50,20 @@ export const errorMiddleware = (err: Error | HttpException, req: Request, res: R
   });
 };
 
-// [보조 함수]
+// [보조 함수] 상태 코드로 에러 이름 자동 생성
+// 예: 400 -> 'BAD_REQUEST' 찾음 -> 'Bad Request'로 변환
 function getErrorName(status: number): string {
-  switch (status) {
-    case STATUS_CODE.BAD_REQUEST:
-      return ERROR_NAME.BAD_REQUEST;
-    case STATUS_CODE.UNAUTHORIZED:
-      return ERROR_NAME.UNAUTHORIZED;
-    case STATUS_CODE.FORBIDDEN:
-      return ERROR_NAME.FORBIDDEN;
-    case STATUS_CODE.NOT_FOUND:
-      return ERROR_NAME.NOT_FOUND;
-    case STATUS_CODE.CONFLICT:
-      return ERROR_NAME.CONFLICT;
-    case STATUS_CODE.INTERNAL_SERVER_ERROR:
-      return ERROR_NAME.INTERNAL_SERVER_ERROR;
-    default:
-      return 'Error';
+  // 1. STATUS_CODE 객체에서 value(숫자)가 status와 일치하는 key를 찾습니다.
+  const key = Object.keys(STATUS_CODE).find((k) => STATUS_CODE[k as keyof typeof STATUS_CODE] === status);
+
+  // 2. 키를 못 찾으면 기본값 반환
+  if (!key) {
+    return 'Error';
   }
+
+  // 3. 변환 로직: "BAD_REQUEST" -> "Bad Request"
+  return key
+    .split('_') // ['BAD', 'REQUEST'] 로 분리
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // ['Bad', 'Request'] 로 변환
+    .join(' '); // "Bad Request" 로 합침
 }
