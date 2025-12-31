@@ -1,6 +1,6 @@
 import type { createUser } from '../dtos/user.dto.js';
 import type { UpdateUser } from '../types/user.type.js';
-import prisma from '../utils/prisma.js';
+import prisma, { type ExtendedTransactionClient } from '../utils/prisma.js';
 
 class UserRepository {
   getById = async (id: string) => {
@@ -45,6 +45,12 @@ class UserRepository {
 
   delete = async (id: string) => {
     return await prisma.user.delete({
+      where: { id },
+    });
+  };
+
+  deleteWithTx = async (id: string, tx: ExtendedTransactionClient) => {
+    return await tx.user.delete({
       where: { id },
     });
   };

@@ -29,18 +29,37 @@ export const errorMiddleware = (err: Error | HttpException, req: Request, res: R
   // 에러 이름 결정 (Swagger용)
   const errorName = getErrorName(status);
 
+  // 프로젝트 루트 경로
+  const projectRoot = process.cwd();
+
+  // 스택 트레이스를 배열로 변환하고 절대 경로를 상대 경로로 변환
+  const stackLines = err.stack
+    ? err.stack.split('\n').map((line) => {
+        // 절대 경로를 프로젝트 루트 기준 상대 경로로 변환
+        return line.trim().replace(new RegExp(projectRoot, 'g'), '.');
+      })
+    : [];
   // 로깅
-  logger.error({
+  const logData = {
     timestamp: new Date().toISOString(),
     url: req.originalUrl,
     method: req.method,
-    status: status,
-    message: message, // 사용자에게 나가는 메시지
-    body: req.body, // 요청 본문
-    query: req.query, // 쿼리 스트링
-    params: req.params, // URL 파라미터
-    stack: err.stack || null, // 디버깅용 스택 트레이스
-  });
+    status,
+    message, // 사용자에게 나가는 메시지
+    request: {
+      body: req.body, // 요청 본문
+      query: req.query, // 쿼리 스트링
+      params: req.params, // URL 파라미터
+    },
+    stack: stackLines, // 디버깅용 스택 트레이스
+  };
+
+  // 5xx 에러(서버 에러)는 error 레벨, 4xx 에러(클라이언트 에러)는 warn 레벨로 로깅
+  if (status >= 500) {
+    logger.error(logData, `서버 에러 [${status}]`);
+  } else {
+    logger.warn(logData, `클라이언트 요청 에러 [${status}]`);
+  }
 
   // 응답 전송 (Swagger 규격 준수)
   res.status(status).json({
