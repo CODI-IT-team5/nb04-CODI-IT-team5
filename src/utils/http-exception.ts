@@ -17,10 +17,10 @@ export class HttpException extends Error {
   }
 
   // 리소스를 찾을 수 없음
-  static notFound() {
+  static notFound(message: string = MESSAGE.notFound) {
     return new HttpException({
       status: STATUS_CODE.NOT_FOUND,
-      message: MESSAGE.notFound,
+      message: message,
     });
   }
 
