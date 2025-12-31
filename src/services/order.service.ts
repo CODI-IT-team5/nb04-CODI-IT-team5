@@ -99,7 +99,10 @@ export const orderService = {
       ...order,
       payments: order.payment, // payment → payments 필드명 변경
       payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
+      totalQuantity: order.orderItems.reduce(
+        (sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity,
+        0,
+      ),
       orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
@@ -187,7 +190,10 @@ export const orderService = {
       ...order,
       payments: order.payment, // payment → payments 필드명 변경
       payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
+      totalQuantity: order.orderItems.reduce(
+        (sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity,
+        0,
+      ),
       orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
