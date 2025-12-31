@@ -183,7 +183,6 @@ model Size {
   sizeDetail Json?
 
   stocks     ProductStock[] // 재고
-  cartItems  CartItem[]
   orderItems OrderItem[]
 }
 
