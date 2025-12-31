@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import type { OrderStatus, PaymentStatus } from '@prisma/client';
 
 import { HttpException } from '../utils/http-exception.js';
 import prisma from '../utils/prisma.js';
@@ -217,7 +217,7 @@ export const orderService = {
     }
 
     // 트랜잭션으로 “재고 확인 + 주문/결제 생성”을 한 번에 처리
-    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const order = await prisma.$transaction(async (tx) => {
       // 1) 재고 확인 + 단가 조회
       let subtotal = 0;
 
@@ -385,7 +385,7 @@ export const orderService = {
           where: { productId: ci.productId },
         });
 
-        const isAllSoldOut = allStocks.every((s: Prisma.ProductStockGetPayload<Record<string, never>>) =>
+        const isAllSoldOut = allStocks.every((s: (typeof allStocks)[0]) =>
           s.id === updatedStock.id ? updatedStock.quantity === 0 : s.quantity === 0,
         );
 
@@ -427,7 +427,7 @@ export const orderService = {
   },
 
   async deleteOrder({ userId, orderId }: { userId: string; orderId: string }) {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    return prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirst({
         where: { id: orderId, userId },
         include: { orderItems: true },
@@ -550,7 +550,7 @@ export const orderService = {
     return {
       ...updated,
       totalQuantity: updated.orderItems.reduce(
-        (sum: number, item: Prisma.OrderItemGetPayload<Record<string, never>>) => sum + item.quantity,
+        (sum: number, item: (typeof updated.orderItems)[0]) => sum + item.quantity,
         0,
       ),
     };
