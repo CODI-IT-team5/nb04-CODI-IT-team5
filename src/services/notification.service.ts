@@ -15,11 +15,18 @@ type CreateNotificationInput = {
 class NotificationService {
   // 한 유저가 여러 기기에서 접속할 수 있도록, Response 객체를 배열로 관리합니다.
   private clients: Map<string, Response[]> = new Map();
+  // 클라이언트별 알림 대기열
+  private notificationsQueue: Map<string, any[]> = new Map();
   // 동시 접속 허용 수
   private readonly MAX_CONNECTIONS = 3;
 
+  constructor() {
+    // 30초마다 버퍼링된 알림을 전송
+    setInterval(this.sendBufferedNotifications, 30000);
+  }
+
   /**
-   * 새로운 클라이언트를 추가합니다.
+   * 새로운 클라이언트를 추가하고, 알림 대기열을 초기화합니다.
    * @param userId - 사용자 ID
    * @param res - Express의 Response 객체
    */
@@ -37,6 +44,12 @@ class NotificationService {
 
     userClients.push(res);
     this.clients.set(userId, userClients);
+
+    // 새 클라이언트를 위한 알림 대기열 초기화
+    if (!this.notificationsQueue.has(userId)) {
+      this.notificationsQueue.set(userId, []);
+    }
+
     logger.info(`SSE: Client connected, userId: ${userId}. Total connections for user: ${userClients.length}`);
 
     // 연결이 끊겼을 때 해당 클라이언트만 목록에서 제거
@@ -48,7 +61,7 @@ class NotificationService {
   }
 
   /**
-   * 특정 클라이언트를 목록에서 제거합니다.
+   * 특정 클라이언트를 목록에서 제거하고, 연결이 없으면 대기열도 삭제합니다.
    * @param userId - 사용자 ID
    * @param resToRemove - 제거할 Express의 Response 객체
    */
@@ -64,18 +77,45 @@ class NotificationService {
     } else {
       // 해당 유저의 연결이 하나도 남지 않으면 Map에서 키를 삭제
       this.clients.delete(userId);
+      // 대기열도 함께 삭제
+      this.notificationsQueue.delete(userId);
     }
   }
 
   /**
-   * DB에 알림을 생성하고, 실시간으로 클라이언트에게 전송합니다.
+   * DB에 알림을 생성하고, 대기열에 추가합니다.
    * @param data - 생성할 알림 데이터
    */
   async createNotification(data: CreateNotificationInput) {
     const savedNotification = await notificationRepository.create(data);
-    this.sendNotification(data.userId, savedNotification);
+
+    // 해당 유저가 접속 중인지 확인
+    if (this.clients.has(data.userId)) {
+      const queue = this.notificationsQueue.get(data.userId) || [];
+      queue.push(savedNotification);
+      this.notificationsQueue.set(data.userId, queue);
+      logger.info(`SSE: Queued notification for userId: ${data.userId}. Queue size: ${queue.length}`);
+    }
+
     return savedNotification;
   }
+
+  /**
+   * 30초 주기로 대기열의 알림을 클라이언트에게 보냅니다.
+   * 대기열이 비어있으면 빈 배열을 보냅니다.
+   */
+  private sendBufferedNotifications = (): void => {
+    this.clients.forEach((_, userId) => {
+      const queue = this.notificationsQueue.get(userId) || [];
+      this.sendNotification(userId, queue);
+      // 전송 후 대기열 비우기
+      this.notificationsQueue.set(userId, []);
+
+      if (queue.length > 0) {
+        logger.info(`SSE: Flushed notification queue for userId: ${userId}. Sent ${queue.length} items.`);
+      }
+    });
+  };
 
   /**
    * 특정 유저의 알림 목록을 조회합니다.
@@ -107,15 +147,13 @@ class NotificationService {
    * 특정 사용자에게 알림을 보냅니다. (SSE 전송 전용)
    * 해당 유저의 모든 연결된 기기에 알림을 전송합니다.
    * @param userId - 알림을 받을 사용자 ID
-   * @param data - 전송할 데이터 (객체 형태)
+   * @param data - 전송할 데이터 (객체 또는 배열)
    */
   sendNotification(userId: string, data: unknown): void {
     const userClients = this.clients.get(userId);
 
     if (userClients && userClients.length > 0) {
-      const message = `data: ${JSON.stringify(data)}
-
-`;
+      const message = `data: ${JSON.stringify(data)}\n\n`;
 
       // 해당 유저의 모든 클라이언트에게 알림 전송
       userClients.forEach((client) => {
@@ -127,9 +165,11 @@ class NotificationService {
           this.removeClient(userId, client);
         }
       });
-      logger.info(`SSE: Sent notification to userId: ${userId} (${userClients.length} clients)`);
-    } else {
-      logger.warn(`SSE: Client not found for userId: ${userId}. Notification not sent.`);
+
+      // 데이터가 있을 때만 전송 로그를 남김
+      if (Array.isArray(data) && data.length > 0) {
+        logger.info(`SSE: Sent notification to userId: ${userId} (${userClients.length} clients)`);
+      }
     }
   }
 }
