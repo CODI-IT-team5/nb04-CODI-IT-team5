@@ -31,7 +31,12 @@ export class ReviewService {
       throw HttpException.conflict('이미 리뷰를 작성한 주문 항목입니다.');
     }
 
-    return reviewRepository.create(data);
+    const review = await reviewRepository.create(data);
+
+    // OrderItem의 isReviewed를 true로 업데이트
+    await orderItemRepository.updateIsReviewed(data.orderItemId, true);
+
+    return review;
   }
 
   // 리뷰 상세 조회
@@ -100,7 +105,12 @@ export class ReviewService {
       throw HttpException.forbidden('본인의 리뷰만 삭제할 수 있습니다.');
     }
 
-    return reviewRepository.delete(reviewId);
+    await reviewRepository.delete(reviewId);
+
+    // OrderItem의 isReviewed를 false로 업데이트
+    await orderItemRepository.updateIsReviewed(review.orderItemId, false);
+
+    return null;
   }
 }
 

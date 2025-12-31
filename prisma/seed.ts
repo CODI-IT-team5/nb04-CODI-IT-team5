@@ -108,77 +108,6 @@ async function main() {
   });
 
   // ----------------------
-<<<<<<< HEAD
-  // 7. 상품 + 재고 (테스트용 더미)
-  // ----------------------
-  const topCategory = await prisma.category.findFirst({ where: { name: 'TOP' } });
-
-  // 제품이 이미 있으면 재사용, 없으면 생성
-  let sweater = await prisma.product.findFirst({
-    where: { name: '테스트 스웨터', storeId: seller1Store.id },
-  });
-  if (!sweater) {
-    sweater = await prisma.product.create({
-      data: {
-        name: '테스트 스웨터',
-        content: '따뜻한 테스트 스웨터입니다.',
-        price: 30000,
-        image: null,
-        storeId: seller1Store.id,
-        categoryId: topCategory?.id ?? null,
-      },
-    });
-  }
-
-  let hoodie = await prisma.product.findFirst({
-    where: { name: '테스트 후디', storeId: seller1Store.id },
-  });
-  if (!hoodie) {
-    hoodie = await prisma.product.create({
-      data: {
-        name: '테스트 후디',
-        content: '편안한 테스트 후디입니다.',
-        price: 45000,
-        image: null,
-        storeId: seller1Store.id,
-        categoryId: topCategory?.id ?? null,
-      },
-    });
-  }
-
-  // 사이즈 ID들
-  const sizeS = 'size_s';
-  const sizeM = 'size_m';
-  const sizeL = 'size_l';
-
-  // 스톡 upsert (제품/사이즈 별 유니크 키 존재)
-  await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: sweater.id, sizeId: sizeS } },
-    update: { quantity: 20 },
-    create: { productId: sweater.id, sizeId: sizeS, quantity: 20 },
-  });
-  await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: sweater.id, sizeId: sizeM } },
-    update: { quantity: 15 },
-    create: { productId: sweater.id, sizeId: sizeM, quantity: 15 },
-  });
-  await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: hoodie.id, sizeId: sizeM } },
-    update: { quantity: 10 },
-    create: { productId: hoodie.id, sizeId: sizeM, quantity: 10 },
-  });
-  await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: hoodie.id, sizeId: sizeL } },
-    update: { quantity: 0 },
-    create: { productId: hoodie.id, sizeId: sizeL, quantity: 0 }, // 품절 케이스
-  });
-
-  // 편의 출력: 주문 테스트용 ID 참고
-  console.log('[seed] 테스트 상품 ID');
-  console.log(' - 스웨터:', sweater.id);
-  console.log(' - 후디   :', hoodie.id);
-  console.log('[seed] 사용 가능한 사이즈 ID: size_s, size_m (size_l는 후디 품절 케이스)');
-=======
   // 7. 상품 (Notification 테스트용)
   // ----------------------
 
@@ -198,7 +127,6 @@ async function main() {
     },
   });
   console.log(' 테스트용 상품 생성 완료!');
->>>>>>> dev
 }
 
 main()

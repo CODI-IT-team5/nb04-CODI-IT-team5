@@ -19,10 +19,12 @@ export function validateMiddleware(schema: ValidationSchemas) {
         req.body = await schema.body.parseAsync(req.body);
       }
       if (schema.query) {
-        req.query = (await schema.query.parseAsync(req.query)) as typeof req.query;
+        const validated = await schema.query.parseAsync(req.query);
+        Object.assign(req.query, validated);
       }
       if (schema.params) {
-        req.params = (await schema.params.parseAsync(req.params)) as typeof req.params;
+        const validated = await schema.params.parseAsync(req.params);
+        Object.assign(req.params, validated);
       }
       next();
     } catch (err) {
