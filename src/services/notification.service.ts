@@ -1,4 +1,4 @@
-import type { NotificationType } from '@prisma/client';
+import type { Notification, NotificationType } from '@prisma/client';
 import type { Response } from 'express';
 
 import { notificationRepository } from '../repositories/notification.repository.js';
@@ -16,7 +16,7 @@ class NotificationService {
   // 한 유저가 여러 기기에서 접속할 수 있도록, Response 객체를 배열로 관리합니다.
   private clients: Map<string, Response[]> = new Map();
   // 클라이언트별 알림 대기열
-  private notificationsQueue: Map<string, any[]> = new Map();
+  private notificationsQueue: Map<string, Notification[]> = new Map();
   // 동시 접속 허용 수
   private readonly MAX_CONNECTIONS = 3;
 
