@@ -43,23 +43,27 @@ function getDateRange(period: 'today' | 'week' | 'month' | 'year', offset = 0) {
 
 // 기간별 주문 집계
 async function getPeriodStats(storeId: string, start: Date, end: Date) {
-  const orders = await prisma.order.findMany({
+  const orderItems = await prisma.orderItem.findMany({
     where: {
-      createdAt: { gte: start, lte: end },
-      orderItems: {
-        some: {
-          product: { storeId },
-        },
+      product: { storeId },
+      order: {
+        createdAt: { gte: start, lte: end },
+        status: { not: 'Cancelled' },
       },
-      status: { not: 'Cancelled' },
     },
     select: {
-      subtotal: true,
+      price: true,
+      quantity: true,
+      orderId: true,
     },
   });
 
-  const totalOrders = orders.length;
-  const totalSales = orders.reduce((sum, o) => sum + o.subtotal, 0);
+  // 고유 주문 ID 개수 = 주문 건수
+  const uniqueOrders = new Set(orderItems.map((item) => item.orderId));
+  const totalOrders = uniqueOrders.size;
+
+  // 실제 판매 금액 = price × quantity 합계
+  const totalSales = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return { totalOrders, totalSales };
 }
