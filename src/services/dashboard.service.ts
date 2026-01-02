@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma.js';
+import { HttpException } from '../utils/http-exception.js';
 
 // 기간별 시작/끝 날짜 계산 헬퍼
 function getDateRange(period: 'today' | 'week' | 'month' | 'year', offset = 0) {
@@ -74,6 +75,13 @@ function calculateChangeRate(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 100);
 }
 
+// 타입 정의
+type PeriodStats = {
+  current: { totalOrders: number; totalSales: number };
+  previous: { totalOrders: number; totalSales: number };
+  changeRate: { totalOrders: number; totalSales: number };
+};
+
 export const dashboardService = {
   async getDashboard(userId: string) {
     // 판매자의 스토어 조회
@@ -83,29 +91,39 @@ export const dashboardService = {
     });
 
     if (!store) {
-      throw new Error('스토어를 찾을 수 없습니다.');
+      throw HttpException.notFound();
     }
 
-    // 기간별 통계 계산
+    // 기간별 통계 계산 (병렬 처리)
     const periods = ['today', 'week', 'month', 'year'] as const;
-    const stats: any = {};
-
-    for (const period of periods) {
+    
+    const statsPromises = periods.map(async (period) => {
       const currentRange = getDateRange(period, 0);
       const previousRange = getDateRange(period, -1);
       
-      const current = await getPeriodStats(store.id, currentRange.start, currentRange.end);
-      const previous = await getPeriodStats(store.id, previousRange.start, previousRange.end);
+      const [current, previous] = await Promise.all([
+        getPeriodStats(store.id, currentRange.start, currentRange.end),
+        getPeriodStats(store.id, previousRange.start, previousRange.end),
+      ]);
 
-      stats[period] = {
-        current,
-        previous,
-        changeRate: {
-          totalOrders: calculateChangeRate(current.totalOrders, previous.totalOrders),
-          totalSales: calculateChangeRate(current.totalSales, previous.totalSales),
+      return {
+        period,
+        data: {
+          current,
+          previous,
+          changeRate: {
+            totalOrders: calculateChangeRate(current.totalOrders, previous.totalOrders),
+            totalSales: calculateChangeRate(current.totalSales, previous.totalSales),
+          },
         },
       };
-    }
+    });
+
+    const statsArray = await Promise.all(statsPromises);
+    const stats: Record<string, PeriodStats> = {};
+    statsArray.forEach(({ period, data }) => {
+      stats[period] = data;
+    });
 
     // TOP 5 판매 상품
     const topSales = await prisma.product.findMany({
@@ -153,10 +171,11 @@ export const dashboardService = {
     });
 
     const priceRanges = {
-      '만원 이하': 0,
-      '1만원 ~ 3만원': 0,
-      '3만원 ~ 5만원': 0,
-      '5만원 이상': 0,
+      '~20,000원': 0,
+      '~50,000원': 0,
+      '~100,000원': 0,
+      '~200,000원': 0,
+      '200,000원~': 0,
     };
 
     let totalRevenue = 0;
@@ -166,14 +185,16 @@ export const dashboardService = {
         const itemTotal = item.price * item.quantity;
         totalRevenue += itemTotal;
 
-        if (item.price <= 10000) {
-          priceRanges['만원 이하'] += itemTotal;
-        } else if (item.price <= 30000) {
-          priceRanges['1만원 ~ 3만원'] += itemTotal;
+        if (item.price <= 20000) {
+          priceRanges['~20,000원'] += itemTotal;
         } else if (item.price <= 50000) {
-          priceRanges['3만원 ~ 5만원'] += itemTotal;
+          priceRanges['~50,000원'] += itemTotal;
+        } else if (item.price <= 100000) {
+          priceRanges['~100,000원'] += itemTotal;
+        } else if (item.price <= 200000) {
+          priceRanges['~200,000원'] += itemTotal;
         } else {
-          priceRanges['5만원 이상'] += itemTotal;
+          priceRanges['200,000원~'] += itemTotal;
         }
       });
     });
