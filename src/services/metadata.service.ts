@@ -1,8 +1,8 @@
 import { metadataRepository } from '../repositories/metadata.repository.js';
-import { userRepository } from '../repositories/user.repository.js';
 import { MetadataResponse } from '../serializes/metadata.serialize.js';
 import type { UpdateGradeServiceInput } from '../types/metadata.type.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
 
 class MetadataService {
   gradeList = async () => {
@@ -11,34 +11,41 @@ class MetadataService {
   };
 
   updateTotalAmount = async (input: UpdateGradeServiceInput) => {
-    const user = await userRepository.getById(input.userId);
-    if (!user) throw HttpException.userNotFound();
+    return await prisma.$transaction(async (tx) => {
+      //TODO: 캐시에서 가져오는 걸로 변경하기
+      const grades = await metadataRepository.gradeList();
+      if (!grades || grades.length === 0) throw HttpException.notFound();
 
-    const newTotalAmount = user.totalAmount + input.deltaAmount;
+      const updatedUser = await metadataRepository.incrementTotalAmount({
+        userId: input.userId,
+        deltaAmount: input.deltaAmount,
+        tx,
+      });
 
-    //TODO: 캐시에서 가져오는 걸로 변경하기
-    const grades = await metadataRepository.gradeList();
-    if (!grades || grades.length === 0) throw HttpException.notFound();
+      const newTotalAmount = updatedUser.totalAmount;
+      let newGrade = grades[0];
+      for (let i = grades.length - 1; i >= 0; i--) {
+        const grade = grades[i];
+        if (!grade) continue;
 
-    let newGrade = grades[0];
-
-    for (let i = grades.length - 1; i >= 0; i--) {
-      const grade = grades[i];
-      if (!grade) continue;
-
-      if (newTotalAmount >= grade.minAmount) {
-        newGrade = grade;
-        break;
+        if (newTotalAmount >= grade.minAmount) {
+          newGrade = grade;
+          break;
+        }
       }
-    }
 
-    if (!newGrade) throw HttpException.notFound();
-    const result = await metadataRepository.updateTotalAmountAndGrade({
-      userId: input.userId,
-      newTotalAmount,
-      newGradeId: newGrade.id,
+      if (!newGrade) throw HttpException.notFound();
+
+      if (updatedUser.gradeId !== newGrade.id) {
+        return await metadataRepository.updateGrade({
+          userId: input.userId,
+          gradeId: newGrade.id,
+          tx,
+        });
+      }
+
+      return updatedUser;
     });
-    return result;
   };
 }
 
