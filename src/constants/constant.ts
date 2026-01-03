@@ -33,6 +33,9 @@ export const MESSAGE = {
   unauthorized: '로그인이 필요합니다',
   forbidden: '권한이 없습니다',
 
+  insufficientStock: (sizeId: string, availableQuantity: number) =>
+    `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
+
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
 };

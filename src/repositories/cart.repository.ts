@@ -8,13 +8,36 @@ export async function findCartByUserId(userId: string) {
   });
 }
 
+// 제품의 특정 사이즈 재고 조회
+export async function getStockQuantity(productId: string, sizeId: string) {
+  const stock = await prisma.productStock.findUnique({
+    where: {
+      productId_sizeId: {
+        productId,
+        sizeId,
+      },
+    },
+    select: {
+      quantity: true,
+      size: {
+        select: {
+          id: true,
+          sizeDetail: true,
+        },
+      },
+    },
+  });
+
+  return stock;
+}
+
 export async function createCart(userId: string) {
   return prisma.cart.create({
     data: { userId },
   });
 }
 
-// 상세 조회용 (POST /api/cart 응답에 쓰기)
+// 상세 조회용 (GET /api/cart 응답에 쓰기) - Swagger 스펙 준수
 export async function getCartWithItems(userId: string) {
   const cart = await prisma.cart.findUnique({
     where: { userId },
@@ -30,6 +53,10 @@ export async function getCartWithItems(userId: string) {
               image: true,
               createdAt: true,
               updatedAt: true,
+              reviewsRating: true,
+              categoryId: true,
+              content: true,
+              isSoldOut: true,
               store: {
                 select: {
                   id: true,
@@ -41,6 +68,7 @@ export async function getCartWithItems(userId: string) {
                   image: true,
                   createdAt: true,
                   updatedAt: true,
+                  detailAddress: true,
                 },
               },
               stocks: {
@@ -49,7 +77,13 @@ export async function getCartWithItems(userId: string) {
                   productId: true,
                   sizeId: true,
                   quantity: true,
-                  size: true,
+                  size: {
+                    select: {
+                      id: true,
+                      name: true,
+                      sizeDetail: true,
+                    },
+                  },
                 },
               },
               productDiscounts: {
@@ -152,7 +186,7 @@ export async function deleteCartItem(userId: string, cartItemId: string) {
   return result.count;
 }
 
-// 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId)
+// 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId) - Swagger 스펙 준수
 export async function getCartItemWithDetails(userId: string, cartItemId: string) {
   const cart = await findCartByUserId(userId);
   if (!cart) return null;
@@ -169,6 +203,10 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
           image: true,
           createdAt: true,
           updatedAt: true,
+          reviewsRating: true,
+          categoryId: true,
+          content: true,
+          isSoldOut: true,
           store: {
             select: {
               id: true,
@@ -180,6 +218,7 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
               image: true,
               createdAt: true,
               updatedAt: true,
+              detailAddress: true,
             },
           },
           stocks: {
@@ -188,7 +227,13 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
               productId: true,
               sizeId: true,
               quantity: true,
-              size: true,
+              size: {
+                select: {
+                  id: true,
+                  name: true,
+                  sizeDetail: true,
+                },
+              },
             },
           },
           productDiscounts: {
