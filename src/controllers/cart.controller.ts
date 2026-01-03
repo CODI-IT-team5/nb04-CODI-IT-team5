@@ -67,19 +67,27 @@ class CartController {
                   detailAddress: item.product.store.detailAddress,
                 }
               : null,
-            stocks: item.product.stocks?.map((s: { id: string; productId: string; sizeId: string; quantity: number; size: { id: string; name: string; sizeDetail: Prisma.JsonValue } | null }) => ({
-              id: s.id,
-              productId: s.productId,
-              sizeId: s.sizeId,
-              quantity: s.quantity,
-              size: s.size
-                ? {
-                    id: s.size.id,
-                    name: s.size.name,
-                    size: toSizeDetail(s.size.sizeDetail),
-                  }
-                : null,
-            })),
+            stocks: item.product.stocks?.map(
+              (s: {
+                id: string;
+                productId: string;
+                sizeId: string;
+                quantity: number;
+                size: { id: string; name: string; sizeDetail: Prisma.JsonValue } | null;
+              }) => ({
+                id: s.id,
+                productId: s.productId,
+                sizeId: s.sizeId,
+                quantity: s.quantity,
+                size: s.size
+                  ? {
+                      id: s.size.id,
+                      name: s.size.name,
+                      size: toSizeDetail(s.size.sizeDetail),
+                    }
+                  : null,
+              }),
+            ),
           }
         : null,
       size: item.size
