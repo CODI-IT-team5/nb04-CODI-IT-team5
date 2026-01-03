@@ -1,14 +1,16 @@
 import type { OrderStatus, PaymentStatus } from '@prisma/client';
 
+import * as cartRepository from '../repositories/cart.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 import prisma from '../utils/prisma.js';
 
 export type GetOrdersInput = {
   userId: string;
-  status: string | undefined; // 너가 원한 “직관적 undefined” 유지
+  status: string | undefined;
   limit: number;
   page: number;
 };
+
 // size 구조 변환 헬퍼 함수
 function transformSize(size: { id: string; name: string; sizeDetail: unknown } | null) {
   if (!size) return size;
@@ -20,6 +22,7 @@ function transformSize(size: { id: string; name: string; sizeDetail: unknown } |
     size: sizeDetail || { en: size.name || '', ko: size.name || '' },
   };
 }
+
 export const orderService = {
   async getOrders({ userId, status, limit, page }: GetOrdersInput) {
     const take = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 50) : 10;
@@ -94,15 +97,11 @@ export const orderService = {
       }),
     ]);
 
-    // totalQuantity를 orderItems로부터 계산 및 응답 변환
     const dataWithTotalQuantity = data.map((order: (typeof data)[0]) => ({
       ...order,
-      payments: order.payment, // payment → payments 필드명 변경
-      payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce(
-        (sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity,
-        0,
-      ),
+      payments: order.payment,
+      payment: undefined,
+      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
       orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
@@ -120,7 +119,6 @@ export const orderService = {
     };
   },
 
-  // 프론트에서는 사용되지 않는 부분.
   async getOrderById({ userId, orderId }: { userId: string; orderId: string }) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, userId },
@@ -185,15 +183,11 @@ export const orderService = {
       throw HttpException.notFound();
     }
 
-    // totalQuantity를 orderItems로부터 계산 및 응답 변환
     return {
       ...order,
-      payments: order.payment, // payment → payments 필드명 변경
-      payment: undefined, // 기존 필드 제거
-      totalQuantity: order.orderItems.reduce(
-        (sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity,
-        0,
-      ),
+      payments: order.payment,
+      payment: undefined,
+      totalQuantity: order.orderItems.reduce((sum: number, item: (typeof order.orderItems)[0]) => sum + item.quantity, 0),
       orderItems: order.orderItems.map((item: (typeof order.orderItems)[0]) => ({
         ...item,
         size: transformSize(item.size),
@@ -201,25 +195,31 @@ export const orderService = {
     };
   },
 
+  // Cart 기반 주문 생성
   async createOrder(input: {
     userId: string;
     name: string;
     phone: string;
     address: string;
-    orderItems: Array<{ productId: string; sizeId: string; quantity: number }>;
+    cartItemIds?: string[];
     usePoint?: number;
   }) {
-    const { userId, name, phone, address, orderItems } = input;
+    const { userId, name, phone, address, cartItemIds } = input;
     const usePoint = input.usePoint ?? 0;
 
-    if (orderItems.length === 0) {
-      throw HttpException.badRequest('주문 상품이 비어 있습니다.');
+    // 1) Cart에서 주문할 아이템 조회
+    const cartData = await cartRepository.getCartItemsForOrder(userId, cartItemIds);
+    if (!cartData || !cartData.items || cartData.items.length === 0) {
+      throw HttpException.badRequest('장바구니가 비어 있거나 선택한 상품이 없습니다.');
     }
 
-    // 트랜잭션으로 “재고 확인 + 주문/결제 생성”을 한 번에 처리
+    const { cart, items: cartItems } = cartData;
+    const selectedCartItemIds = cartItems.map((item) => item.id);
+
+    // 트랜잭션으로 "재고 확인 + 주문/결제 생성 + Cart 비우기"를 한 번에 처리
     const order = await prisma.$transaction(
       async (tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
-        // 1) 재고 확인 + 단가 조회
+        // 2) 재고 확인 + 단가 조회
         let subtotal = 0;
 
         const computedItems: Array<{
@@ -230,54 +230,34 @@ export const orderService = {
           productName: string;
         }> = [];
 
-        for (const item of orderItems) {
+        for (const cartItem of cartItems) {
           const stock = await tx.productStock.findFirst({
-            where: { productId: item.productId, sizeId: item.sizeId },
-            include: {
-              product: {
-                select: {
-                  price: true,
-                  isSoldOut: true,
-                  name: true,
-                  productDiscounts: {
-                    where: {
-                      revokedAt: null,
-                      discountStartTime: { lte: new Date() },
-                      discountEndTime: { gte: new Date() },
-                    },
-                    select: {
-                      discountRate: true,
-                    },
-                    take: 1,
-                  },
-                },
-              },
-            },
+            where: { productId: cartItem.productId, sizeId: cartItem.sizeId },
           });
 
-          if (!stock || stock.product.isSoldOut || stock.quantity < item.quantity) {
-            throw HttpException.badRequest('품절되었거나 재고가 부족합니다.');
+          if (!stock || cartItem.product.isSoldOut || stock.quantity < cartItem.quantity) {
+            throw HttpException.badRequest(`상품 "${cartItem.product.name}"의 재고가 부족하거나 품절되었습니다.`);
           }
 
           // 할인율 적용
-          let unitPrice = stock.product.price;
-          const activeDiscount = stock.product.productDiscounts?.[0];
+          let unitPrice = cartItem.product.price;
+          const activeDiscount = cartItem.product.productDiscounts?.[0];
           if (activeDiscount) {
             unitPrice = Math.floor(unitPrice * (1 - activeDiscount.discountRate / 100));
           }
 
-          subtotal += unitPrice * item.quantity;
+          subtotal += unitPrice * cartItem.quantity;
 
           computedItems.push({
-            productId: item.productId,
-            sizeId: item.sizeId,
-            quantity: item.quantity,
+            productId: cartItem.productId,
+            sizeId: cartItem.sizeId,
+            quantity: cartItem.quantity,
             priceSnapshot: unitPrice,
-            productName: stock.product.name,
+            productName: cartItem.product.name,
           });
         }
 
-        // 2) 사용자 포인트 검증 및 차감
+        // 3) 사용자 포인트 검증 및 차감
         const userRecord = await tx.user.findUnique({
           where: { id: userId },
           select: { email: true, points: true },
@@ -299,6 +279,7 @@ export const orderService = {
 
         const finalPrice = Math.max(subtotal - usePoint, 0);
 
+        // 4) 주문 생성
         const order = await tx.order.create({
           data: {
             userId,
@@ -367,7 +348,7 @@ export const orderService = {
           },
         });
 
-        // 4) 재고 차감 및 판매량 업데이트, 품절 처리
+        // 5) 재고 차감 및 판매량 업데이트, 품절 처리
         for (const ci of computedItems) {
           // 재고 차감
           const updatedStock = await tx.productStock.update({
@@ -398,7 +379,7 @@ export const orderService = {
           }
         }
 
-        // 5) 포인트 사용 히스토리 생성
+        // 6) 포인트 사용 히스토리 생성
         if (usePoint > 0) {
           await tx.pointHistory.create({
             data: {
@@ -411,6 +392,14 @@ export const orderService = {
             },
           });
         }
+
+        // 7) 주문 완료 후 Cart에서 해당 아이템 삭제
+        await tx.cartItem.deleteMany({
+          where: {
+            id: { in: selectedCartItemIds },
+            cartId: cart.id,
+          },
+        });
 
         return order;
       },
@@ -553,10 +542,7 @@ export const orderService = {
 
     return {
       ...updated,
-      totalQuantity: updated.orderItems.reduce(
-        (sum: number, item: (typeof updated.orderItems)[0]) => sum + item.quantity,
-        0,
-      ),
+      totalQuantity: updated.orderItems.reduce((sum: number, item: (typeof updated.orderItems)[0]) => sum + item.quantity, 0),
     };
   },
 };
