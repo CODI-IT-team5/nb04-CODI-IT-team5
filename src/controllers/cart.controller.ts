@@ -1,7 +1,7 @@
 // src/cart/cart.controller.ts
 
-import type { NextFunction, Request, Response } from 'express';
 import type { Prisma } from '@prisma/client';
+import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
@@ -16,8 +16,11 @@ const toSizeDetail = (value: Prisma.JsonValue | null): SizeDetail | null => {
   return value as SizeDetail;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CartItemWithDetails = any;
+
 class CartController {
-  private getUserIdOr401(req: Request, res: Response, next: NextFunction): string {
+  private getUserIdOr401(req: Request): string {
     const user = req.user;
     if (!user) {
       throw HttpException.unauthorized('인증이 필요합니다.');
@@ -25,7 +28,7 @@ class CartController {
     return user.id;
   }
 
-  private transformCartItem(item: any) {
+  private transformCartItem(item: CartItemWithDetails) {
     return {
       id: item.id,
       cartId: item.cartId,
@@ -64,7 +67,7 @@ class CartController {
                   detailAddress: item.product.store.detailAddress,
                 }
               : null,
-            stocks: item.product.stocks?.map((s: any) => ({
+            stocks: item.product.stocks?.map((s: { id: string; productId: string; sizeId: string; quantity: number; size: { id: string; name: string; sizeDetail: Prisma.JsonValue } | null }) => ({
               id: s.id,
               productId: s.productId,
               sizeId: s.sizeId,
@@ -92,7 +95,7 @@ class CartController {
   // POST /api/cart : 장바구니 생성 (또는 기존 카트 반환)
   createCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req, res, next);
+      const userId = this.getUserIdOr401(req);
 
       const cart = await cartService.createCart(userId);
       if (!cart) {
@@ -116,7 +119,7 @@ class CartController {
   // PATCH /api/cart : 장바구니 수정 (아이템 추가/수정)
   patchCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req, res, next);
+      const userId = this.getUserIdOr401(req);
 
       const body = req.body as PatchCartInput;
       const items = await cartService.patchCart(userId, body);
@@ -130,7 +133,7 @@ class CartController {
   // DELETE /api/cart/:cartItemId : 장바구니 아이템 삭제
   deleteCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req, res, next);
+      const userId = this.getUserIdOr401(req);
 
       const cartItemId = req.params.cartItemId;
       if (!cartItemId) {
@@ -151,7 +154,7 @@ class CartController {
   // GET /api/cart : 장바구니 조회
   getCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req, res, next);
+      const userId = this.getUserIdOr401(req);
 
       const cart = await getCartWithItems(userId);
 
@@ -175,10 +178,10 @@ class CartController {
     }
   };
 
-  // GET /api/cart/:cartItemId : 장바구니 아이템 상세 조회
+  // GET /api/cart/:cartItemId : 장바구니 아이템 상세 조회 (Swagger 스펙 준수)
   getCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req, res, next);
+      const userId = this.getUserIdOr401(req);
 
       const { cartItemId } = req.params;
       if (!cartItemId) {
@@ -190,8 +193,29 @@ class CartController {
         throw HttpException.notFound('장바구니에 아이템이 없습니다.');
       }
 
-      const transformed = {
-        ...this.transformCartItem(item),
+      // Swagger 스펙에 맞춘 간소화된 응답
+      const response = {
+        id: item.id,
+        cartId: item.cartId,
+        productId: item.productId,
+        sizeId: item.sizeId,
+        quantity: item.quantity,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        product: item.product
+          ? {
+              id: item.product.id,
+              storeId: item.product.storeId,
+              name: item.product.name,
+              price: item.product.price,
+              image: item.product.image,
+              createdAt: item.product.createdAt,
+              updatedAt: item.product.updatedAt,
+              discountRate: item.product.productDiscounts?.[0]?.discountRate ?? 0,
+              discountStartTime: item.product.productDiscounts?.[0]?.discountStartTime ?? null,
+              discountEndTime: item.product.productDiscounts?.[0]?.discountEndTime ?? null,
+            }
+          : null,
         cart: item.cart
           ? {
               id: item.cart.id,
@@ -199,10 +223,10 @@ class CartController {
               createdAt: item.cart.createdAt,
               updatedAt: item.cart.updatedAt,
             }
-          : item.cart,
+          : null,
       };
 
-      return res.status(STATUS_CODE.OK).json(transformed);
+      return res.status(STATUS_CODE.OK).json(response);
     } catch (error) {
       return next(error);
     }

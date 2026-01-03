@@ -1,9 +1,9 @@
 
 # 로그인 응답에서 자동으로 토큰/쿠키 추출
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWpxcGh2OTQwMDAxOXpkemZraGI4cmJ5IiwiaWF0IjoxNzY2OTkyNzAwLCJleHAiOjE3NjY5OTYzMDB9.WK6ZPVudq8HaJQV26fBPeEz_vvqbGSQ4KGrA26UTts0
+@accessToken = {{auth.response.body.accessToken}}
 # 테스트용 상품/사이즈/장바구니아이템/주문 ID (필요 시 교체)
-@productId = PUT_PRODUCT_ID
+@productId = testProductId
 @sizeId = size_s
 @cartItemId = PUT_CART_ITEM_ID
 
@@ -32,12 +32,15 @@ Authorization: Bearer {{accessToken}}
 }
 
 ### 2-3. 장바구니 재조회 -> 여기서 items[0].id 복사해서 cartItemId 갱신
-GET {{baseUrl}}/api/cart
-Authorization: Bearer {{accessToken}}
-
-### 2-4. 장바구니 아이템 상세
-GET {{baseUrl}}/api/cart/{{cartItemId}}
-Authorization: Bearer {{accessToken}}
+	# @name getCart
+	GET {{baseUrl}}/api/cart
+	Authorization: Bearer {{accessToken}}
+	
+	@cartItemId = {{getCart.response.body.items[0].id}}
+	
+	### 2-4. 장바구니 아이템 상세
+	GET {{baseUrl}}/api/cart/{{cartItemId}}
+	Authorization: Bearer {{accessToken}}
 
 ### 2-5. 장바구니 아이템 삭제
 DELETE {{baseUrl}}/api/cart/{{cartItemId}}

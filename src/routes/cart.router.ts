@@ -1,7 +1,7 @@
 // src/cart/cart.routes.ts
 import { Router } from 'express';
 
-import * as cartController from '../controllers/cart.controller.js';
+import { cartController } from '../controllers/cart.controller.js';
 import { patchCartDto } from '../dtos/cart.dto.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { validateMiddleware } from '../middlewares/validate.middleware.js';

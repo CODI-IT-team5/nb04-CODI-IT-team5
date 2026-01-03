@@ -118,47 +118,49 @@ export async function getOrCreateCart(userId: string) {
   return cart;
 }
 
-// PATCH /api/cart – 상품+여러 사이즈 한 번에 처리
+// PATCH /api/cart – 상품+여러 사이즈 한 번에 처리 (트랜잭션으로 원자성 보장)
 export async function upsertCartItems(userId: string, input: PatchCartInput) {
   const { productId, sizes } = input;
 
   const cart = await getOrCreateCart(userId);
 
-  // 사이즈별로 upsert / delete 처리
-  for (const sizeInfo of sizes) {
-    const { sizeId, quantity } = sizeInfo;
+  // 트랜잭션으로 전체 작업 묶기: 하나라도 실패하면 전체 롤백
+  await prisma.$transaction(async (tx) => {
+    for (const sizeInfo of sizes) {
+      const { sizeId, quantity } = sizeInfo;
 
-    if (quantity <= 0) {
-      // 수량 0이면 해당 아이템 삭제
-      await prisma.cartItem.deleteMany({
-        where: {
-          cartId: cart.id,
-          productId,
-          sizeId,
-        },
-      });
-      continue;
+      if (quantity <= 0) {
+        // 수량 0이면 해당 아이템 삭제
+        await tx.cartItem.deleteMany({
+          where: {
+            cartId: cart.id,
+            productId,
+            sizeId,
+          },
+        });
+      } else {
+        // 수량이 양수면 upsert
+        await tx.cartItem.upsert({
+          where: {
+            cartId_productId_sizeId: {
+              cartId: cart.id,
+              productId,
+              sizeId,
+            },
+          },
+          update: {
+            quantity,
+          },
+          create: {
+            cartId: cart.id,
+            productId,
+            sizeId,
+            quantity,
+          },
+        });
+      }
     }
-
-    await prisma.cartItem.upsert({
-      where: {
-        cartId_productId_sizeId: {
-          cartId: cart.id,
-          productId,
-          sizeId,
-        },
-      },
-      update: {
-        quantity,
-      },
-      create: {
-        cartId: cart.id,
-        productId,
-        sizeId,
-        quantity,
-      },
-    });
-  }
+  });
 
   // 스펙상 PATCH 응답은 CartItem 배열 형식이라 생각하고 items만 반환
   const items = await prisma.cartItem.findMany({
@@ -186,7 +188,7 @@ export async function deleteCartItem(userId: string, cartItemId: string) {
   return result.count;
 }
 
-// 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId) - Swagger 스펙 준수
+// 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId) - Swagger 스펙 준수 (간소화)
 export async function getCartItemWithDetails(userId: string, cartItemId: string) {
   const cart = await findCartByUserId(userId);
   if (!cart) return null;
@@ -203,39 +205,6 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
           image: true,
           createdAt: true,
           updatedAt: true,
-          reviewsRating: true,
-          categoryId: true,
-          content: true,
-          isSoldOut: true,
-          store: {
-            select: {
-              id: true,
-              userId: true,
-              name: true,
-              address: true,
-              phoneNumber: true,
-              content: true,
-              image: true,
-              createdAt: true,
-              updatedAt: true,
-              detailAddress: true,
-            },
-          },
-          stocks: {
-            select: {
-              id: true,
-              productId: true,
-              sizeId: true,
-              quantity: true,
-              size: {
-                select: {
-                  id: true,
-                  name: true,
-                  sizeDetail: true,
-                },
-              },
-            },
-          },
           productDiscounts: {
             where: {
               revokedAt: null,
@@ -251,12 +220,7 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
           },
         },
       },
-      size: true,
-      cart: {
-        include: {
-          items: true,
-        },
-      },
+      cart: true,
     },
   });
 }
