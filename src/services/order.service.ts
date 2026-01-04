@@ -1,0 +1,226 @@
+import { OrderStatus, PaymentStatus, PointHistoryType, Prisma } from '@prisma/client';
+
+import { MESSAGE } from '../constants/constant.js';
+import type { createOrderDto, GetOrdersInput, updateOrderDto } from '../dtos/order.dto.js';
+import { cartRepository } from '../repositories/cart.repository.js';
+import { orderRepository } from '../repositories/order.repository.js';
+import { OrderResponse } from '../serializes/order.serialize.js';
+import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
+
+class OrderService {
+  /**
+   * 주문 목록 조회
+   */
+  getOrders = async (input: GetOrdersInput) => {
+    const { userId, status, limit, page } = input;
+    const [total, orders] = await Promise.all([
+      orderRepository.countByUserId(userId, status),
+      orderRepository.findManyByUserId({ userId, status, limit, page }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    const meta = { total, page, limit, totalPages };
+
+    return OrderResponse.paginated(orders, meta);
+  };
+
+  /**
+   * 주문 상세 조회
+   */
+  getOrderById = async (userId: string, orderId: string) => {
+    const order = await orderRepository.findById(orderId);
+
+    if (!order) {
+      throw HttpException.notFound('주문을 찾을 수 없습니다.');
+    }
+    if (order.userId !== userId) {
+      throw HttpException.forbidden();
+    }
+
+    return OrderResponse.single(order);
+  };
+
+  /**
+   * 주문 생성
+   */
+  createOrder = async (userId: string, input: createOrderDto) => {
+    const { name, phone, address, orderItems, usePoint = 0 } = input;
+
+    const createdOrder = await prisma.$transaction(async (tx) => {
+      // 1. 상품 정보 및 재고 조회, 가격 계산
+      let subtotal = 0;
+      const computedItems = [];
+
+      for (const item of orderItems) {
+        const productStock = await tx.productStock.findFirst({
+          where: { productId: item.productId, sizeId: item.sizeId },
+          include: {
+            product: {
+              select: { price: true, isSoldOut: true, name: true },
+            },
+          },
+        });
+
+        if (!productStock || productStock.product.isSoldOut || productStock.quantity < item.quantity) {
+          throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+        }
+
+        const unitPrice = productStock.product.price;
+        subtotal += unitPrice * item.quantity;
+
+        computedItems.push({
+          productId: item.productId,
+          sizeId: item.sizeId,
+          quantity: item.quantity,
+          price: unitPrice,
+          productName: productStock.product.name,
+        });
+      }
+
+      // 2. 사용자 포인트 검증
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { points: true, email: true } });
+      if (!user) throw HttpException.userNotFound();
+      if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
+
+      const finalPrice = Math.max(subtotal - usePoint, 0);
+
+      // 3. 주문, 주문 아이템, 결제 정보 생성
+      const order = await tx.order.create({
+        data: {
+          userId,
+          name,
+          phoneNumber: phone,
+          address,
+          email: user.email,
+          subtotal: finalPrice,
+          usePoint,
+          status: OrderStatus.CompletedPayment,
+          orderItems: {
+            create: computedItems.map((item) => ({
+              quantity: item.quantity,
+              price: item.price,
+              productName: item.productName,
+              productId: item.productId,
+              sizeId: item.sizeId,
+            })),
+          },
+          payment: {
+            create: {
+              price: finalPrice,
+              status: PaymentStatus.CompletedPayment,
+            },
+          },
+        },
+      });
+
+      // 4. 재고 차감 및 판매량 업데이트, 포인트 사용/적립 처리
+      if (usePoint > 0) {
+        await tx.user.update({ where: { id: userId }, data: { points: { decrement: usePoint } } });
+        await tx.pointHistory.create({
+          data: {
+            userId,
+            orderId: order.id,
+            title: '주문 시 포인트 사용',
+            point: -usePoint,
+            type: PointHistoryType.USE,
+          },
+        });
+      }
+
+      for (const item of computedItems) {
+        await tx.productStock.update({
+          where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
+          data: { quantity: { decrement: item.quantity } },
+        });
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { salesCount: { increment: item.quantity } },
+        });
+      }
+
+      // 5. [핵심] 장바구니에서 주문된 상품들 제거
+      const userCart = await tx.cart.findUnique({ where: { userId } });
+      if (userCart) {
+        const productIdsToRemove = orderItems.map((item) => item.productId);
+        await tx.cartItem.deleteMany({
+          where: {
+            cartId: userCart.id,
+            productId: { in: productIdsToRemove },
+          },
+        });
+      }
+
+      return order;
+    });
+
+    // 6. 생성된 주문 정보 상세 조회 후 반환 (Serializer 적용을 위해)
+    const detailedOrder = await orderRepository.findById(createdOrder.id);
+    return OrderResponse.single(detailedOrder!);
+  };
+
+  /**
+   * 주문 취소
+   */
+  deleteOrder = async (userId: string, orderId: string) => {
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, userId },
+        include: { orderItems: true },
+      });
+
+      if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
+      if (order.status !== 'WaitingPayment') throw HttpException.badRequest(MESSAGE.orderCancellationFailed);
+
+      await tx.order.update({ where: { id: orderId }, data: { status: OrderStatus.Cancelled } });
+
+      for (const item of order.orderItems) {
+        await tx.productStock.update({
+          where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
+          data: { quantity: { increment: item.quantity } },
+        });
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { salesCount: { decrement: item.quantity } },
+        });
+      }
+
+      if (order.usePoint > 0) {
+        await tx.user.update({ where: { id: userId }, data: { points: { increment: order.usePoint } } });
+        await tx.pointHistory.create({
+          data: {
+            userId,
+            orderId: order.id,
+            title: '주문 취소로 인한 포인트 복구',
+            point: order.usePoint,
+            type: PointHistoryType.EARN,
+          },
+        });
+      }
+
+      return { message: '주문이 성공적으로 취소되었습니다.' };
+    });
+  };
+
+  /**
+   * 주문 정보 수정 (배송지)
+   */
+  updateOrder = async (userId: string, orderId: string, input: updateOrderDto) => {
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        name: input.name,
+        phoneNumber: input.phone,
+        address: input.address,
+      },
+    });
+
+    const detailedOrder = await orderRepository.findById(updatedOrder.id);
+    return OrderResponse.single(detailedOrder!);
+  };
+}
+
+export const orderService = new OrderService();
