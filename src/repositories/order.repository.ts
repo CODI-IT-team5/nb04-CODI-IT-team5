@@ -1,12 +1,12 @@
 import type { Order, OrderStatus } from '@prisma/client';
-import type { GetOrdersInput } from '../services/order.service.js';
 import prisma from '../utils/prisma.js';
 
 class OrderRepository {
   /**
    * 사용자의 주문 목록을 페이지네이션하여 조회합니다.
    */
-  findManyByUserId = async ({ userId, status, limit, page }: GetOrdersInput) => {
+  findManyByUserId = async (input: { userId: string; status?: OrderStatus; limit: number; page: number }) => {
+    const { userId, status, limit, page } = input;
     const take = limit;
     const skip = (page - 1) * take;
 

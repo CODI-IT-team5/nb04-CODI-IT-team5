@@ -1,8 +1,8 @@
-import { OrderStatus, PaymentStatus, PointHistoryType, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
 
 import { MESSAGE } from '../constants/constant.js';
-import type { createOrderDto, GetOrdersInput, updateOrderDto } from '../dtos/order.dto.js';
-import { cartRepository } from '../repositories/cart.repository.js';
+import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
+import * as cartRepository from '../repositories/cart.repository.js';
 import { orderRepository } from '../repositories/order.repository.js';
 import { OrderResponse } from '../serializes/order.serialize.js';
 import { HttpException } from '../utils/http-exception.js';
@@ -12,11 +12,20 @@ class OrderService {
   /**
    * 주문 목록 조회
    */
-  getOrders = async (input: GetOrdersInput) => {
-    const { userId, status, limit, page } = input;
+  getOrders = async (input: GetOrdersQuery & { userId: string }) => {
+    const { userId, status, limit = 10, page = 1 } = input;
+
+    // exactOptionalPropertyTypes 대응
+    const repoInput = {
+      userId,
+      limit,
+      page,
+      ...(status && { status }),
+    };
+
     const [total, orders] = await Promise.all([
       orderRepository.countByUserId(userId, status),
-      orderRepository.findManyByUserId({ userId, status, limit, page }),
+      orderRepository.findManyByUserId(repoInput),
     ]);
 
     const totalPages = Math.ceil(total / limit) || 1;
@@ -44,13 +53,19 @@ class OrderService {
   /**
    * 주문 생성
    */
-  createOrder = async (userId: string, input: createOrderDto) => {
+  createOrder = async (userId: string, input: CreateOrderInput) => {
     const { name, phone, address, orderItems, usePoint = 0 } = input;
 
     const createdOrder = await prisma.$transaction(async (tx) => {
       // 1. 상품 정보 및 재고 조회, 가격 계산
       let subtotal = 0;
-      const computedItems = [];
+      const computedItems: {
+        productId: string;
+        sizeId: string;
+        quantity: number;
+        price: number;
+        productName: string;
+      }[] = [];
 
       for (const item of orderItems) {
         const productStock = await tx.productStock.findFirst({
@@ -140,7 +155,7 @@ class OrderService {
       }
 
       // 5. [핵심] 장바구니에서 주문된 상품들 제거
-      const userCart = await tx.cart.findUnique({ where: { userId } });
+      const userCart = await cartRepository.findCartByUserId(userId);
       if (userCart) {
         const productIdsToRemove = orderItems.map((item) => item.productId);
         await tx.cartItem.deleteMany({
@@ -205,17 +220,19 @@ class OrderService {
   /**
    * 주문 정보 수정 (배송지)
    */
-  updateOrder = async (userId: string, orderId: string, input: updateOrderDto) => {
+  updateOrder = async (userId: string, orderId: string, input: UpdateOrderInput) => {
     const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
     if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
 
+    // exactOptionalPropertyTypes 대응
+    const dataToUpdate: { name?: string; phoneNumber?: string; address?: string } = {};
+    if (input.name) dataToUpdate.name = input.name;
+    if (input.phone) dataToUpdate.phoneNumber = input.phone;
+    if (input.address) dataToUpdate.address = input.address;
+
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: {
-        name: input.name,
-        phoneNumber: input.phone,
-        address: input.address,
-      },
+      data: dataToUpdate,
     });
 
     const detailedOrder = await orderRepository.findById(updatedOrder.id);

@@ -1,9 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
-import type { createOrderDto, getOrdersQueryDto, updateOrderDto } from '../dtos/order.dto.js';
+import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
 import { orderService } from '../services/order.service.js';
-import { HttpException } from '../utils/http-exception.js';
 
 class OrderController {
   /**
@@ -12,13 +11,13 @@ class OrderController {
   getOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const { status, limit = 10, page = 1 } = req.query as unknown as getOrdersQueryDto;
+      const query = req.query as GetOrdersQuery;
 
       const result = await orderService.getOrders({
         userId,
-        status,
-        limit,
-        page,
+        status: query.status,
+        limit: query.limit ?? 10,
+        page: query.page ?? 1,
       });
 
       return res.status(STATUS_CODE.OK).json(result);
@@ -33,7 +32,7 @@ class OrderController {
   getOrderById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const { orderId } = req.params;
+      const orderId = req.params.orderId!;
 
       const order = await orderService.getOrderById(userId, orderId);
       return res.status(STATUS_CODE.OK).json(order);
@@ -48,7 +47,7 @@ class OrderController {
   createOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const orderData = req.body as createOrderDto;
+      const orderData = req.body as CreateOrderInput;
 
       const result = await orderService.createOrder(userId, orderData);
       return res.status(STATUS_CODE.CREATED).json(result);
@@ -63,7 +62,7 @@ class OrderController {
   deleteOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const { orderId } = req.params;
+      const orderId = req.params.orderId!;
 
       const result = await orderService.deleteOrder(userId, orderId);
       return res.status(STATUS_CODE.OK).json(result);
@@ -78,8 +77,8 @@ class OrderController {
   updateOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const { orderId } = req.params;
-      const orderData = req.body as updateOrderDto;
+      const orderId = req.params.orderId!;
+      const orderData = req.body as UpdateOrderInput;
 
       const result = await orderService.updateOrder(userId, orderId, orderData);
       return res.status(STATUS_CODE.OK).json(result);
