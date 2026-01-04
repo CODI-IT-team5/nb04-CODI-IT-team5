@@ -8,6 +8,7 @@ import { config } from './config/config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
+import { cartRouter } from './routes/cart.router.js';
 import communityRoutes from './routes/community.router.js';
 import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
@@ -23,7 +24,15 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(loggerMiddleware); // 로그 저장
 
-app.use(cors({ origin: config.app.cors_origin, credentials: config.app.cors_credentials })); // 요청 허용 도메인
+app.use(
+  cors({
+    origin: config.app.cors_origin,
+    credentials: config.app.cors_credentials,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+); // 요청 허용 도메인
 app.use(compression({ threshold: config.app.compression_threshold, level: config.app.compression_level })); // 응답 압축
 app.use(limiter); // API 요청 제한
 app.use(helmet()); // 보안 헤더 적용
@@ -38,6 +47,7 @@ app.use('/api/users', userRouter);
 app.use('/api/s3', s3Router);
 app.use('/api/metadata', metadataRouter);
 app.use('/api', communityRoutes);
+app.use('/api/cart', cartRouter);
 app.use('/api/notifications', notificationRouter);
 
 app.use((req, res, next) => {
