@@ -72,7 +72,7 @@ const upload = multer({
     cb(null, true);
   },
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB 제한
+    fileSize: config.app.fileSizeLimit,
   },
 });
 
@@ -82,7 +82,9 @@ export const uploadImage = (req: Request, res: Response, next: NextFunction) => 
     if (err instanceof MulterError) {
       switch (err.code) {
         case 'LIMIT_FILE_SIZE':
-          return next(HttpException.badRequest('파일 크기는 5MB를 초과할 수 없습니다.'));
+          return next(
+            HttpException.badRequest(`파일 크기는 ${config.app.fileSizeLimit / 1024 / 1024}MB를 초과할 수 없습니다.`),
+          );
         case 'LIMIT_UNEXPECTED_FILE':
           return next(HttpException.badRequest('하나의 파일만 업로드할 수 있습니다.'));
         default:

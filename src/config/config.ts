@@ -17,6 +17,7 @@ export const config = {
     rateLimitMax: Number(process.env['RATE_LIMIT_MAX']) || 100, // 시간 제한당 허용 요청 수
     compression_threshold: Number(process.env['COMPRESSION_THRESHOLD']) || 1024, // gzip 최소 크기
     compression_level: Number(process.env['COMPRESSION_LEVEL']) || 6, // gzip 압축 레벨
+    fileSizeLimit: Number(process.env['FILE_SIZE_LIMIT']) || 5 * 1024 * 1024, // 5MB
     cookieMaxAge: ms((process.env['REFRESH_TOKEN_EXPIRES_IN'] as StringValue) ?? '7d'),
   },
   auth: {
