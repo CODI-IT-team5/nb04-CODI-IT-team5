@@ -1,6 +1,5 @@
 @refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWpxcGh2OTQwMDAxOXpkemZraGI4cmJ5IiwiaWF0IjoxNzY3MTU0NzgzLCJleHAiOjE3NjcxNTgzODN9.ULa471vxG469ZIyaTnueYyUTQhmatuoqSB7-xhRC3T8
-@sweaterId = cmjc7d7wh000e9zja0frqnk94
+@accessToken = {{auth.response.body.accessToken}}
 @hoodieId = cmjc7d7wq000g9zjafx0hwebf
 @orderId = {{createOrder.response.body.id}}
 
