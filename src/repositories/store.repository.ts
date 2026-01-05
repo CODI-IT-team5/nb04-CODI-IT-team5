@@ -169,16 +169,16 @@ export class StoreRepository {
     });
   }
 
-  async update({ storeId, userId: _userId, ...data }: UpdateStoreServiceInput) {
+  async update(input: UpdateStoreServiceInput) {
     return prisma.store.update({
-      where: { id: storeId },
+      where: { id: input.storeId },
       data: {
-        name: data.name ?? Prisma.skip,
-        address: data.address ?? Prisma.skip,
-        detailAddress: data.detailAddress ?? Prisma.skip,
-        phoneNumber: data.phoneNumber ?? Prisma.skip,
-        content: data.content ?? Prisma.skip,
-        image: data.image ?? Prisma.skip,
+        name: input.name ?? Prisma.skip,
+        address: input.address ?? Prisma.skip,
+        detailAddress: input.detailAddress ?? Prisma.skip,
+        phoneNumber: input.phoneNumber ?? Prisma.skip,
+        content: input.content ?? Prisma.skip,
+        image: input.image ?? Prisma.skip,
       },
     });
   }
