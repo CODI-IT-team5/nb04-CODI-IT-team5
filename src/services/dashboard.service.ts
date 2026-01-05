@@ -1,8 +1,9 @@
-import prisma from '../utils/prisma.js';
+import type { PeriodStats } from '../types/dashboard.type.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
 
-// 기간별 시작/끝 날짜 계산 헬퍼
-function getDateRange(period: 'today' | 'week' | 'month' | 'year', offset = 0) {
+// 타입 정의
+const getDateRange = (period: 'today' | 'week' | 'month' | 'year', offset = 0) => {
   const now = new Date();
   let start: Date;
   let end: Date;
@@ -40,7 +41,7 @@ function getDateRange(period: 'today' | 'week' | 'month' | 'year', offset = 0) {
   }
 
   return { start, end };
-}
+};
 
 // 기간별 주문 집계
 async function getPeriodStats(storeId: string, start: Date, end: Date) {
@@ -69,18 +70,10 @@ async function getPeriodStats(storeId: string, start: Date, end: Date) {
   return { totalOrders, totalSales };
 }
 
-// 변화율 계산
 function calculateChangeRate(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
 }
-
-// 타입 정의
-type PeriodStats = {
-  current: { totalOrders: number; totalSales: number };
-  previous: { totalOrders: number; totalSales: number };
-  changeRate: { totalOrders: number; totalSales: number };
-};
 
 export const dashboardService = {
   async getDashboard(userId: string) {
@@ -148,29 +141,18 @@ export const dashboardService = {
     }));
 
     // 가격대별 매출 비중
-    const allOrders = await prisma.order.findMany({
+    const allOrderItems = await prisma.orderItem.findMany({
       where: {
-        orderItems: {
-          some: {
-            product: { storeId: store.id },
-          },
-        },
-        status: { not: 'Cancelled' },
+        product: { storeId: store.id },
+        order: { status: { not: 'Cancelled' } },
       },
-      include: {
-        orderItems: {
-          where: {
-            product: { storeId: store.id },
-          },
-          select: {
-            price: true,
-            quantity: true,
-          },
-        },
+      select: {
+        price: true,
+        quantity: true,
       },
     });
 
-    const priceRanges = {
+    const priceRanges: Record<string, number> = {
       '~20,000원': 0,
       '~50,000원': 0,
       '~100,000원': 0,
@@ -180,23 +162,21 @@ export const dashboardService = {
 
     let totalRevenue = 0;
 
-    allOrders.forEach((order) => {
-      order.orderItems.forEach((item) => {
-        const itemTotal = item.price * item.quantity;
-        totalRevenue += itemTotal;
+    allOrderItems.forEach((item) => {
+      const itemTotal = item.price * item.quantity;
+      totalRevenue += itemTotal;
 
-        if (item.price <= 20000) {
-          priceRanges['~20,000원'] += itemTotal;
-        } else if (item.price <= 50000) {
-          priceRanges['~50,000원'] += itemTotal;
-        } else if (item.price <= 100000) {
-          priceRanges['~100,000원'] += itemTotal;
-        } else if (item.price <= 200000) {
-          priceRanges['~200,000원'] += itemTotal;
-        } else {
-          priceRanges['200,000원~'] += itemTotal;
-        }
-      });
+      if (item.price <= 20000) {
+        priceRanges['~20,000원'] = (priceRanges['~20,000원'] ?? 0) + itemTotal;
+      } else if (item.price <= 50000) {
+        priceRanges['~50,000원'] = (priceRanges['~50,000원'] ?? 0) + itemTotal;
+      } else if (item.price <= 100000) {
+        priceRanges['~100,000원'] = (priceRanges['~100,000원'] ?? 0) + itemTotal;
+      } else if (item.price <= 200000) {
+        priceRanges['~200,000원'] = (priceRanges['~200,000원'] ?? 0) + itemTotal;
+      } else {
+        priceRanges['200,000원~'] = (priceRanges['200,000원~'] ?? 0) + itemTotal;
+      }
     });
 
     const priceRange = Object.entries(priceRanges).map(([range, sales]) => ({
