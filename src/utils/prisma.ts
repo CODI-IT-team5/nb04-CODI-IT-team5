@@ -110,7 +110,15 @@ function handleUpdateOperation(
 
     for (const [key, value] of Object.entries(data)) {
       // Prisma.skip은 symbol이므로 typeof로 체크하거나, 빈 객체가 된 경우를 필터링
-      if (value !== Prisma.skip && !(typeof value === 'object' && value !== null && Object.keys(value).length === 0 && value.constructor === Object)) {
+      if (
+        value !== Prisma.skip &&
+        !(
+          typeof value === 'object' &&
+          value !== null &&
+          Object.keys(value).length === 0 &&
+          value.constructor === Object
+        )
+      ) {
         cleanedData[key] = value;
       }
     }
