@@ -13,9 +13,16 @@ class CartController {
   private getUserIdOr401(req: Request): string {
     const user = req.user;
     if (!user) {
-      throw HttpException.unauthorized('인증이 필요합니다.');
+      throw HttpException.unauthorized(MESSAGE.unauthorized);
     }
     return user.id;
+  }
+
+  private getCartItemIdOrThrow(cartItemId: string | undefined): string {
+    if (!cartItemId) {
+      throw HttpException.badRequest(MESSAGE.badRequest);
+    }
+    return cartItemId;
   }
 
   // POST /api/cart : 장바구니 생성 (또는 기존 카트 반환)
@@ -60,11 +67,7 @@ class CartController {
   deleteCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = this.getUserIdOr401(req);
-
-      const cartItemId = req.params.cartItemId;
-      if (!cartItemId) {
-        throw HttpException.badRequest(MESSAGE.badRequest);
-      }
+      const cartItemId = this.getCartItemIdOrThrow(req.params.cartItemId);
 
       const deletedCount = await cartService.removeCartItem(userId, cartItemId);
       if (!deletedCount) {
@@ -108,11 +111,7 @@ class CartController {
   getCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = this.getUserIdOr401(req);
-
-      const { cartItemId } = req.params;
-      if (!cartItemId) {
-        throw HttpException.badRequest(MESSAGE.badRequest);
-      }
+      const cartItemId = this.getCartItemIdOrThrow(req.params.cartItemId);
 
       const item = await getCartItemWithDetails(userId, cartItemId);
       if (!item) {
