@@ -94,18 +94,21 @@ class OrderService {
           });
         }
 
-        // 2. 사용자 포인트 검증
-        const user = await tx.user.findUnique({ where: { id: userId }, select: { points: true, email: true } });
+        // 2. 사용자 포인트 검증 (등급 정보 포함 조회)
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          include: { grade: true },
+        });
         if (!user) throw HttpException.userNotFound();
         if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
 
         const finalPrice = Math.max(subtotal - usePoint, 0);
 
-        // 3. 주문 상태 결정 (isTest 플래그에 따라)
+        // 3. 주문 상태 결정
         const orderStatus = isTest ? OrderStatus.WaitingPayment : OrderStatus.CompletedPayment;
         const paymentStatus = isTest ? PaymentStatus.Pending : PaymentStatus.CompletedPayment;
 
-        // 4. 주문, 주문 아이템, 결제 정보 생성
+        // 4. 주문 생성
         const order = await tx.order.create({
           data: {
             userId,
@@ -134,20 +137,7 @@ class OrderService {
           },
         });
 
-        // 5. 재고 차감 및 판매량 업데이트, 포인트 사용/적립 처리
-        if (usePoint > 0) {
-          await tx.user.update({ where: { id: userId }, data: { points: { decrement: usePoint } } });
-          await tx.pointHistory.create({
-            data: {
-              userId,
-              orderId: order.id,
-              title: '주문 시 포인트 사용',
-              point: -usePoint,
-              type: PointHistoryType.USE,
-            },
-          });
-        }
-
+        // 5. 재고 차감 및 판매량 업데이트
         for (const item of computedItems) {
           await tx.productStock.update({
             where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
@@ -159,7 +149,7 @@ class OrderService {
           });
         }
 
-        // 6. [핵심] 장바구니에서 주문된 상품들 제거
+        // 6. 장바구니 비우기
         const userCart = await cartRepository.findCartByUserId(userId);
         if (userCart) {
           const productIdsToRemove = orderItems.map((item) => item.productId);
@@ -171,12 +161,63 @@ class OrderService {
           });
         }
 
+        // 7. 포인트 사용/적립 및 등급 업데이트 (실제 주문일 경우에만)
+        if (!isTest) {
+          // 포인트 사용 처리
+          if (usePoint > 0) {
+            await tx.pointHistory.create({
+              data: {
+                userId,
+                orderId: order.id,
+                title: '주문 시 포인트 사용',
+                point: -usePoint,
+                type: PointHistoryType.USE,
+              },
+            });
+          }
+
+          // 포인트 적립 처리
+          const earnedPoints = Math.floor(finalPrice * (user.grade.rate / 100));
+          if (earnedPoints > 0) {
+            await tx.pointHistory.create({
+              data: {
+                userId,
+                orderId: order.id,
+                title: '상품 구매 적립',
+                point: earnedPoints,
+                type: PointHistoryType.EARN,
+              },
+            });
+          }
+
+          // 사용자 누적 금액 및 포인트 최종 업데이트
+          const netPointChange = earnedPoints - usePoint;
+          const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: {
+              points: { increment: netPointChange },
+              totalAmount: { increment: finalPrice },
+            },
+          });
+
+          // 등급 업데이트 확인
+          const allGrades = await tx.grade.findMany({ orderBy: { minAmount: 'desc' } });
+          const newGrade = allGrades.find((grade) => updatedUser.totalAmount >= grade.minAmount);
+
+          if (newGrade && newGrade.id !== user.gradeId) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { gradeId: newGrade.id },
+            });
+          }
+        }
+
         return order;
       },
       { maxWait: 5000, timeout: 20000 },
     );
 
-    // 7. 생성된 주문 정보 상세 조회 후 반환 (Serializer 적용을 위해)
+    // 8. 최종 결과 반환
     const detailedOrder = await orderRepository.findById(createdOrder.id);
     return OrderResponse.single(detailedOrder!);
   };

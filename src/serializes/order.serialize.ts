@@ -1,19 +1,9 @@
-import type { Order, OrderItem, Payment, Product, Review, Size, Store } from '@prisma/client';
+import type { Size } from '@prisma/client';
 
-// Prisma의 include로 가져온 복잡한 타입을 위한 인터페이스 정의
-type OrderItemWithDetails = OrderItem & {
-  product: Product & {
-    reviews: Review[];
-    store: Store;
-  };
-  size: Size;
-  review: Review | null;
-};
+import type { OrderWithDetails } from '../repositories/order.repository.js';
 
-type OrderWithDetails = Order & {
-  orderItems: OrderItemWithDetails[];
-  payment: Payment | null;
-};
+// 이제 OrderWithDetails 타입은 repository에서 가져오므로, 그에 맞춰 타입을 추론합니다.
+type OrderItemWithDetails = OrderWithDetails['orderItems'][number];
 
 export class OrderResponse {
   // private static으로 유틸리티 함수를 클래스 내부에 캡슐화
@@ -61,7 +51,10 @@ export class OrderResponse {
     };
   }
 
-  static paginated(orders: OrderWithDetails[], meta: { total: number; page: number; limit: number; totalPages: number }) {
+  static paginated(
+    orders: OrderWithDetails[],
+    meta: { total: number; page: number; limit: number; totalPages: number },
+  ) {
     return {
       data: orders.map((order) => this.single(order)),
       meta: meta,

@@ -3,15 +3,7 @@ import { z } from 'zod';
 // GET /api/orders
 export const getOrdersQueryDto = z.object({
   status: z
-    .enum([
-      'WaitingPayment',
-      'CompletedPayment',
-      'Processing',
-      'Shipping',
-      'Delivered',
-      'Cancelled',
-      'Refunded',
-    ])
+    .enum(['WaitingPayment', 'CompletedPayment', 'Processing', 'Shipping', 'Delivered', 'Cancelled', 'Refunded'])
     .optional(),
   limit: z.coerce.number().int().positive().max(50).optional(),
   page: z.coerce.number().int().positive().optional(),
@@ -20,7 +12,7 @@ export type GetOrdersQuery = z.infer<typeof getOrdersQueryDto>;
 
 // POST /api/orders
 const createOrderItemSchema = z.object({
-  // productId: z.string().cuid(), (임시) 테스트를 위해서 cuid 검증 X 
+  // productId: z.string().cuid(), (임시) 테스트를 위해서 cuid 검증 X
   productId: z.string(),
   sizeId: z.string(), // sizeId는 'size_s' 같은 문자열일 수 있으므로 cuid()가 아님
   quantity: z.number().int().positive(),

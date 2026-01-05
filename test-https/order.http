@@ -144,3 +144,43 @@ Authorization: Bearer {{accessToken}}
 # - 기대 결과: status가 "Cancelled"인지 확인
 GET {{baseUrl}}/api/orders/{{testOrderId}}
 Authorization: Bearer {{accessToken}}
+
+###
+# =================================================================
+# 5. 포인트 적립 및 등급 상승 테스트
+# - Green 등급(0원 이상) -> Orange 등급(100,000원 이상)
+# - 테스트 상품 가격: 50,000원
+# =================================================================
+###
+
+# 테스트 방법:
+# 1. DB 초기화 후, "1.2. 실제 주문 생성" 요청을 **총 2번** 보냅니다. (누적 금액: 100,000원)
+# 2. 아래 "5.1. 등급 상승을 위한 세 번째 주문" 요청을 보냅니다. (누적 금액: 150,000원)
+# 3. 마지막으로 "5.2. 내 정보 확인" 요청을 보내 결과를 확인합니다.
+
+### 5.1. 등급 상승을 위한 세 번째 주문
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "김등급",
+  "phone": "010-3333-4444",
+  "address": "서울시 등급구 상승로",
+  "orderItems": [
+    {
+      "productId": "{{testProductId}}",
+      "sizeId": "size_m",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+### 5.2. 내 정보 확인
+# - 기대 결과:
+#   - grade.name이 "Orange"로 변경되었는지 확인
+#   - points가 Green 등급 적립률(1%)에 따라 1500점(=150,000 * 0.01)이 되었는지 확인
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}

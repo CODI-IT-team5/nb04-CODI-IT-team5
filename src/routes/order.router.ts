@@ -14,7 +14,12 @@ orderRouter.get('/', authMiddleware, validateMiddleware({ query: getOrdersQueryD
 orderRouter.post('/', authMiddleware, validateMiddleware({ body: createOrderDto }), orderController.createOrder);
 
 // GET /api/orders/:orderId - 주문 상세 조회
-orderRouter.get('/:orderId', authMiddleware, validateMiddleware({ params: orderIdParamDto }), orderController.getOrderById);
+orderRouter.get(
+  '/:orderId',
+  authMiddleware,
+  validateMiddleware({ params: orderIdParamDto }),
+  orderController.getOrderById,
+);
 
 // DELETE /api/orders/:orderId - 주문 취소
 orderRouter.delete(
