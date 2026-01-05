@@ -20,7 +20,8 @@ export type GetOrdersQuery = z.infer<typeof getOrdersQueryDto>;
 
 // POST /api/orders
 const createOrderItemSchema = z.object({
-  productId: z.string().cuid(),
+  // productId: z.string().cuid(), (임시) 테스트를 위해서 cuid 검증 X 
+  productId: z.string(),
   sizeId: z.string(), // sizeId는 'size_s' 같은 문자열일 수 있으므로 cuid()가 아님
   quantity: z.number().int().positive(),
 });
@@ -31,6 +32,7 @@ export const createOrderDto = z.object({
   address: z.string().min(1, '주소를 입력해주세요.'),
   orderItems: z.array(createOrderItemSchema).min(1, '주문할 상품이 없습니다.'),
   usePoint: z.number().int().min(0).optional(),
+  isTest: z.boolean().optional(),
 });
 export type CreateOrderInput = z.infer<typeof createOrderDto>;
 

@@ -54,122 +54,129 @@ class OrderService {
    * 주문 생성
    */
   createOrder = async (userId: string, input: CreateOrderInput) => {
-    const { name, phone, address, orderItems, usePoint = 0 } = input;
+    const { name, phone, address, orderItems, usePoint = 0, isTest = false } = input;
 
-    const createdOrder = await prisma.$transaction(async (tx) => {
-      // 1. 상품 정보 및 재고 조회, 가격 계산
-      let subtotal = 0;
-      const computedItems: {
-        productId: string;
-        sizeId: string;
-        quantity: number;
-        price: number;
-        productName: string;
-      }[] = [];
+    const createdOrder = await prisma.$transaction(
+      async (tx) => {
+        // 1. 상품 정보 및 재고 조회, 가격 계산
+        let subtotal = 0;
+        const computedItems: {
+          productId: string;
+          sizeId: string;
+          quantity: number;
+          price: number;
+          productName: string;
+        }[] = [];
 
-      for (const item of orderItems) {
-        const productStock = await tx.productStock.findFirst({
-          where: { productId: item.productId, sizeId: item.sizeId },
-          include: {
-            product: {
-              select: { price: true, isSoldOut: true, name: true },
+        for (const item of orderItems) {
+          const productStock = await tx.productStock.findFirst({
+            where: { productId: item.productId, sizeId: item.sizeId },
+            include: {
+              product: {
+                select: { price: true, isSoldOut: true, name: true },
+              },
             },
-          },
-        });
+          });
 
-        if (!productStock || productStock.product.isSoldOut || productStock.quantity < item.quantity) {
-          throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+          if (!productStock || productStock.product.isSoldOut || productStock.quantity < item.quantity) {
+            throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+          }
+
+          const unitPrice = productStock.product.price;
+          subtotal += unitPrice * item.quantity;
+
+          computedItems.push({
+            productId: item.productId,
+            sizeId: item.sizeId,
+            quantity: item.quantity,
+            price: unitPrice,
+            productName: productStock.product.name,
+          });
         }
 
-        const unitPrice = productStock.product.price;
-        subtotal += unitPrice * item.quantity;
+        // 2. 사용자 포인트 검증
+        const user = await tx.user.findUnique({ where: { id: userId }, select: { points: true, email: true } });
+        if (!user) throw HttpException.userNotFound();
+        if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
 
-        computedItems.push({
-          productId: item.productId,
-          sizeId: item.sizeId,
-          quantity: item.quantity,
-          price: unitPrice,
-          productName: productStock.product.name,
-        });
-      }
+        const finalPrice = Math.max(subtotal - usePoint, 0);
 
-      // 2. 사용자 포인트 검증
-      const user = await tx.user.findUnique({ where: { id: userId }, select: { points: true, email: true } });
-      if (!user) throw HttpException.userNotFound();
-      if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
+        // 3. 주문 상태 결정 (isTest 플래그에 따라)
+        const orderStatus = isTest ? OrderStatus.WaitingPayment : OrderStatus.CompletedPayment;
+        const paymentStatus = isTest ? PaymentStatus.Pending : PaymentStatus.CompletedPayment;
 
-      const finalPrice = Math.max(subtotal - usePoint, 0);
-
-      // 3. 주문, 주문 아이템, 결제 정보 생성
-      const order = await tx.order.create({
-        data: {
-          userId,
-          name,
-          phoneNumber: phone,
-          address,
-          email: user.email,
-          subtotal: finalPrice,
-          usePoint,
-          status: OrderStatus.CompletedPayment,
-          orderItems: {
-            create: computedItems.map((item) => ({
-              quantity: item.quantity,
-              price: item.price,
-              productName: item.productName,
-              productId: item.productId,
-              sizeId: item.sizeId,
-            })),
-          },
-          payment: {
-            create: {
-              price: finalPrice,
-              status: PaymentStatus.CompletedPayment,
-            },
-          },
-        },
-      });
-
-      // 4. 재고 차감 및 판매량 업데이트, 포인트 사용/적립 처리
-      if (usePoint > 0) {
-        await tx.user.update({ where: { id: userId }, data: { points: { decrement: usePoint } } });
-        await tx.pointHistory.create({
+        // 4. 주문, 주문 아이템, 결제 정보 생성
+        const order = await tx.order.create({
           data: {
             userId,
-            orderId: order.id,
-            title: '주문 시 포인트 사용',
-            point: -usePoint,
-            type: PointHistoryType.USE,
+            name,
+            phoneNumber: phone,
+            address,
+            email: user.email,
+            subtotal: finalPrice,
+            usePoint,
+            status: orderStatus,
+            orderItems: {
+              create: computedItems.map((item) => ({
+                quantity: item.quantity,
+                price: item.price,
+                productName: item.productName,
+                productId: item.productId,
+                sizeId: item.sizeId,
+              })),
+            },
+            payment: {
+              create: {
+                price: finalPrice,
+                status: paymentStatus,
+              },
+            },
           },
         });
-      }
 
-      for (const item of computedItems) {
-        await tx.productStock.update({
-          where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
-          data: { quantity: { decrement: item.quantity } },
-        });
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { salesCount: { increment: item.quantity } },
-        });
-      }
+        // 5. 재고 차감 및 판매량 업데이트, 포인트 사용/적립 처리
+        if (usePoint > 0) {
+          await tx.user.update({ where: { id: userId }, data: { points: { decrement: usePoint } } });
+          await tx.pointHistory.create({
+            data: {
+              userId,
+              orderId: order.id,
+              title: '주문 시 포인트 사용',
+              point: -usePoint,
+              type: PointHistoryType.USE,
+            },
+          });
+        }
 
-      // 5. [핵심] 장바구니에서 주문된 상품들 제거
-      const userCart = await cartRepository.findCartByUserId(userId);
-      if (userCart) {
-        const productIdsToRemove = orderItems.map((item) => item.productId);
-        await tx.cartItem.deleteMany({
-          where: {
-            cartId: userCart.id,
-            productId: { in: productIdsToRemove },
-          },
-        });
-      }
+        for (const item of computedItems) {
+          await tx.productStock.update({
+            where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
+            data: { quantity: { decrement: item.quantity } },
+          });
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { salesCount: { increment: item.quantity } },
+          });
+        }
 
-      return order;
-    });
+        // 6. [핵심] 장바구니에서 주문된 상품들 제거
+        const userCart = await cartRepository.findCartByUserId(userId);
+        if (userCart) {
+          const productIdsToRemove = orderItems.map((item) => item.productId);
+          await tx.cartItem.deleteMany({
+            where: {
+              cartId: userCart.id,
+              productId: { in: productIdsToRemove },
+            },
+          });
+        }
 
-    // 6. 생성된 주문 정보 상세 조회 후 반환 (Serializer 적용을 위해)
+        return order;
+      },
+      { maxWait: 5000, timeout: 20000 },
+    );
+
+    // 7. 생성된 주문 정보 상세 조회 후 반환 (Serializer 적용을 위해)
     const detailedOrder = await orderRepository.findById(createdOrder.id);
     return OrderResponse.single(detailedOrder!);
   };
