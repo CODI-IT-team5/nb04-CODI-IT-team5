@@ -39,12 +39,3 @@ export const MESSAGE = {
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
 };
-
-export const ERROR_NAME = {
-  BAD_REQUEST: 'Bad Request',
-  UNAUTHORIZED: 'Unauthorized',
-  FORBIDDEN: 'Forbidden',
-  NOT_FOUND: 'Not Found',
-  CONFLICT: 'Conflict',
-  INTERNAL_SERVER_ERROR: 'Internal Server Error',
-};
