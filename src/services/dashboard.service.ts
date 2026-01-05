@@ -89,11 +89,11 @@ export const dashboardService = {
 
     // 기간별 통계 계산 (병렬 처리)
     const periods = ['today', 'week', 'month', 'year'] as const;
-    
+
     const statsPromises = periods.map(async (period) => {
       const currentRange = getDateRange(period, 0);
       const previousRange = getDateRange(period, -1);
-      
+
       const [current, previous] = await Promise.all([
         getPeriodStats(store.id, currentRange.start, currentRange.end),
         getPeriodStats(store.id, previousRange.start, previousRange.end),

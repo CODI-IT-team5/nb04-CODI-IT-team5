@@ -199,11 +199,31 @@ async function main() {
       }));
 
     const seedOrders: Array<{ name: string; createdAt: Date; items: Item[] }> = [
-      { name: '대시보드 샘플 1', createdAt: daysAgo(0), items: makeItems([{ p: 'sweater', sizeId: sizeS, quantity: 1 }]) },
-      { name: '대시보드 샘플 2', createdAt: daysAgo(1), items: makeItems([{ p: 'hoodie', sizeId: sizeM, quantity: 2 }]) },
-      { name: '대시보드 샘플 3', createdAt: daysAgo(3), items: makeItems([{ p: 'sweater', sizeId: sizeM, quantity: 3 }]) },
-      { name: '대시보드 샘플 4', createdAt: daysAgo(20), items: makeItems([{ p: 'hoodie', sizeId: sizeM, quantity: 1 }]) },
-      { name: '대시보드 샘플 5', createdAt: daysAgo(200), items: makeItems([{ p: 'sweater', sizeId: sizeS, quantity: 4 }]) },
+      {
+        name: '대시보드 샘플 1',
+        createdAt: daysAgo(0),
+        items: makeItems([{ p: 'sweater', sizeId: sizeS, quantity: 1 }]),
+      },
+      {
+        name: '대시보드 샘플 2',
+        createdAt: daysAgo(1),
+        items: makeItems([{ p: 'hoodie', sizeId: sizeM, quantity: 2 }]),
+      },
+      {
+        name: '대시보드 샘플 3',
+        createdAt: daysAgo(3),
+        items: makeItems([{ p: 'sweater', sizeId: sizeM, quantity: 3 }]),
+      },
+      {
+        name: '대시보드 샘플 4',
+        createdAt: daysAgo(20),
+        items: makeItems([{ p: 'hoodie', sizeId: sizeM, quantity: 1 }]),
+      },
+      {
+        name: '대시보드 샘플 5',
+        createdAt: daysAgo(200),
+        items: makeItems([{ p: 'sweater', sizeId: sizeS, quantity: 4 }]),
+      },
     ];
 
     let sweaterSold = 0;
