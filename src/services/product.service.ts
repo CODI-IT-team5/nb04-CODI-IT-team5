@@ -1,4 +1,4 @@
-import { STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE } from '../constants/constant.js';
 import { metadataRepository } from '../repositories/metadata.repository.js';
 import productRepository from '../repositories/product.repository.js';
 import storeRepository from '../repositories/store.repository.js';
@@ -53,10 +53,7 @@ class ProductService {
 
     const createdProduct = await productRepository.findByIdWithRelations(product.id);
     if (!createdProduct) {
-      throw new HttpException({
-        status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-        message: '상품 생성 후 조회에 실패했습니다.',
-      });
+      throw HttpException.notFound(MESSAGE.productCreationFailed);
     }
 
     return this.transformProductWithRelations(createdProduct);
@@ -73,7 +70,7 @@ class ProductService {
   getById = async (productId: string) => {
     const product = await productRepository.findByIdWithRelations(productId);
     if (!product) {
-      throw new HttpException({ status: STATUS_CODE.NOT_FOUND, message: '상품을 찾을 수 없습니다.' });
+      throw HttpException.notFound(MESSAGE.productNotFound);
     }
 
     return this.transformProductWithRelations(product);
@@ -125,10 +122,7 @@ class ProductService {
 
     const updatedProduct = await productRepository.findByIdWithRelations(input.productId);
     if (!updatedProduct) {
-      throw new HttpException({
-        status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-        message: '상품 업데이트 후 조회에 실패했습니다.',
-      });
+      throw HttpException.notFound(MESSAGE.productUpdateFailed);
     }
 
     return this.transformProductWithRelations(updatedProduct);
@@ -144,10 +138,7 @@ class ProductService {
   private validateStore = async (userId: string) => {
     const store = await storeRepository.findByUserId(userId);
     if (!store) {
-      throw new HttpException({
-        status: STATUS_CODE.FORBIDDEN,
-        message: '스토어가 없습니다. 판매자만 상품을 등록할 수 있습니다.',
-      });
+      throw HttpException.forbidden(MESSAGE.storeNotFound);
     }
     return store;
   };
@@ -156,7 +147,7 @@ class ProductService {
   private validateCategory = async (categoryName: string) => {
     const category = await metadataRepository.findCategoryByName(categoryName);
     if (!category) {
-      throw new HttpException({ status: STATUS_CODE.NOT_FOUND, message: '카테고리를 찾을 수 없습니다.' });
+      throw HttpException.notFound(MESSAGE.categoryNotFound);
     }
     return category;
   };
@@ -166,10 +157,7 @@ class ProductService {
     for (const stock of stocks) {
       const size = await metadataRepository.findSizeById(stock.sizeId);
       if (!size) {
-        throw new HttpException({
-          status: STATUS_CODE.NOT_FOUND,
-          message: `사이즈 ID ${stock.sizeId}를 찾을 수 없습니다.`,
-        });
+        throw HttpException.notFound(MESSAGE.sizeNotFound(stock.sizeId));
       }
     }
   };
@@ -178,10 +166,10 @@ class ProductService {
   private validateProductOwnership = async (input: ProductOwnershipValidationInput) => {
     const product = await productRepository.findByIdWithStoreOwner(input.productId);
     if (!product) {
-      throw new HttpException({ status: STATUS_CODE.NOT_FOUND, message: '상품을 찾을 수 없습니다.' });
+      throw HttpException.notFound(MESSAGE.productNotFound);
     }
     if (product.store.userId !== input.userId) {
-      throw new HttpException({ status: STATUS_CODE.FORBIDDEN, message: '본인의 상품만 수정/삭제할 수 있습니다.' });
+      throw HttpException.forbidden(MESSAGE.productOwnershipRequired);
     }
     return product;
   };
