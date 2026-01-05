@@ -30,6 +30,12 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: 환경 변수 설정 (Prisma 생성용)
+        run: echo "DATABASE_URL=postgresql://dummy@localhost/dummy" > .env
+
+      - name: Prisma Client 생성
+        run: npx prisma generate
+
       - name: Prettier 체크
         run: npm run format:check
 

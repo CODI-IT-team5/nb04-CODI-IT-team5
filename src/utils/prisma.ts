@@ -102,6 +102,30 @@ function handleUpdateOperation(
   query: (args: Record<string, unknown>) => Promise<unknown>,
 ): Promise<unknown> {
   addSoftDeleteFilter(args);
+
+  // data 객체에서 Prisma.skip 값을 제거
+  if (args.data && typeof args.data === 'object') {
+    const data = args.data as Record<string, unknown>;
+    const cleanedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      // Prisma.skip은 symbol이므로 typeof로 체크하거나, 빈 객체가 된 경우를 필터링
+      if (
+        value !== Prisma.skip &&
+        !(
+          typeof value === 'object' &&
+          value !== null &&
+          Object.keys(value).length === 0 &&
+          value.constructor === Object
+        )
+      ) {
+        cleanedData[key] = value;
+      }
+    }
+
+    args.data = cleanedData;
+  }
+
   return query(args);
 }
 

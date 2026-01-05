@@ -8,6 +8,11 @@ declare global {
         email: string;
         type: UserRole;
       };
+      validated?: {
+        body?: Record<string, unknown>;
+        query?: Record<string, unknown>;
+        params?: Record<string, unknown>;
+      };
     }
   }
 }
