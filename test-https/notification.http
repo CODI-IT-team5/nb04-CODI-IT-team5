@@ -1,3 +1,5 @@
+### sse 테스트는 9번 항목에 있습니다. (로그인해서 토큰 받고 실행해주세요)
+
 ### 0. 공통 변수
 @baseUrl = http://localhost:3001
 @productId = testProductId
@@ -32,6 +34,17 @@ Content-Type: application/json
 
 ### 구매자 토큰 저장
 @buyerToken = {{buyerLogin.response.body.accessToken}}
+
+
+# -----------------------------------------------------------------
+# 2.1. 구매자 정보 조회 (ID 획득용)
+# -----------------------------------------------------------------
+# @name getMe
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{buyerToken}}
+
+### 구매자 ID 저장
+@buyerId = {{getMe.response.body.id}}
 
 
 # -----------------------------------------------------------------
@@ -105,9 +118,56 @@ Authorization: Bearer {{buyerToken}}
 
 ###
 
+# =================================================================
+# 9. SSE 30초 주기 테스트
+# =================================================================
+
+# 테스트 방법:
+# 1. 아래 "SSE 연결 시작" 요청을 먼저 보냅니다.
+# 2. 곧바로 아래 "테스트 알림 생성 1", "테스트 알림 생성 2" 요청을 빠르게 연속으로 보냅니다.
+# 3. "SSE 연결 시작" 요청의 응답 창을 확인합니다.
+#    - 30초 이내에 2개의 알림 데이터가 배열 형태로 한꺼번에 수신되는지 확인합니다. (예: data: [ {..}, {..} ])
+# 4. 아무 요청도 보내지 않고 30초를 더 기다립니다.
+#    - 빈 배열(heartbeat)이 수신되는지 확인합니다. (예: data: [])
+
 # -----------------------------------------------------------------
-# 9. SSE 연결 테스트 (구매자)
+# 9.1. SSE 연결 시작 (구매자)
 # -----------------------------------------------------------------
+# @name subscribeToSSE
 GET {{baseUrl}}/api/notifications/sse
 Authorization: Bearer {{buyerToken}}
 Accept: text/event-stream
+
+###
+
+# -----------------------------------------------------------------
+# 9.2. 테스트 알림 생성 1 (구매자에게)
+# -----------------------------------------------------------------
+# @name createTestNotification1
+POST {{baseUrl}}/api/notifications
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{buyerId}}",
+  "type": "INQUIRY_REPLIED_FOR_BUYER",
+  "content": "첫 번째 테스트 알림입니다.",
+  "url": "/test/1"
+}
+
+###
+
+# -----------------------------------------------------------------
+# 9.3. 테스트 알림 생성 2 (구매자에게)
+# -----------------------------------------------------------------
+# @name createTestNotification2
+POST {{baseUrl}}/api/notifications
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{buyerId}}",
+  "type": "INQUIRY_REPLIED_FOR_BUYER",
+  "content": "두 번째 테스트 알림입니다.",
+  "url": "/test/2"
+}
