@@ -2,7 +2,6 @@ import { Prisma, UserRole } from '@prisma/client';
 
 import storeRepository from '../repositories/store.repository.js';
 import { userRepository } from '../repositories/user.repository.js';
-import { StoreResponse } from '../serializes/store.serialize.js';
 import type {
   CreateStoreServiceInput,
   GetMyProductsInput,
@@ -28,7 +27,7 @@ class StoreService {
 
     try {
       const store = await storeRepository.create(input);
-      return StoreResponse.base(store);
+      return store;
     } catch (err: unknown) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         throw HttpException.badRequest('이미 사용 중인 스토어 이름입니다');
@@ -56,7 +55,7 @@ class StoreService {
 
     try {
       const updatedStore = await storeRepository.update(input);
-      return StoreResponse.base(updatedStore);
+      return updatedStore;
     } catch (err: unknown) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         throw HttpException.badRequest('이미 사용 중인 스토어 이름입니다');
@@ -70,7 +69,7 @@ class StoreService {
     if (!store) {
       throw HttpException.notFound('스토어를 찾을 수 없습니다');
     }
-    return StoreResponse.detail(store);
+    return store;
   };
 
   getMyStore = async (userId: string) => {
@@ -78,7 +77,7 @@ class StoreService {
     if (!store) {
       throw HttpException.notFound('스토어를 찾을 수 없습니다');
     }
-    return StoreResponse.myDetail(store);
+    return store;
   };
 
   getMyProducts = async (input: GetMyProductsInput) => {
@@ -95,7 +94,7 @@ class StoreService {
 
     return {
       type: result.type,
-      store: StoreResponse.base(store),
+      store,
     };
   };
 }

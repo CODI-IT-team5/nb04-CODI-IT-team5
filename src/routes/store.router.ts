@@ -11,7 +11,7 @@ export const storeRouter = express.Router();
 // 새 스토어 등록
 storeRouter.route('/').post(authMiddleware, requireSeller, validateMiddleware(storeDto.create), storeController.create);
 
-// 내 스토어 상세 조회 (구체적 경로를 동적 경로보다 먼저!)
+// 내 스토어 상세 조회
 storeRouter.route('/detail/my').get(authMiddleware, requireSeller, storeController.getMyStore);
 
 // 내 스토어 등록 상품 조회
@@ -19,13 +19,13 @@ storeRouter
   .route('/detail/my/product')
   .get(authMiddleware, requireSeller, validateMiddleware(storeDto.getMyProducts), storeController.getMyProducts);
 
-// 관심 스토어 등록/해제 (구체적 경로를 먼저!)
+// 관심 스토어 등록/해제
 storeRouter
   .route('/:storeId/favorite')
   .post(authMiddleware, validateMiddleware(storeDto.toggleFavorite), storeController.toggleFavorite)
   .delete(authMiddleware, validateMiddleware(storeDto.toggleFavorite), storeController.toggleFavorite);
 
-// 스토어 상세 조회/수정 (동적 경로는 마지막에!)
+// 스토어 상세 조회/수정
 storeRouter
   .route('/:storeId')
   .get(validateMiddleware(storeDto.getById), storeController.getById)
