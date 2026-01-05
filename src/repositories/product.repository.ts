@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import type {
   CreateDiscountRepositoryInput,
@@ -188,12 +188,12 @@ export class ProductRepository {
     return prisma.product.update({
       where: { id: input.productId },
       data: {
-        ...(input.data.name !== undefined && { name: input.data.name }),
-        ...(input.data.price !== undefined && { price: input.data.price }),
-        ...(input.data.content !== undefined && { content: input.data.content }),
-        ...(input.data.image !== undefined && { image: input.data.image }),
-        ...(input.data.categoryId !== undefined && { categoryId: input.data.categoryId }),
-        ...(input.data.isSoldOut !== undefined && { isSoldOut: input.data.isSoldOut }),
+        name: input.data.name ?? Prisma.skip,
+        price: input.data.price ?? Prisma.skip,
+        content: input.data.content ?? Prisma.skip,
+        image: input.data.image ?? Prisma.skip,
+        categoryId: input.data.categoryId ?? Prisma.skip,
+        isSoldOut: input.data.isSoldOut ?? Prisma.skip,
       },
     });
   };
