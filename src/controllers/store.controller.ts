@@ -32,7 +32,7 @@ class StoreController {
     try {
       const { storeId } = req.params;
       if (!storeId) throw HttpException.badRequest('storeId가 필요합니다');
-      const store = await storeService.getById({ storeId });
+      const store = await storeService.getById(storeId);
       res.status(STATUS_CODE.OK).json(StoreResponse.detail(store));
     } catch (err) {
       next(err);

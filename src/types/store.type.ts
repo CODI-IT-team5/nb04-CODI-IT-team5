@@ -9,11 +9,6 @@ export interface UpdateStoreServiceInput extends UpdateStoreDto {
   userId: string;
 }
 
-export interface GetStoreByIdInput {
-  storeId: string;
-  userId?: string;
-}
-
 export interface ToggleFavoriteInput {
   storeId: string;
   userId: string;

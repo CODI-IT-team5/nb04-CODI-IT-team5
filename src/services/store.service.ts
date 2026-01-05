@@ -1,11 +1,10 @@
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import storeRepository from '../repositories/store.repository.js';
 import { userRepository } from '../repositories/user.repository.js';
 import type {
   CreateStoreServiceInput,
   GetMyProductsInput,
-  GetStoreByIdInput,
   ToggleFavoriteInput,
   UpdateStoreServiceInput,
 } from '../types/store.type.js';
@@ -16,10 +15,7 @@ class StoreService {
     const user = await userRepository.getById(input.userId);
     if (!user) throw HttpException.userNotFound();
 
-    if (user.type !== UserRole.SELLER) {
-      throw HttpException.forbidden('판매자만 스토어를 등록할 수 있습니다');
-    }
-
+    // TODO: prisma error target 안 잡히는 문제 해결하면 조회 없이 catch err에서 분기 처리 가능
     const existingStore = await storeRepository.findByUserId(input.userId);
     if (existingStore) {
       throw HttpException.badRequest('이미 등록된 스토어가 있습니다');
@@ -64,8 +60,8 @@ class StoreService {
     }
   };
 
-  getById = async (input: GetStoreByIdInput) => {
-    const store = await storeRepository.findByIdWithDetails(input);
+  getById = async (storeId: string) => {
+    const store = await storeRepository.findByIdWithDetails(storeId);
     if (!store) {
       throw HttpException.notFound('스토어를 찾을 수 없습니다');
     }

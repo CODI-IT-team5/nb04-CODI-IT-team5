@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client';
 import type {
   CreateStoreServiceInput,
   GetMyProductsInput,
-  GetStoreByIdInput,
   ToggleFavoriteInput,
   UpdateStoreServiceInput,
 } from '../types/store.type.js';
@@ -28,13 +27,13 @@ export class StoreRepository {
     });
   }
 
-  async findByIdWithDetails(input: GetStoreByIdInput) {
+  async findByIdWithDetails(storeId: string) {
     const favoriteCount = await prisma.favoriteStore.count({
-      where: { storeId: input.storeId },
+      where: { storeId },
     });
 
     const store = await prisma.store.findFirst({
-      where: { id: input.storeId },
+      where: { id: storeId },
     });
 
     if (!store) return null;
