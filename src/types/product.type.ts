@@ -1,5 +1,7 @@
 import type { Category, Product, ProductDiscount, ProductStock, Size, Store } from '@prisma/client';
 
+import type { CreateProductDto, UpdateProductDto } from '../dtos/product.dto.js';
+
 // 상품 목록용 상품 타입 (productDiscounts 포함)
 export interface ProductWithStore extends Product {
   store: Store;
@@ -114,4 +116,29 @@ export interface ProductListFilters {
 export interface ProductListResponse {
   list: ProductListItem[];
   totalCount: number;
+}
+
+export interface ProductUpdateServiceInput extends UpdateProductDto {
+  userId: string;
+  productId: string;
+}
+
+export interface ProductCreateServiceInput {
+  userId: string;
+  data: CreateProductDto;
+}
+
+export interface ProductGetListServiceInput {
+  filters: ProductListFilters;
+  userId?: string | undefined;
+}
+
+export interface ProductDeleteServiceInput {
+  userId: string;
+  productId: string;
+}
+
+export interface ProductOwnershipValidationInput {
+  productId: string;
+  userId: string;
 }

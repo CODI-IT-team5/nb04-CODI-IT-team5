@@ -63,7 +63,68 @@ export const deleteProductDto = {
 };
 
 // 타입 내보내기
-export type CreateProductInput = z.infer<typeof createProductDto.body>;
-export type UpdateProductInput = z.infer<typeof updateProductDto.body>;
+export type CreateProductDto = z.infer<typeof createProductDto.body>;
+export type UpdateProductDto = z.infer<typeof updateProductDto.body>;
 export type GetProductListQuery = z.infer<typeof getProductListDto.query>;
 export type StockItem = z.infer<typeof stockItemSchema>;
+
+// Repository용 Data 타입
+export interface CreateProductRepositoryData {
+  name: string;
+  price: number;
+  content?: string;
+  image?: string;
+}
+
+export interface UpdateProductRepositoryData {
+  name?: string | undefined;
+  price?: number | undefined;
+  content?: string | undefined;
+  image?: string | undefined;
+  categoryId?: string | undefined;
+  isSoldOut?: boolean | undefined;
+}
+
+export interface CreateDiscountRepositoryData {
+  discountRate: number;
+  discountStartTime: Date;
+  discountEndTime: Date;
+}
+
+// Repository 메서드 Input 타입
+export interface CreateProductRepositoryInput {
+  storeId: string;
+  categoryId: string | null;
+  data: CreateProductRepositoryData;
+}
+
+export interface CreateStockRepositoryInput {
+  productId: string;
+  sizeId: string;
+  quantity: number;
+}
+
+export interface UpdateStockRepositoryInput {
+  stockId: string;
+  quantity: number;
+}
+
+export interface UpsertStocksRepositoryInput {
+  productId: string;
+  stocks: StockItem[];
+}
+
+export interface UpdateProductRepositoryInput {
+  productId: string;
+  data: UpdateProductRepositoryData;
+}
+
+export interface CreateDiscountRepositoryInput {
+  productId: string;
+  data: CreateDiscountRepositoryData;
+}
+
+export interface FindManyProductRepositoryInput {
+  filters: GetProductListQuery;
+  userId?: string | undefined;
+}

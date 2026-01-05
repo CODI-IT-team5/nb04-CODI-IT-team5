@@ -1,16 +1,24 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
-import type { ProductListFilters, StockInput } from '../types/product.type.js';
+import type {
+  CreateDiscountRepositoryInput,
+  CreateProductRepositoryInput,
+  CreateStockRepositoryInput,
+  FindManyProductRepositoryInput,
+  UpdateProductRepositoryInput,
+  UpdateStockRepositoryInput,
+  UpsertStocksRepositoryInput,
+} from '../dtos/product.dto.js';
 import prisma from '../utils/prisma.js';
 
 export class ProductRepository {
-  async findById(productId: string) {
+  findById = async (productId: string) => {
     return prisma.product.findFirst({
       where: { id: productId },
     });
-  }
+  };
 
-  async findByIdWithStoreOwner(productId: string) {
+  findByIdWithStoreOwner = async (productId: string) => {
     return prisma.product.findFirst({
       where: { id: productId },
       include: {
@@ -21,9 +29,9 @@ export class ProductRepository {
         },
       },
     });
-  }
+  };
 
-  async findByIdWithRelations(productId: string) {
+  findByIdWithRelations = async (productId: string) => {
     return prisma.product.findFirst({
       where: { id: productId },
       include: {
@@ -60,10 +68,10 @@ export class ProductRepository {
         },
       },
     });
-  }
+  };
 
-  async findMany(filters: ProductListFilters, userId?: string) {
-    const { page, pageSize, search, sort, priceMin, priceMax, size, favoriteStore, categoryName } = filters;
+  findMany = async (input: FindManyProductRepositoryInput) => {
+    const { page, pageSize, search, sort, priceMin, priceMax, size, favoriteStore, categoryName } = input.filters;
 
     const where: Prisma.ProductWhereInput = {};
 
@@ -104,11 +112,11 @@ export class ProductRepository {
     }
 
     // 찜한 스토어 필터
-    if (favoriteStore && userId) {
+    if (favoriteStore && input.userId) {
       where.store = {
         likedBy: {
           some: {
-            userId,
+            userId: input.userId,
           },
         },
       };
@@ -160,85 +168,67 @@ export class ProductRepository {
     ]);
 
     return { products, totalCount };
-  }
+  };
 
-  async create(
-    storeId: string,
-    categoryId: string | null,
-    data: {
-      name: string;
-      price: number;
-      content?: string;
-      image?: string;
-    },
-  ) {
+  create = async (input: CreateProductRepositoryInput) => {
     return prisma.product.create({
       data: {
-        ...data,
-        storeId,
-        categoryId,
+        ...input.data,
+        storeId: input.storeId,
+        categoryId: input.categoryId,
         isSoldOut: false,
         salesCount: 0,
         reviewsCount: 0,
         reviewsRating: 0,
       },
     });
-  }
+  };
 
-  async update(
-    productId: string,
-    data: {
-      name?: string | undefined;
-      price?: number | undefined;
-      content?: string | undefined;
-      image?: string | undefined;
-      categoryId?: string | null | undefined;
-      isSoldOut?: boolean | undefined;
-    },
-  ) {
+  update = async (input: UpdateProductRepositoryInput) => {
     return prisma.product.update({
-      where: { id: productId },
+      where: { id: input.productId },
       data: {
-        name: data.name ?? Prisma.skip,
-        price: data.price ?? Prisma.skip,
-        content: data.content ?? Prisma.skip,
-        image: data.image ?? Prisma.skip,
-        categoryId: data.categoryId ?? Prisma.skip,
-        isSoldOut: data.isSoldOut ?? Prisma.skip,
+        ...(input.data.name !== undefined && { name: input.data.name }),
+        ...(input.data.price !== undefined && { price: input.data.price }),
+        ...(input.data.content !== undefined && { content: input.data.content }),
+        ...(input.data.image !== undefined && { image: input.data.image }),
+        ...(input.data.categoryId !== undefined && { categoryId: input.data.categoryId }),
+        ...(input.data.isSoldOut !== undefined && { isSoldOut: input.data.isSoldOut }),
       },
     });
-  }
+  };
 
-  async delete(productId: string) {
+  delete = async (productId: string) => {
     return prisma.product.delete({
       where: { id: productId },
     });
-  }
+  };
 
-  async createStock(productId: string, sizeId: string, quantity: number) {
+  createStock = async (input: CreateStockRepositoryInput) => {
     return prisma.productStock.create({
       data: {
-        productId,
-        sizeId,
-        quantity,
+        productId: input.productId,
+        sizeId: input.sizeId,
+        quantity: input.quantity,
       },
     });
-  }
+  };
 
-  async updateStock(stockId: string, quantity: number) {
+  updateStock = async (input: UpdateStockRepositoryInput) => {
     return prisma.productStock.update({
-      where: { id: stockId },
-      data: { quantity },
+      where: { id: input.stockId },
+      data: { quantity: input.quantity },
     });
-  }
+  };
 
-  async deleteStock(stockId: string) {
+  deleteStock = async (stockId: string) => {
     return prisma.productStock.delete({
       where: { id: stockId },
     });
-  }
+  };
 
-  async upsertStocks(productId: string, stocks: StockInput[]) {
+  upsertStocks = async (input: UpsertStocksRepositoryInput) => {
+    const { productId, stocks } = input;
     const operations = stocks.map((stock) =>
       prisma.productStock.upsert({
         where: {
@@ -259,25 +249,18 @@ export class ProductRepository {
     );
 
     return prisma.$transaction(operations);
-  }
+  };
 
-  async createDiscount(
-    productId: string,
-    data: {
-      discountRate: number;
-      discountStartTime: Date;
-      discountEndTime: Date;
-    },
-  ) {
+  createDiscount = async (input: CreateDiscountRepositoryInput) => {
     return prisma.productDiscount.create({
       data: {
-        productId,
-        ...data,
+        productId: input.productId,
+        ...input.data,
       },
     });
-  }
+  };
 
-  async revokeActiveDiscounts(productId: string) {
+  revokeActiveDiscounts = async (productId: string) => {
     return prisma.productDiscount.updateMany({
       where: {
         productId,
@@ -287,7 +270,7 @@ export class ProductRepository {
         revokedAt: new Date(),
       },
     });
-  }
+  };
 }
 
 export default new ProductRepository();
