@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
+import type { MyProductsQueryDto } from '../dtos/store.dto.js';
 import { StoreResponse } from '../serializes/store.serialize.js';
 import { storeService } from '../services/store.service.js';
 import { HttpException } from '../utils/http-exception.js';
@@ -51,10 +52,10 @@ class StoreController {
   getMyProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) throw HttpException.userNotFound();
-      const { page, pageSize } = req.validated?.query || {};
+      const { page, pageSize } = req.validated?.query as MyProductsQueryDto;
       const result = await storeService.getMyProducts({
-        page: page as number,
-        pageSize: pageSize as number,
+        page,
+        pageSize,
         userId: req.user.id,
       });
       res.status(STATUS_CODE.OK).json(result);
