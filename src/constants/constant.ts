@@ -36,6 +36,11 @@ export const MESSAGE = {
   insufficientStock: (sizeId: string, availableQuantity: number) =>
     `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
 
+  sizeNotFound: '사이즈가 존재하지 않습니다',
+  cartCreationFailed: '장바구니 생성에 실패했습니다',
+  cartNotFound: '장바구니를 찾을 수 없습니다',
+  cartItemNotFound: '장바구니에 아이템이 없습니다',
+
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
 };
