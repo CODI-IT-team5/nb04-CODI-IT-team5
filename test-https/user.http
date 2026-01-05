@@ -1,3 +1,4 @@
+@baseUrl = http://localhost:3001
 @refreshToken = {{auth.response.cookies['refreshToken']}
 @accessToken = {{auth.response.body.accessToken}}
 @newUserEmail = test@test.com

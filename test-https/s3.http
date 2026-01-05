@@ -1,14 +1,94 @@
-### 환경 변수
+### test-https 상위 폴더에 test.jpg(정상 파일)와 fake.jpg(텍스트 파일)이 존재해야 합니다 !!
+### 환경 변수 설정
 @host = http://localhost:3001
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
+@newUserEmail = test@test.com
+@newUserPassword = testtest
 
-### 1. 이미지 업로드 테스트
+# =======================================================
+# 1단계: 인증 (로그인 및 토큰 획득)
+# =======================================================
+
+# 1. [회원가입] 테스트용 유저 생성
+POST {{host}}/api/users
+Content-Type: application/json
+
+{
+  "name": "테스트유저",
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}",
+  "type": "BUYER"
+}
+
+###
+
+# 2. [로그인] Access Token 발급 받기
+# @name auth 
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}"
+}
+
+###
+
+# 3. [변수 저장] 토큰 자동 추출
+@token = {{auth.response.body.accessToken}}
+
+
+# =======================================================
+# 2단계: 이미지 업로드 테스트 (성공 & 실패)
+# =======================================================
+
+# -------------------------------------------------------
+# Case A. [성공] 정상적인 JPG 이미지 업로드
+# -------------------------------------------------------
+# 예상 결과: 200 OK
 POST {{host}}/api/s3/upload
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary={{boundary}}
 
-------WebKitFormBoundary7MA4YWxkTrZu0gW
+--{{boundary}}
 Content-Disposition: form-data; name="image"; filename="test.jpg"
 Content-Type: image/jpeg
 
-// 테스트 할 이미지를 프로젝트 폴더에 생성하고 테스트 진행
-< ./../test.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
+< ../test.jpg
+--{{boundary}}--
+
+###
+
+# -------------------------------------------------------
+# Case B. [실패] 가짜 이미지 파일 (MIME Type 불일치)
+# -------------------------------------------------------
+# 시나리오: 확장자는 .jpg지만, 실제 내용(Content-Type)은 text/plain인 경우
+# 예상 결과: 400 Bad Request
+POST {{host}}/api/s3/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="fake.jpg"
+Content-Type: text/plain
+
+< ../fake.jpg
+--{{boundary}}--
+
+###
+
+# -------------------------------------------------------
+# Case C. [실패] 허용되지 않은 확장자 (.txt)
+# -------------------------------------------------------
+# 시나리오: 이미지 파일이 아닌 .txt 파일을 올리는 경우
+# 예상 결과: 400 Bad Request
+POST {{host}}/api/s3/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="memo.txt"
+Content-Type: text/plain
+
+< ../fake.jpg
+--{{boundary}}--

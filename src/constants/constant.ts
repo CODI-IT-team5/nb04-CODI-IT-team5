@@ -14,7 +14,7 @@ export const STATUS_CODE = {
 
 export const MESSAGE = {
   userAuthenticated: '사용자가 성공적으로 인증되었습니다',
-  emailAready: '이미 존재하는 유저입니다',
+  emailAlready: '이미 존재하는 유저입니다',
   logoutSuccess: '성공적으로 로그아웃되었습니다',
   userDeleted: '회원탈퇴를 성공했습니다',
   invalidPassword: '현재 비밀번호가 올바르지 않습니다',
@@ -32,6 +32,12 @@ export const MESSAGE = {
 
   unauthorized: '로그인이 필요합니다',
   forbidden: '권한이 없습니다',
+
+  orderItemsEmpty: '주문할 상품이 없습니다.',
+  insufficientStock: (sizeId: string, availableQuantity: number) =>
+    `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
+  insufficientPoints: '보유 포인트를 초과하여 사용할 수 없습니다.',
+  orderCancellationFailed: '결제 대기중인 주문만 취소할 수 있습니다.',
 
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',

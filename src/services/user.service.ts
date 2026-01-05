@@ -1,6 +1,5 @@
 import { DeletedTokenReason, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
 import { config } from '../config/config.js';
 import { MESSAGE } from '../constants/constant.js';
@@ -10,6 +9,7 @@ import { userRepository } from '../repositories/user.repository.js';
 import { UserResponse } from '../serializes/user.serialize.js';
 import type { deleteUser, UpdateUserInput } from '../types/user.type.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
 
 class UserService {
   getById = async (userId: string) => {
@@ -48,11 +48,14 @@ class UserService {
   };
 
   delete = async (input: deleteUser) => {
-    const decoded = jwt.verify(input.refreshToken, config.auth.refreshTokenSecretKey);
-    if (!decoded || typeof decoded === 'string' || !decoded.jti) throw HttpException.tokenError();
-
-    await authRepository.deleteRefreshToken({ jti: decoded.jti, reason: DeletedTokenReason.DELETED_USER });
-    return await userRepository.delete(input.userId);
+    return await prisma.$transaction(async (tx) => {
+      // 사용자의 모든 디바이스 ID 조회
+      const deviceIds = await authRepository.findUserDeviceIds(input.userId, tx);
+      // 해당 디바이스들의 모든 RefreshToken 삭제
+      await authRepository.deleteRefreshTokensByDeviceIds(deviceIds, DeletedTokenReason.DELETED_USER, tx);
+      // 사용자 삭제
+      return await userRepository.deleteWithTx(input.userId, tx);
+    });
   };
 
   getLikeStores = async (userId: string) => {

@@ -1,0 +1,28 @@
+### 등급 조회
+GET {{baseUrl}}/api/metadata/grade
+
+# ---------------------------------------
+# 누적 금액이랑 등급 변화 바로 확인하고 싶어서 임시로
+# 라우터랑 http 코드 작성
+# ---------------------------------------
+@accessToken = {{auth.response.body.accessToken}}
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "{{user}}",
+  "password": "{{password}}"
+}
+
+### 누적 구매 금액 변경
+PATCH  {{baseUrl}}/api/metadata/grade
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "deltaAmount": 30000
+}
