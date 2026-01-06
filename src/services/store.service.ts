@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-import storeRepository from '../repositories/store.repository.js';
+import { storeRepository } from '../repositories/store.repository.js';
 import { userRepository } from '../repositories/user.repository.js';
 import type {
   CreateStoreServiceInput,

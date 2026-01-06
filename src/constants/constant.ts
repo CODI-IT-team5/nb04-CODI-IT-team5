@@ -37,8 +37,18 @@ export const MESSAGE = {
   insufficientStock: (sizeId: string, availableQuantity: number) =>
     `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
   insufficientPoints: '보유 포인트를 초과하여 사용할 수 없습니다.',
-  orderCancellationFailed: '결제 대기중인 주문만 취소할 수 있습니다.',
 
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
+
+  orderNotFound: '주문을 찾을 수 없습니다.',
+  orderCancellationFailed: '주문 취소에 실패했습니다.',
+
+  productCreationFailed: '상품 생성 후 조회에 실패했습니다.',
+  productNotFound: '상품을 찾을 수 없습니다.',
+  productUpdateFailed: '상품 업데이트 후 조회에 실패했습니다.',
+  storeNotFound: '스토어가 없습니다. 판매자만 상품을 등록할 수 있습니다.',
+  categoryNotFound: '카테고리를 찾을 수 없습니다.',
+  sizeNotFound: (sizeId: string) => `사이즈 ID ${sizeId}를 찾을 수 없습니다.`,
+  productOwnershipRequired: '본인의 상품만 수정/삭제할 수 있습니다.',
 };
