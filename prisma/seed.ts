@@ -57,13 +57,13 @@ async function main() {
   // ----------------------
   await prisma.category.createMany({
     data: [
-      { name: 'TOP' },
-      { name: 'BOTTOM' },
-      { name: 'OUTER' },
-      { name: 'DRESS' },
-      { name: 'SKIRT' },
-      { name: 'SHOES' },
-      { name: 'ACC' },
+      { name: 'top' },
+      { name: 'bottom' },
+      { name: 'outer' },
+      { name: 'dress' },
+      { name: 'skirt' },
+      { name: 'shoes' },
+      { name: 'acc' },
     ],
     skipDuplicates: true,
   });
@@ -73,11 +73,12 @@ async function main() {
   // ----------------------
   await prisma.size.createMany({
     data: [
-      { id: 'size_free', name: 'Free', sizeDetail: { ko: '프리사이즈', en: 'Free' } },
-      { id: 'size_s', name: 'S', sizeDetail: { ko: '스몰', en: 'Small' } },
-      { id: 'size_m', name: 'M', sizeDetail: { ko: '미디움', en: 'Medium' } },
-      { id: 'size_l', name: 'L', sizeDetail: { ko: '라지', en: 'Large' } },
-      { id: 'size_xl', name: 'XL', sizeDetail: { ko: '엑스라지', en: 'X-Large' } },
+      { id: 1, name: 'XS', sizeDetail: { ko: '엑스스몰', en: 'X-Small' } },
+      { id: 2, name: 'S', sizeDetail: { ko: '스몰', en: 'Small' } },
+      { id: 3, name: 'M', sizeDetail: { ko: '미디움', en: 'Medium' } },
+      { id: 4, name: 'L', sizeDetail: { ko: '라지', en: 'Large' } },
+      { id: 5, name: 'XL', sizeDetail: { ko: '엑스라지', en: 'X-Large' } },
+      { id: 6, name: 'Free', sizeDetail: { ko: '프리사이즈', en: 'Free' } },
     ],
     skipDuplicates: true,
   });
@@ -112,7 +113,7 @@ async function main() {
   // ----------------------
 
   const topCategory = await prisma.category.findFirst({
-    where: { name: 'TOP' },
+    where: { name: 'top' },
   });
 
   const testProduct = await prisma.product.upsert({
@@ -133,14 +134,14 @@ async function main() {
   // 8. 재고 추가 (테스트용)
   // ----------------------
   await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: testProduct.id, sizeId: 'size_s' } },
+    where: { productId_sizeId: { productId: testProduct.id, sizeId: 2 } },
     update: { quantity: 10 },
-    create: { productId: testProduct.id, sizeId: 'size_s', quantity: 10 },
+    create: { productId: testProduct.id, sizeId: 2, quantity: 10 },
   });
   await prisma.productStock.upsert({
-    where: { productId_sizeId: { productId: testProduct.id, sizeId: 'size_m' } },
+    where: { productId_sizeId: { productId: testProduct.id, sizeId: 3 } },
     update: { quantity: 10 },
-    create: { productId: testProduct.id, sizeId: 'size_m', quantity: 10 },
+    create: { productId: testProduct.id, sizeId: 3, quantity: 10 },
   });
 
   console.log(' 테스트용 상품 및 재고 생성 완료!');

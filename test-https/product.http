@@ -22,19 +22,19 @@ Content-Type: application/json
   "name": "가디건",
   "price": 20000,
   "content": "상품 상세 설명",
-  "image": "https://s3.amazonaws.com/bucket/products/cardigan.jpg",
-  "categoryName": "TOP",
+  "imageId": "default-image",
+  "categoryName": "top",
   "stocks": [
     {
-      "sizeId": "size_free",
+      "sizeId": 3,
       "quantity": 10
     },
     {
-      "sizeId": "size_s",
+      "sizeId": 2,
       "quantity": 5
     },
     {
-      "sizeId": "size_m",
+      "sizeId": 1,
       "quantity": 8
     }
   ],
@@ -64,11 +64,11 @@ Content-Type: application/json
   "isSoldOut": false,
   "stocks": [
     {
-      "sizeId": "size_free",
+      "sizeId": 1,
       "quantity": 15
     },
     {
-      "sizeId": "size_m",
+      "sizeId": 2,
       "quantity": 12
     }
   ]
