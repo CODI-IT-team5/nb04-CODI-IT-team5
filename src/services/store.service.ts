@@ -42,13 +42,6 @@ class StoreService {
       throw HttpException.forbidden('본인의 스토어만 수정할 수 있습니다');
     }
 
-    if (input.name && input.name !== store.name) {
-      const existingStore = await storeRepository.findByName(input.name);
-      if (existingStore && existingStore.id !== input.storeId) {
-        throw HttpException.badRequest('이미 사용 중인 스토어 이름입니다');
-      }
-    }
-
     try {
       const updatedStore = await storeRepository.update(input);
       return updatedStore;
