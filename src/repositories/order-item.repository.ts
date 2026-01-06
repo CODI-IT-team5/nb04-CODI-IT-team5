@@ -10,6 +10,13 @@ export class OrderItemRepository {
       },
     });
   }
+
+  async updateIsReviewed(orderItemId: string, isReviewed: boolean) {
+    return prisma.orderItem.update({
+      where: { id: orderItemId },
+      data: { isReviewed },
+    });
+  }
 }
 
 export default new OrderItemRepository();

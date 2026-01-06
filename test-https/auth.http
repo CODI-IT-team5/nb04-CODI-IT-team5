@@ -1,6 +1,7 @@
 
-@refreshToken = {{auth.response.cookies['refreshToken']}
+@refreshToken = {{auth.response.cookies['refreshToken']}}
 @accessToken = {{auth.response.body.accessToken}}
+
 
 ### 서버 상태 확인
 GET {{baseUrl}}/health
@@ -13,8 +14,8 @@ Content-Type: application/json
 User-Agent: rest-client-test
 
 {
-  "email": "{{user}}",
-  "password": "{{password}}"
+  "email": "buyer1@test.com",
+  "password": "test1234"
 }
 
 ### 엑세스 토큰 재발급

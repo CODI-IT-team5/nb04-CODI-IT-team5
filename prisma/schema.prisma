@@ -34,7 +34,6 @@ model User {
 
   // 관계 설정
   store Store? // 판매자: 본인 스토어 (1:1)
-  cart  Cart? // 구매자: 장바구니 (1:1)
 
   orders         Order[] // 주문 내역
   reviews        Review[] // 작성한 리뷰
@@ -45,6 +44,7 @@ model User {
   pointHistories PointHistory[]
   devices        Device[]
   uploadedImages Image[]
+  cart           Cart?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
@@ -190,6 +190,38 @@ model Size {
 }
 
 // ==========================================
+// 3-2. 장바구니 (Cart)
+// ==========================================
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sizeId String
+  size   Size   @relation(fields: [sizeId], references: [id])
+
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, sizeId])
+}
+
+// ==========================================
 // 4. 상품 (Product)
 // ==========================================
 
@@ -216,8 +248,7 @@ model Product {
   stocks  ProductStock[]
   reviews Review[]
   inquiries Inquiry[]
-
-  cartItems  CartItem[]
+  cartItems CartItem[]
   orderItems OrderItem[]
 
   createdAt        DateTime          @default(now())
@@ -255,39 +286,7 @@ model ProductStock {
 }
 
 // ==========================================
-// 5. 장바구니 (Cart)
-// ==========================================
-
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
-
-model CartItem {
-  id     String @id @default(cuid())
-  cartId String
-  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  sizeId String
-  size   Size   @relation(fields: [sizeId], references: [id])
-
-  quantity Int @default(1)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId, sizeId])
-}
-
-// ==========================================
-// 6. 주문 (Order)
+// 5. 주문 (Order)
 // ==========================================
 
 enum OrderStatus {
@@ -317,7 +316,7 @@ model Order {
   email       String
 
   // 금액 정보
-  subtotal Int // 할인 적용 + 포인트 사용 후 총 상품 금액
+  subtotal Int @default(0) // 할인 적용 + 포인트 사용 후 총 상품 금액
   usePoint Int @default(0) // 사용한 포인트
 
   status OrderStatus @default(WaitingPayment)
@@ -380,7 +379,7 @@ model Payment {
 }
 
 // ==========================================
-// 7. 커뮤니티 (Review, Inquiry)
+// 6. 커뮤니티 (Review, Inquiry)
 // ==========================================
 
 model Review {
@@ -441,7 +440,7 @@ model InquiryReply {
 }
 
 // ==========================================
-// 8. 알림 (Notification)
+// 7. 알림 (Notification)
 // ==========================================
 
 enum NotificationType {
