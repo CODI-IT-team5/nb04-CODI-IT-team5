@@ -44,6 +44,7 @@ model User {
   pointHistories PointHistory[]
   devices        Device[]
   uploadedImages Image[]
+  cart           Cart?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
@@ -189,6 +190,38 @@ model Size {
 }
 
 // ==========================================
+// 3-2. 장바구니 (Cart)
+// ==========================================
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sizeId String
+  size   Size   @relation(fields: [sizeId], references: [id])
+
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, sizeId])
+}
+
+// ==========================================
 // 4. 상품 (Product)
 // ==========================================
 
@@ -215,7 +248,7 @@ model Product {
   stocks  ProductStock[]
   reviews Review[]
   inquiries Inquiry[]
-
+  cartItems CartItem[]
   orderItems OrderItem[]
 
   createdAt        DateTime          @default(now())
