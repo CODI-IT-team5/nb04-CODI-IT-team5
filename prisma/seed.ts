@@ -86,11 +86,7 @@ async function main() {
   // 5. 스토어
   // ----------------------
   const seller1Store = await prisma.store.upsert({
-<<<<<<< HEAD
-    where: { name: '셀러1 스토어' },
-=======
     where: { userId: seller1.id },
->>>>>>> origin/dev
     update: {},
     create: {
       name: '셀러1 스토어',

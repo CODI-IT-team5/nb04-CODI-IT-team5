@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-@refreshToken = {{auth.response.cookies['refreshToken']}}
-@accessToken = {{auth.response.body.accessToken}}
-@hoodieId = cmjc7d7wq000g9zjafx0hwebf
-@orderId = {{createOrder.response.body.id}}
-
-### 주문 목록 조회
-GET {{baseUrl}}/api/orders?limit=10&page=1
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-### 주문 상세 조회
-GET {{baseUrl}}/api/orders/{{orderId}}
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-### 주문 생성
-# @name createOrder
-=======
 ### 공통 변수
 @baseUrl = http://localhost:3001
 @testProductId = testProductId
@@ -64,40 +45,11 @@ Content-Type: application/json
 
 ### 1.2. 실제 주문 생성 (isTest 없음)
 # @name createRealOrder
->>>>>>> origin/dev
 POST {{baseUrl}}/api/orders
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-<<<<<<< HEAD
-	"name": "홍길동",
-	"phone": "010-1234-5678",
-	"address": "서울시 강남구 예시로 1",
-	"orderItems": [
-		{
-			"productId": "{{sweaterId}}",
-			"sizeId": "size_s",
-			"quantity": 1
-		},
-		{
-			"productId": "{{hoodieId}}",
-			"sizeId": "size_m",
-			"quantity": 2
-		}
-	],
-	"usePoint": 0
-}
-
-### 주문 취소 (WaitingPayment 상태만 가능)
-DELETE {{baseUrl}}/api/orders/{{orderId}}
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-### 주문 정보 수정 (이름/전화번호/배송지)
-### 프론트에 사용하지 X
-PATCH {{baseUrl}}/api/orders/{{orderId}}
-=======
   "name": "김실사용",
   "phone": "010-1111-2222",
   "address": "서울시 강남구 진짜 주소",
@@ -127,17 +79,10 @@ Authorization: Bearer {{accessToken}}
 ### 2.1. 주문 생성을 위해 장바구니에 상품 담기
 # @name prepareTestOrderCart
 PATCH {{baseUrl}}/api/cart
->>>>>>> origin/dev
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-<<<<<<< HEAD
-	"name": "김수정",
-	"phone": "010-9876-5432",
-	"address": "서울시 서초구 수정로 2"
-}
-=======
   "productId": "{{testProductId}}",
   "sizes": [
     {
@@ -239,4 +184,3 @@ Content-Type: application/json
 #   - points가 Green 등급 적립률(1%)에 따라 1500점(=150,000 * 0.01)이 되었는지 확인
 GET {{baseUrl}}/api/users/me
 Authorization: Bearer {{accessToken}}
->>>>>>> origin/dev

@@ -183,12 +183,8 @@ model Size {
   // 다국어 지원을 위해 JSON 타입 사용 (PostgreSQL 지원)
   sizeDetail Json?
 
-<<<<<<< HEAD
-  stocks     ProductStock[] // 재고
-=======
   stocks    ProductStock[] // 재고
   cartItems CartItem[]
->>>>>>> origin/dev
   orderItems OrderItem[]
 }
 
