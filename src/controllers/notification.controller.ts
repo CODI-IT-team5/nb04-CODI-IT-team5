@@ -4,7 +4,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { STATUS_CODE } from '../constants/constant.js';
 import { notificationService } from '../services/notification.service.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 class NotificationController {
   /**

@@ -3,7 +3,7 @@ import type { Response } from 'express';
 
 import { notificationRepository } from '../repositories/notification.repository.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 type CreateNotificationInput = {
   userId: string;

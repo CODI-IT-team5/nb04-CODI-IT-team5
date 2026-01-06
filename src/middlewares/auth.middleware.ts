@@ -5,7 +5,7 @@ import { config } from '../config/config.js';
 import { authRepository } from '../repositories/auth.repository.js';
 import type { AccessTokenPayload } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger, { getLogMeta } from '../utils/logger.js';
+import { getLogMeta, logger } from '../utils/logger.js';
 
 export const authMiddleware = async (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];

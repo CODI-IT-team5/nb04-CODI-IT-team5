@@ -4,7 +4,7 @@ import inquiryRepository from '../repositories/inquiry.repository.js';
 import inquiryReplyRepository from '../repositories/inquiry-reply.repository.js';
 import { storeRepository } from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import { notificationService } from './notification.service.js';
 
 export class InquiryReplyService {

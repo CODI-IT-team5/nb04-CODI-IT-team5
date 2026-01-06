@@ -9,7 +9,7 @@ const logDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 const logPath = path.join(logDir, 'app.log');
 
-const logger = pino(
+export const logger = pino(
   {
     level: config.app.logLevel,
     timestamp: pino.stdTimeFunctions.isoTime,
@@ -34,8 +34,6 @@ const logger = pino(
     ],
   }),
 );
-
-export default logger;
 
 export const getLogMeta = (req: Request) => ({
   ip: req.ip,

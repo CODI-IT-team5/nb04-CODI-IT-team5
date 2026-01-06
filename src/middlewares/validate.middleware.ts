@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { STATUS_CODE } from '../constants/constant.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 interface ValidationSchemas {
   body?: ZodTypeAny;

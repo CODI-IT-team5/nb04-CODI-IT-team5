@@ -13,7 +13,7 @@ import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { requireBuyer, requireSeller } from '../middlewares/role.middleware.js';
 import { validateMiddleware } from '../middlewares/validate.middleware.js';
 
-const productRouter = Router();
+export const productRouter = Router();
 
 // 새 상품 등록/목록 조회
 productRouter
@@ -33,5 +33,3 @@ productRouter
   .route('/:productId/inquiries')
   .post(authMiddleware, requireBuyer, inquiryController.createInquiry.bind(inquiryController))
   .get(inquiryController.getProductInquiries.bind(inquiryController));
-
-export default productRouter;
