@@ -6,7 +6,18 @@ import bcrypt from 'bcrypt';
 
 async function main() {
   // ----------------------
-  // 1. 등급
+  // 1. 기본 리소스
+  // ----------------------
+  await prisma.image.create({
+    data: {
+      id: config.resource.defaultImageId,
+      key: config.resource.defaultImageKey,
+      url: config.resource.defaultImageUrl,
+    },
+  });
+
+  // ----------------------
+  // 2. 등급
   // ----------------------
   await prisma.grade.createMany({
     data: [
@@ -19,7 +30,7 @@ async function main() {
     skipDuplicates: true,
   });
   // ----------------------
-  // 2. 유저
+  // 3. 유저
   // ----------------------
 
   const testPassword = 'test1234';
@@ -53,7 +64,7 @@ async function main() {
   ]);
 
   // ----------------------
-  // 3. 카테고리
+  // 4. 카테고리
   // ----------------------
   await prisma.category.createMany({
     data: [
@@ -69,7 +80,7 @@ async function main() {
   });
 
   // ----------------------
-  // 4. 사이즈
+  // 5. 사이즈
   // ----------------------
   await prisma.size.createMany({
     data: [
@@ -84,7 +95,7 @@ async function main() {
   });
 
   // ----------------------
-  // 5. 스토어
+  // 6. 스토어
   // ----------------------
   const seller1Store = await prisma.store.upsert({
     where: { userId: seller1.id },
@@ -100,7 +111,7 @@ async function main() {
   });
 
   // ----------------------
-  // 6. 관심 스토어
+  // 7. 관심 스토어
   // ----------------------
   await prisma.favoriteStore.upsert({
     where: { userId_storeId: { userId: buyer1.id, storeId: seller1Store.id } },
@@ -109,7 +120,7 @@ async function main() {
   });
 
   // ----------------------
-  // 7. 상품 (Notification 테스트용)
+  // 8. 상품 (Notification 테스트용)
   // ----------------------
 
   const topCategory = await prisma.category.findFirst({
@@ -131,7 +142,7 @@ async function main() {
   });
 
   // ----------------------
-  // 8. 재고 추가 (테스트용)
+  // 9. 재고 추가 (테스트용)
   // ----------------------
   await prisma.productStock.upsert({
     where: { productId_sizeId: { productId: testProduct.id, sizeId: 2 } },

@@ -15,7 +15,7 @@ class UserService {
   getById = async (userId: string) => {
     const user = await userRepository.getById(userId);
     if (!user) throw HttpException.userNotFound();
-    return UserResponse.base(user);
+    return UserResponse.baseWithImage(user);
   };
 
   create = async (input: createUser) => {
@@ -32,7 +32,7 @@ class UserService {
   };
 
   update = async (input: UpdateUserInput) => {
-    const { currentPassword, password, ...test } = input;
+    const { currentPassword, password, ...updateData } = input;
     if (!currentPassword) throw HttpException.notFound();
 
     const storedPassword = await userRepository.findPassword(input.userId);
@@ -43,8 +43,8 @@ class UserService {
 
     const hashedPassword = password ? await bcrypt.hash(password, config.app.bcryptSaltRounds) : undefined;
 
-    const user = await userRepository.update({ ...test, password: hashedPassword });
-    return UserResponse.base(user);
+    const user = await userRepository.update({ ...updateData, password: hashedPassword });
+    return UserResponse.baseWithImage(user);
   };
 
   delete = async (input: deleteUser) => {

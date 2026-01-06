@@ -1,3 +1,4 @@
+import type { ExtendedTransactionClient } from '../utils/prisma.js';
 export interface grade {
   name: string;
   id: string;
@@ -14,4 +15,16 @@ export interface UpdateGrade {
 export interface UpdateGradeServiceInput {
   userId: string;
   deltaAmount: number;
+}
+
+export interface IncrementTotalAmountInput {
+  userId: string;
+  deltaAmount: number;
+  tx: ExtendedTransactionClient;
+}
+
+export interface UpdateGradeInput {
+  userId: string;
+  gradeId: string;
+  tx: ExtendedTransactionClient;
 }

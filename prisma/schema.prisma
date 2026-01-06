@@ -23,7 +23,10 @@ model User {
   password String
   name     String
   type     UserRole @default(BUYER)
-  image    String? // 프로필 이미지 URL (단순 문자열)
+
+  // TODO: 기본값 설정을 스키마에서 진행할지 다른데에서 진행할지 나중에 한 번 더 고민
+  imageId String @default("default-image")
+  image   Image  @relation("UserProfileImage", fields: [imageId], references: [id])
 
   points      Int @default(0)
   totalAmount Int @default(0) // 누적 구매 금액
@@ -43,14 +46,15 @@ model User {
   notifications  Notification[] // 알림 목록
   pointHistories PointHistory[]
   devices        Device[]
-  uploadedImages Image[]
+  uploadedImages Image[]         @relation("UploadedImages")
   cart           Cart?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  lastLoginAt DateTime?
-  deletedAt   DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  lastLoginAt    DateTime?
+  deletedAt      DateTime?
 
   @@index([deletedAt])
+  @@index([imageId])
 }
 
 enum DeletedTokenReason {
@@ -63,20 +67,20 @@ enum DeletedTokenReason {
 }
 
 model RefreshToken {
-  id        String          @id @default(cuid())
-  jti       String          @unique
-  deviceId  String
-  device    Device          @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  reason    DeletedTokenReason? // 토큰 무효화 이유
-  issuedAt  DateTime // 토큰 발급 시간
-  expiresAt DateTime // 만료 날짜
-  updatedAt DateTime        @updatedAt
+  id         String              @id @default(cuid())
+  jti        String              @unique
+  deviceId   String
+  device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  reason     DeletedTokenReason? // 토큰 무효화 이유
+  issuedAt   DateTime // 토큰 발급 시간
+  expiresAt  DateTime // 만료 날짜
+  updatedAt  DateTime            @updatedAt
   lastUsedAt DateTime // 마지막 사용 시간
-  deletedAt DateTime? // 무효화 된 시간
+  deletedAt  DateTime? // 무효화 된 시간
 
+  @@unique([deviceId, deletedAt])
   @@index([deletedAt])
   @@index([issuedAt])
-  @@unique([deviceId, deletedAt])
 }
 
 model Device {
@@ -136,10 +140,12 @@ model Grade {
 // ==========================================
 
 model Store {
-  id      String  @id @default(cuid())
-  name    String  @unique
-  content String  @db.Text
-  image   String?
+  id      String @id @default(cuid())
+  name    String @unique
+  content String @db.Text
+
+  imageId String @default("default-image")
+  image   Image  @relation("StoreImage", fields: [imageId], references: [id])
 
   address       String
   detailAddress String?
@@ -154,6 +160,8 @@ model Store {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  @@index([imageId])
 }
 
 model FavoriteStore {
@@ -184,8 +192,8 @@ model Size {
   // 다국어 지원을 위해 JSON 타입 사용 (PostgreSQL 지원)
   sizeDetail Json?
 
-  stocks    ProductStock[] // 재고
-  cartItems CartItem[]
+  stocks     ProductStock[] // 재고
+  cartItems  CartItem[]
   orderItems OrderItem[]
 }
 
@@ -230,7 +238,9 @@ model Product {
   name    String
   content String? @db.Text
   price   Int // 정가
-  image   String?
+
+  imageId String @default("default-image")
+  image   Image  @relation("ProductImage", fields: [imageId], references: [id])
 
   isSoldOut Boolean @default(false)
 
@@ -245,16 +255,18 @@ model Product {
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
 
-  stocks  ProductStock[]
-  reviews Review[]
-  inquiries Inquiry[]
-  cartItems CartItem[]
+  stocks     ProductStock[]
+  reviews    Review[]
+  inquiries  Inquiry[]
+  cartItems  CartItem[]
   orderItems OrderItem[]
 
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   deletedAt        DateTime?
   productDiscounts ProductDiscount[]
+
+  @@index([imageId])
 }
 
 model ProductDiscount {
@@ -447,6 +459,7 @@ enum NotificationType {
   // [구매자용]
   PRODUCT_SOLDOUT_FOR_BUYER
   INQUIRY_REPLIED_FOR_BUYER
+  GRADE_UPGRADE
   // [판매자용]
   PRODUCT_SOLDOUT_FOR_SELLER
   NEW_INQUIRY_FOR_SELLER
@@ -458,7 +471,7 @@ model Notification {
   type      NotificationType
   isChecked Boolean          @default(false) // 읽음 여부
   url       String?          // 클릭 시 이동할 링크 (/product/123 등)
-   
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -471,15 +484,19 @@ model Notification {
 // ==========================================
 
 model Image {
-  id           String   @id @default(cuid())
-  key          String   // S3 객체 Key (삭제 시 필요)
-  url          String   // 접근 URL (CDN/S3)
-  originalName String?  // 원본 파일명
-  mimeType     String?  // 파일 타입 (image/jpeg 등)
-  size         Int?     // 파일 크기 (Byte)
+  id           String  @id @default(cuid())
+  key          String // S3 객체 Key (삭제 시 필요)
+  url          String // 접근 URL (CDN/S3)
+  originalName String? // 원본 파일명
+  mimeType     String? // 파일 타입 (image/jpeg 등)
+  size         Int? // 파일 크기 (Byte)
 
-  userId       String?  // 업로더 ID (누가 올렸는지 추적)
-  user         User?    @relation(fields: [userId], references: [id])
+  userId String? // 업로더 ID (누가 올렸는지 추적)
+  user   User?   @relation("UploadedImages", fields: [userId], references: [id])
 
-  createdAt    DateTime @default(now())
+  userProfiles User[]    @relation("UserProfileImage")
+  stores       Store[]   @relation("StoreImage")
+  products     Product[] @relation("ProductImage")
+
+  createdAt DateTime @default(now())
 }

@@ -27,6 +27,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(loggerMiddleware); // 로그 저장
 
+app.set('etag', false); // TODO: 프론트에서 304 받으면 에러나서 임시 설정
+
 app.use(
   cors({
     origin: config.app.cors_origin,
@@ -36,6 +38,15 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 ); // 요청 허용 도메인
+
+// SSE compression 제외 (compression 설정되면 타임아웃 발생)
+// TODO: 추후 더 나은 방법 찾아보기
+app.use('/api/notifications/sse', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Content-Encoding', 'identity');
+  next();
+});
+
 app.use(compression({ threshold: config.app.compression_threshold, level: config.app.compression_level })); // 응답 압축
 app.use(limiter); // API 요청 제한
 app.use(helmet()); // 보안 헤더 적용

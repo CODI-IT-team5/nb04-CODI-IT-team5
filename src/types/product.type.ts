@@ -1,15 +1,17 @@
-import type { Category, Product, ProductDiscount, ProductStock, Size, Store } from '@prisma/client';
+import type { Category, Image, Product, ProductDiscount, ProductStock, Size, Store } from '@prisma/client';
 
 import type { CreateProductDto, UpdateProductDto } from '../dtos/product.dto.js';
 
 // 상품 목록용 상품 타입 (productDiscounts 포함)
 export interface ProductWithStore extends Product {
+  image: Image;
   store: Store;
   productDiscounts: ProductDiscount[];
 }
 
 // 레포지토리에서 반환하는 상품 타입 (변환 전)
 export interface ProductWithRelations extends Product {
+  image: Image;
   store: Store;
   category: Category | null;
   stocks: (ProductStock & {
@@ -58,7 +60,8 @@ export interface ProductListItem {
   storeId: string;
   storeName: string;
   name: string;
-  image: string | null;
+  imageId: string;
+  image: Image;
   price: number;
   discountPrice: number | null;
   discountRate: number | null;
@@ -86,7 +89,7 @@ export interface CreateProductData {
   name: string;
   price: number;
   content?: string;
-  image?: string;
+  imageId?: string;
   categoryName: string;
   stocks: StockInput[];
   discountRate?: number;

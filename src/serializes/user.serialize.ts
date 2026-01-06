@@ -1,4 +1,4 @@
-import type { likeStores, UserBase } from '../types/user.type.js';
+import type { GetById as baseWithImage, likeStores, UserBase } from '../types/user.type.js';
 
 export class UserResponse {
   static base(input: UserBase) {
@@ -16,7 +16,24 @@ export class UserResponse {
         rate: input.grade.rate,
         minAmount: input.grade.minAmount,
       },
-      image: input.image,
+    };
+  }
+  static baseWithImage(input: baseWithImage) {
+    return {
+      id: input.id,
+      name: input.name,
+      email: input.email,
+      type: input.type,
+      points: input.points,
+      createdAt: input.createdAt,
+      updatedAt: input.updatedAt,
+      grade: {
+        name: input.grade.name,
+        id: input.grade.id,
+        rate: input.grade.rate,
+        minAmount: input.grade.minAmount,
+      },
+      image: input.image.url,
     };
   }
 
@@ -34,7 +51,7 @@ export class UserResponse {
         detailAddress: input.store.detailAddress,
         phoneNumber: input.store.phoneNumber,
         content: input.store.content,
-        image: input.store.image,
+        image: input.store.image.url,
       },
     }));
   }

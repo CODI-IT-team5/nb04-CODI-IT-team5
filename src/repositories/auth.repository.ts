@@ -26,7 +26,7 @@ class AuthRepository {
   findUserByEmail = async (email: string) => {
     return await prisma.user.findUnique({
       where: { email },
-      include: { grade: true },
+      include: { grade: true, image: true },
     });
   };
 

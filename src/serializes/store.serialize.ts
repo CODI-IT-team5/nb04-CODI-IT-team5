@@ -1,7 +1,7 @@
-import type { Store } from '@prisma/client';
+import type { Image, Store } from '@prisma/client';
 
 export class StoreResponse {
-  static base(input: Store) {
+  static base(input: Store & { image: Image }) {
     return {
       id: input.id,
       name: input.name,
@@ -12,11 +12,11 @@ export class StoreResponse {
       detailAddress: input.detailAddress,
       phoneNumber: input.phoneNumber,
       content: input.content,
-      image: input.image,
+      image: input.image.url,
     };
   }
 
-  static detail(input: Store & { favoriteCount: number }) {
+  static detail(input: Store & { favoriteCount: number } & { image: Image }) {
     return {
       id: input.id,
       name: input.name,
@@ -27,7 +27,7 @@ export class StoreResponse {
       detailAddress: input.detailAddress,
       phoneNumber: input.phoneNumber,
       content: input.content,
-      image: input.image,
+      image: input.image.url,
       favoriteCount: input.favoriteCount,
     };
   }
@@ -38,7 +38,7 @@ export class StoreResponse {
       favoriteCount: number;
       monthFavoriteCount: number;
       totalSoldCount: number;
-    },
+    } & { image: Image },
   ) {
     return {
       id: input.id,
@@ -50,7 +50,7 @@ export class StoreResponse {
       detailAddress: input.detailAddress,
       phoneNumber: input.phoneNumber,
       content: input.content,
-      image: input.image,
+      image: input.image.url,
       productCount: input.productCount,
       favoriteCount: input.favoriteCount,
       monthFavoriteCount: input.monthFavoriteCount,
