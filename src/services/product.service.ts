@@ -157,7 +157,7 @@ class ProductService {
     for (const stock of stocks) {
       const size = await metadataRepository.findSizeById(stock.sizeId);
       if (!size) {
-        throw HttpException.notFound(MESSAGE.sizeNotFound(stock.sizeId));
+        throw HttpException.notFound(MESSAGE.sizeNotFound);
       }
     }
   };

@@ -54,6 +54,5 @@ export const MESSAGE = {
   productUpdateFailed: '상품 업데이트 후 조회에 실패했습니다.',
   storeNotFound: '스토어가 없습니다. 판매자만 상품을 등록할 수 있습니다.',
   categoryNotFound: '카테고리를 찾을 수 없습니다.',
-  sizeNotFound: (sizeId: string) => `사이즈 ID ${sizeId}를 찾을 수 없습니다.`,
   productOwnershipRequired: '본인의 상품만 수정/삭제할 수 있습니다.',
 };
