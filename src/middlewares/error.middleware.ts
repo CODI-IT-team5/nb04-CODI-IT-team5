@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { ERROR_NAME, MESSAGE, STATUS_CODE } from '../constants/constant.js';
+import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 
@@ -26,21 +26,40 @@ export const errorMiddleware = (err: Error | HttpException, req: Request, res: R
     }
   }
 
-  // 에러 이름 결정 (Swagger용)
+  // 에러 이름 결정 (자동 변환 로직 사용)
   const errorName = getErrorName(status);
 
+  // 프로젝트 루트 경로
+  const projectRoot = process.cwd();
+
+  // 스택 트레이스를 배열로 변환하고 절대 경로를 상대 경로로 변환
+  const stackLines = err.stack
+    ? err.stack.split('\n').map((line) => {
+        // 절대 경로를 프로젝트 루트 기준 상대 경로로 변환
+        return line.trim().replace(new RegExp(projectRoot, 'g'), '.');
+      })
+    : [];
   // 로깅
-  logger.error({
+  const logData = {
     timestamp: new Date().toISOString(),
     url: req.originalUrl,
     method: req.method,
-    status: status,
-    message: message, // 사용자에게 나가는 메시지
-    body: req.body, // 요청 본문
-    query: req.query, // 쿼리 스트링
-    params: req.params, // URL 파라미터
-    stack: err.stack || null, // 디버깅용 스택 트레이스
-  });
+    status,
+    message, // 사용자에게 나가는 메시지
+    request: {
+      body: req.body, // 요청 본문
+      query: req.query, // 쿼리 스트링
+      params: req.params, // URL 파라미터
+    },
+    stack: stackLines, // 디버깅용 스택 트레이스
+  };
+
+  // 5xx 에러(서버 에러)는 error 레벨, 4xx 에러(클라이언트 에러)는 warn 레벨로 로깅
+  if (status >= 500) {
+    logger.error(logData, `서버 에러 [${status}]`);
+  } else {
+    logger.warn(logData, `클라이언트 요청 에러 [${status}]`);
+  }
 
   // 응답 전송 (Swagger 규격 준수)
   res.status(status).json({
@@ -50,22 +69,20 @@ export const errorMiddleware = (err: Error | HttpException, req: Request, res: R
   });
 };
 
-// [보조 함수]
+// [보조 함수] 상태 코드로 에러 이름 자동 생성
+// 예: 400 -> 'BAD_REQUEST' 찾음 -> 'Bad Request'로 변환
 function getErrorName(status: number): string {
-  switch (status) {
-    case STATUS_CODE.BAD_REQUEST:
-      return ERROR_NAME.BAD_REQUEST;
-    case STATUS_CODE.UNAUTHORIZED:
-      return ERROR_NAME.UNAUTHORIZED;
-    case STATUS_CODE.FORBIDDEN:
-      return ERROR_NAME.FORBIDDEN;
-    case STATUS_CODE.NOT_FOUND:
-      return ERROR_NAME.NOT_FOUND;
-    case STATUS_CODE.CONFLICT:
-      return ERROR_NAME.CONFLICT;
-    case STATUS_CODE.INTERNAL_SERVER_ERROR:
-      return ERROR_NAME.INTERNAL_SERVER_ERROR;
-    default:
-      return 'Error';
+  // 1. STATUS_CODE 객체에서 value(숫자)가 status와 일치하는 key를 찾습니다.
+  const key = Object.keys(STATUS_CODE).find((k) => STATUS_CODE[k as keyof typeof STATUS_CODE] === status);
+
+  // 2. 키를 못 찾으면 기본값 반환
+  if (!key) {
+    return 'Error';
   }
+
+  // 3. 변환 로직: "BAD_REQUEST" -> "Bad Request"
+  return key
+    .split('_') // ['BAD', 'REQUEST'] 로 분리
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // ['Bad', 'Request'] 로 변환
+    .join(' '); // "Bad Request" 로 합침
 }

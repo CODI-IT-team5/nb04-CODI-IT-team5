@@ -224,6 +224,7 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
     },
   });
 }
+<<<<<<< HEAD
 
 // 주문 생성용: Cart의 특정 아이템들 (또는 전체) 조회
 export async function getCartItemsForOrder(userId: string, cartItemIds?: string[]) {
@@ -281,3 +282,5 @@ export async function clearCartItems(userId: string, cartItemIds?: string[]) {
   const result = await prisma.cartItem.deleteMany({ where });
   return result.count;
 }
+=======
+>>>>>>> origin/dev

@@ -15,16 +15,26 @@ interface ValidationSchemas {
 export function validateMiddleware(schema: ValidationSchemas) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
+      req.validated = {};
+
       if (schema.body) {
         req.body = await schema.body.parseAsync(req.body);
+        req.validated.body = req.body;
       }
       if (schema.query) {
+<<<<<<< HEAD
         const validated = await schema.query.parseAsync(req.query);
         Object.assign(req.query, validated);
       }
       if (schema.params) {
         const validated = await schema.params.parseAsync(req.params);
         Object.assign(req.params, validated);
+=======
+        req.validated.query = (await schema.query.parseAsync(req.query)) as Record<string, unknown>;
+      }
+      if (schema.params) {
+        req.validated.params = (await schema.params.parseAsync(req.params)) as Record<string, unknown>;
+>>>>>>> origin/dev
       }
       next();
     } catch (err) {

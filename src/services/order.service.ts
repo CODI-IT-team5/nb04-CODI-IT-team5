@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { Prisma as PrismaClient } from '@prisma/client';
 
@@ -196,10 +197,89 @@ export const orderService = {
                     take: 1,
                   },
                 },
+=======
+import { OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
+
+import { MESSAGE } from '../constants/constant.js';
+import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
+import * as cartRepository from '../repositories/cart.repository.js';
+import { orderRepository } from '../repositories/order.repository.js';
+import { OrderResponse } from '../serializes/order.serialize.js';
+import { HttpException } from '../utils/http-exception.js';
+import prisma from '../utils/prisma.js';
+
+class OrderService {
+  /**
+   * 주문 목록 조회
+   */
+  getOrders = async (input: GetOrdersQuery & { userId: string }) => {
+    const { userId, status, limit = 10, page = 1 } = input;
+
+    // exactOptionalPropertyTypes 대응
+    const repoInput = {
+      userId,
+      limit,
+      page,
+      ...(status && { status }),
+    };
+
+    const [total, orders] = await Promise.all([
+      orderRepository.countByUserId(userId, status),
+      orderRepository.findManyByUserId(repoInput),
+    ]);
+
+    const totalPages = Math.ceil(total / limit) || 1;
+    const meta = { total, page, limit, totalPages };
+
+    return OrderResponse.paginated(orders, meta);
+  };
+
+  /**
+   * 주문 상세 조회
+   */
+  getOrderById = async (userId: string, orderId: string) => {
+    const order = await orderRepository.findById(orderId);
+
+    if (!order) {
+      throw HttpException.notFound('주문을 찾을 수 없습니다.');
+    }
+    if (order.userId !== userId) {
+      throw HttpException.forbidden();
+    }
+
+    return OrderResponse.single(order);
+  };
+
+  /**
+   * 주문 생성
+   */
+  createOrder = async (userId: string, input: CreateOrderInput) => {
+    const { name, phone, address, orderItems, usePoint = 0, isTest = false } = input;
+
+    const createdOrder = await prisma.$transaction(
+      async (tx) => {
+        // 1. 상품 정보 및 재고 조회, 가격 계산
+        let subtotal = 0;
+        const computedItems: {
+          productId: string;
+          sizeId: string;
+          quantity: number;
+          price: number;
+          productName: string;
+        }[] = [];
+
+        for (const item of orderItems) {
+          const productStock = await tx.productStock.findFirst({
+            where: { productId: item.productId, sizeId: item.sizeId },
+            include: {
+              product: {
+                select: { price: true, isSoldOut: true, name: true },
+>>>>>>> origin/dev
               },
             },
           });
 
+<<<<<<< HEAD
           if (!stock || stock.product.isSoldOut || stock.quantity < item.quantity) {
             throw HttpException.badRequest(`상품 "${item.productId}"의 재고가 부족하거나 품절되었습니다.`);
           }
@@ -211,10 +291,20 @@ export const orderService = {
           }
 
           subtotal += unitPrice * item.quantity;
+=======
+          if (!productStock || productStock.product.isSoldOut || productStock.quantity < item.quantity) {
+            throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+          }
+
+          const unitPrice = productStock.product.price;
+          subtotal += unitPrice * item.quantity;
+
+>>>>>>> origin/dev
           computedItems.push({
             productId: item.productId,
             sizeId: item.sizeId,
             quantity: item.quantity,
+<<<<<<< HEAD
             priceSnapshot: unitPrice,
             productName: stock.product.name,
           });
@@ -250,11 +340,51 @@ export const orderService = {
                 productName: ci.productName,
                 product: { connect: { id: ci.productId } },
                 size: { connect: { id: ci.sizeId } },
+=======
+            price: unitPrice,
+            productName: productStock.product.name,
+          });
+        }
+
+        // 2. 사용자 포인트 검증 (등급 정보 포함 조회)
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          include: { grade: true },
+        });
+        if (!user) throw HttpException.userNotFound();
+        if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
+
+        const finalPrice = Math.max(subtotal - usePoint, 0);
+
+        // 3. 주문 상태 결정
+        const orderStatus = isTest ? OrderStatus.WaitingPayment : OrderStatus.CompletedPayment;
+        const paymentStatus = isTest ? PaymentStatus.Pending : PaymentStatus.CompletedPayment;
+
+        // 4. 주문 생성
+        const order = await tx.order.create({
+          data: {
+            userId,
+            name,
+            phoneNumber: phone,
+            address,
+            email: user.email,
+            subtotal: finalPrice,
+            usePoint,
+            status: orderStatus,
+            orderItems: {
+              create: computedItems.map((item) => ({
+                quantity: item.quantity,
+                price: item.price,
+                productName: item.productName,
+                productId: item.productId,
+                sizeId: item.sizeId,
+>>>>>>> origin/dev
               })),
             },
             payment: {
               create: {
                 price: finalPrice,
+<<<<<<< HEAD
                 status: 'CompletedPayment' as PaymentStatus,
               },
             },
@@ -320,15 +450,129 @@ export const orderService = {
       }
 
       await tx.order.update({ where: { id: orderId }, data: { status: 'Cancelled' } });
+=======
+                status: paymentStatus,
+              },
+            },
+          },
+        });
+
+        // 5. 재고 차감 및 판매량 업데이트
+        for (const item of computedItems) {
+          await tx.productStock.update({
+            where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
+            data: { quantity: { decrement: item.quantity } },
+          });
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { salesCount: { increment: item.quantity } },
+          });
+        }
+
+        // 6. 장바구니 비우기
+        const userCart = await cartRepository.findCartByUserId(userId);
+        if (userCart) {
+          const productIdsToRemove = orderItems.map((item) => item.productId);
+          await tx.cartItem.deleteMany({
+            where: {
+              cartId: userCart.id,
+              productId: { in: productIdsToRemove },
+            },
+          });
+        }
+
+        // 7. 포인트 사용/적립 및 등급 업데이트 (실제 주문일 경우에만)
+        if (!isTest) {
+          // 포인트 사용 처리
+          if (usePoint > 0) {
+            await tx.pointHistory.create({
+              data: {
+                userId,
+                orderId: order.id,
+                title: '주문 시 포인트 사용',
+                point: -usePoint,
+                type: PointHistoryType.USE,
+              },
+            });
+          }
+
+          // 포인트 적립 처리
+          const earnedPoints = Math.floor(finalPrice * (user.grade.rate / 100));
+          if (earnedPoints > 0) {
+            await tx.pointHistory.create({
+              data: {
+                userId,
+                orderId: order.id,
+                title: '상품 구매 적립',
+                point: earnedPoints,
+                type: PointHistoryType.EARN,
+              },
+            });
+          }
+
+          // 사용자 누적 금액 및 포인트 최종 업데이트
+          const netPointChange = earnedPoints - usePoint;
+          const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: {
+              points: { increment: netPointChange },
+              totalAmount: { increment: finalPrice },
+            },
+          });
+
+          // 등급 업데이트 확인
+          const allGrades = await tx.grade.findMany({ orderBy: { minAmount: 'desc' } });
+          const newGrade = allGrades.find((grade) => updatedUser.totalAmount >= grade.minAmount);
+
+          if (newGrade && newGrade.id !== user.gradeId) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { gradeId: newGrade.id },
+            });
+          }
+        }
+
+        return order;
+      },
+      { maxWait: 5000, timeout: 20000 },
+    );
+
+    // 8. 최종 결과 반환
+    const detailedOrder = await orderRepository.findById(createdOrder.id);
+    return OrderResponse.single(detailedOrder!);
+  };
+
+  /**
+   * 주문 취소
+   */
+  deleteOrder = async (userId: string, orderId: string) => {
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, userId },
+        include: { orderItems: true },
+      });
+
+      if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
+      if (order.status !== 'WaitingPayment') throw HttpException.badRequest(MESSAGE.orderCancellationFailed);
+
+      await tx.order.update({ where: { id: orderId }, data: { status: OrderStatus.Cancelled } });
+>>>>>>> origin/dev
 
       for (const item of order.orderItems) {
         await tx.productStock.update({
           where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
           data: { quantity: { increment: item.quantity } },
         });
+<<<<<<< HEAD
 
         await tx.product.update({ where: { id: item.productId }, data: { salesCount: { decrement: item.quantity } } });
         await tx.product.update({ where: { id: item.productId }, data: { isSoldOut: false } });
+=======
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { salesCount: { decrement: item.quantity } },
+        });
+>>>>>>> origin/dev
       }
 
       if (order.usePoint > 0) {
@@ -338,13 +582,19 @@ export const orderService = {
             userId,
             orderId: order.id,
             title: '주문 취소로 인한 포인트 복구',
+<<<<<<< HEAD
             description: `주문 #${order.id} 취소`,
             point: order.usePoint,
             type: 'EARN',
+=======
+            point: order.usePoint,
+            type: PointHistoryType.EARN,
+>>>>>>> origin/dev
           },
         });
       }
 
+<<<<<<< HEAD
       return null;
     });
   },
@@ -368,3 +618,33 @@ export const orderService = {
     };
   },
 };
+=======
+      return { message: '주문이 성공적으로 취소되었습니다.' };
+    });
+  };
+
+  /**
+   * 주문 정보 수정 (배송지)
+   */
+  updateOrder = async (userId: string, orderId: string, input: UpdateOrderInput) => {
+    const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+    if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
+
+    // exactOptionalPropertyTypes 대응
+    const dataToUpdate: { name?: string; phoneNumber?: string; address?: string } = {};
+    if (input.name) dataToUpdate.name = input.name;
+    if (input.phone) dataToUpdate.phoneNumber = input.phone;
+    if (input.address) dataToUpdate.address = input.address;
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: dataToUpdate,
+    });
+
+    const detailedOrder = await orderRepository.findById(updatedOrder.id);
+    return OrderResponse.single(detailedOrder!);
+  };
+}
+
+export const orderService = new OrderService();
+>>>>>>> origin/dev

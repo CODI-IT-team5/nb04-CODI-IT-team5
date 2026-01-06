@@ -7,24 +7,27 @@ import { config } from '../config/config.js';
 import { authRepository } from '../repositories/auth.repository.js';
 import type { BaseDevice, BaseLogin, LoginData, loginUpdateData } from '../types/auth.type.js';
 import { HttpException } from '../utils/http-exception.js';
+import prisma, { type ExtendedTransactionClient } from '../utils/prisma.js';
 
 class AuthService {
-  login = async (inputData: LoginData) => {
-    const { email, password, userAgent, ip } = inputData;
+  login = async (input: LoginData) => {
+    const user = await verifyUser({ email: input.email, password: input.password }); // 유저 찾기, 비밀번호 비교
 
-    const user = await verifyUser({ email, password }); // 유저 찾기, 비밀번호 비교
-    const device = await findOrCreateDevice({ userId: user.id, userAgent, ip }); // 기기 찾기 또는 만들기
-    const tokens = await generateTokens({ userId: user.id, deviceId: device.id }); // 엑세스 토큰 만들기
+    const tokens = await prisma.$transaction(async (tx) => {
+      const device = await findOrCreateDevice({ userId: user.id, userAgent: input.userAgent, ip: input.ip }, tx); // 기기 찾기 또는 만들기
+      const tokens = await generateTokens({ userId: user.id, deviceId: device.id }); // 엑세스 토큰 만들기
 
-    await authRepository.createRefreshToken({
-      jti: tokens.jti,
-      deviceId: device.id,
-      issuedAt: tokens.refreshTokenIssuedAt,
-      expiresAt: tokens.refreshTokenExpiresAt,
-    });
-    await authRepository.login({
-      deviceId: device.id,
-      userId: user.id,
+      await authRepository.createRefreshToken(
+        {
+          jti: tokens.jti,
+          deviceId: device.id,
+          issuedAt: tokens.refreshTokenIssuedAt,
+          expiresAt: tokens.refreshTokenExpiresAt,
+        },
+        tx,
+      );
+      await authRepository.login({ deviceId: device.id, userId: user.id }, tx);
+      return tokens;
     });
 
     return {
@@ -96,34 +99,47 @@ const verifyUser = async (data: BaseLogin) => {
 };
 
 // 디바이스 찾기 또는 생성
-const findOrCreateDevice = async (data: BaseDevice) => {
-  const { userId, userAgent, ip } = data;
-  let device = await authRepository.findDeviceByUserAgent({ userId, userAgent, ip });
+const findOrCreateDevice = async (input: BaseDevice, tx: ExtendedTransactionClient) => {
+  const { userId, userAgent, ip } = input;
+  const device = await authRepository.findDeviceByUserAgent({ userId, userAgent, ip }, tx);
+
   if (!device) {
-    await deviceLimit(userId);
-    device = await authRepository.createDevice({ userId, userAgent, ip });
-    return device;
+    await deviceLimit(userId, tx);
+    const newDevice = await authRepository.createDevice({ userId, userAgent, ip }, tx);
+    return newDevice;
   }
 
-  await authRepository.deleteRefreshTokenByDeviceId({ deviceId: device.id, reason: DeletedTokenReason.REPLACED });
+  const activeToken = device.refreshTokens[0];
+  if (activeToken?.jti) {
+    await authRepository.deleteRefreshTokenWithTx(
+      {
+        jti: activeToken.jti,
+        reason: DeletedTokenReason.REPLACED,
+      },
+      tx,
+    );
+  }
   return device;
 };
 
-const deviceLimit = async (userId: string) => {
-  const count = await authRepository.findDeviceCount(userId);
+const deviceLimit = async (userId: string, tx: ExtendedTransactionClient) => {
+  const count = await authRepository.findDeviceCount(userId, tx);
   if (count < config.auth.maxDevice) return;
 
   const oldestDevice = await authRepository.findLastUsedDevice(userId);
   if (!oldestDevice) throw HttpException.notFound();
 
-  await authRepository.deleteDevice(oldestDevice.id);
+  await authRepository.deleteDevice(oldestDevice.id, tx);
 
   const token = oldestDevice.refreshTokens?.[0];
   if (token) {
-    await authRepository.deleteRefreshToken({
-      jti: token.jti,
-      reason: DeletedTokenReason.DEVICE_LIMIT,
-    });
+    await authRepository.deleteRefreshTokenWithTx(
+      {
+        jti: token.jti,
+        reason: DeletedTokenReason.DEVICE_LIMIT,
+      },
+      tx,
+    );
   }
 };
 

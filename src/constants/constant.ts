@@ -14,7 +14,7 @@ export const STATUS_CODE = {
 
 export const MESSAGE = {
   userAuthenticated: '사용자가 성공적으로 인증되었습니다',
-  emailAready: '이미 존재하는 유저입니다',
+  emailAlready: '이미 존재하는 유저입니다',
   logoutSuccess: '성공적으로 로그아웃되었습니다',
   userDeleted: '회원탈퇴를 성공했습니다',
   invalidPassword: '현재 비밀번호가 올바르지 않습니다',
@@ -33,15 +33,22 @@ export const MESSAGE = {
   unauthorized: '로그인이 필요합니다',
   forbidden: '권한이 없습니다',
 
+  orderItemsEmpty: '주문할 상품이 없습니다.',
+  insufficientStock: (sizeId: string, availableQuantity: number) =>
+    `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
+  insufficientPoints: '보유 포인트를 초과하여 사용할 수 없습니다.',
+
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
-};
 
-export const ERROR_NAME = {
-  BAD_REQUEST: 'Bad Request',
-  UNAUTHORIZED: 'Unauthorized',
-  FORBIDDEN: 'Forbidden',
-  NOT_FOUND: 'Not Found',
-  CONFLICT: 'Conflict',
-  INTERNAL_SERVER_ERROR: 'Internal Server Error',
+  orderNotFound: '주문을 찾을 수 없습니다.',
+  orderCancellationFailed: '주문 취소에 실패했습니다.',
+
+  productCreationFailed: '상품 생성 후 조회에 실패했습니다.',
+  productNotFound: '상품을 찾을 수 없습니다.',
+  productUpdateFailed: '상품 업데이트 후 조회에 실패했습니다.',
+  storeNotFound: '스토어가 없습니다. 판매자만 상품을 등록할 수 있습니다.',
+  categoryNotFound: '카테고리를 찾을 수 없습니다.',
+  sizeNotFound: (sizeId: string) => `사이즈 ID ${sizeId}를 찾을 수 없습니다.`,
+  productOwnershipRequired: '본인의 상품만 수정/삭제할 수 있습니다.',
 };

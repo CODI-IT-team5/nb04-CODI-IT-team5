@@ -23,7 +23,7 @@ model User {
   password String
   name     String
   type     UserRole @default(BUYER)
-  image    String? // 프로필 이미지
+  image    String? // 프로필 이미지 URL (단순 문자열)
 
   points      Int @default(0)
   totalAmount Int @default(0) // 누적 구매 금액
@@ -43,7 +43,7 @@ model User {
   notifications  Notification[] // 알림 목록
   pointHistories PointHistory[]
   devices        Device[]
-
+  uploadedImages Image[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
@@ -62,19 +62,20 @@ enum DeletedTokenReason {
 }
 
 model RefreshToken {
-  id         String              @id @default(cuid())
-  jti        String              @unique
-  deviceId   String
-  device     Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  reason     DeletedTokenReason? // 토큰 무효화 이유
-  issuedAt   DateTime // 토큰 발급 시간
-  expiresAt  DateTime // 만료 날짜
-  updatedAt  DateTime            @updatedAt
+  id        String          @id @default(cuid())
+  jti       String          @unique
+  deviceId  String
+  device    Device          @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  reason    DeletedTokenReason? // 토큰 무효화 이유
+  issuedAt  DateTime // 토큰 발급 시간
+  expiresAt DateTime // 만료 날짜
+  updatedAt DateTime        @updatedAt
   lastUsedAt DateTime // 마지막 사용 시간
-  deletedAt  DateTime? // 무효화 된 시간
+  deletedAt DateTime? // 무효화 된 시간
 
   @@index([deletedAt])
   @@index([issuedAt])
+  @@unique([deviceId, deletedAt])
 }
 
 model Device {
@@ -182,7 +183,12 @@ model Size {
   // 다국어 지원을 위해 JSON 타입 사용 (PostgreSQL 지원)
   sizeDetail Json?
 
+<<<<<<< HEAD
   stocks     ProductStock[] // 재고
+=======
+  stocks    ProductStock[] // 재고
+  cartItems CartItem[]
+>>>>>>> origin/dev
   orderItems OrderItem[]
 }
 
@@ -210,8 +216,8 @@ model Product {
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
 
-  stocks    ProductStock[]
-  reviews   Review[]
+  stocks  ProductStock[]
+  reviews Review[]
   inquiries Inquiry[]
 
   orderItems OrderItem[]
@@ -423,10 +429,28 @@ model Notification {
   type      NotificationType
   isChecked Boolean          @default(false) // 읽음 여부
   url       String?          // 클릭 시 이동할 링크 (/product/123 등)
-  
+   
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// 9. 이미지 관리
+// ==========================================
+
+model Image {
+  id           String   @id @default(cuid())
+  key          String   // S3 객체 Key (삭제 시 필요)
+  url          String   // 접근 URL (CDN/S3)
+  originalName String?  // 원본 파일명
+  mimeType     String?  // 파일 타입 (image/jpeg 등)
+  size         Int?     // 파일 크기 (Byte)
+
+  userId       String?  // 업로더 ID (누가 올렸는지 추적)
+  user         User?    @relation(fields: [userId], references: [id])
+
+  createdAt    DateTime @default(now())
 }
