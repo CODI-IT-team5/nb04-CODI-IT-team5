@@ -219,6 +219,8 @@ class ProductService {
       sumScore: 0,
     };
 
+    let totalRating = 0;
+
     reviews.forEach((review) => {
       switch (review.rating) {
         case 1:
@@ -237,8 +239,11 @@ class ProductService {
           stats.rate5Length++;
           break;
       }
-      stats.sumScore += review.rating;
+      totalRating += review.rating;
     });
+
+    // sumScore는 평균 별점 (소수점 첫째자리까지)
+    stats.sumScore = reviews.length > 0 ? Math.round((totalRating / reviews.length) * 10) / 10 : 0;
 
     return stats;
   };

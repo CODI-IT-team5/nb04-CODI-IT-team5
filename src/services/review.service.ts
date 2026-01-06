@@ -7,8 +7,8 @@ import { HttpException } from '../utils/http-exception.js';
 export class ReviewService {
   // 리뷰 작성
   async createReview(data: CreateReviewData) {
-    if (data.rating < 0 || data.rating > 5) {
-      throw HttpException.badRequest('별점은 0~5 사이의 값이어야 합니다.');
+    if (data.rating < 1 || data.rating > 5) {
+      throw HttpException.badRequest('별점은 1~5 사이의 값이어야 합니다.');
     }
 
     const orderItem = await orderItemRepository.findByIdWithRelations(data.orderItemId);
@@ -51,21 +51,29 @@ export class ReviewService {
   }
 
   // 상품별 리뷰 목록 조회 (평균 별점, 리뷰 개수 포함)
-  async getProductReviews(productId: string) {
+  async getProductReviews(productId: string, page: number = 1, limit: number = 10) {
     const product = await productRepository.findById(productId);
 
     if (!product) {
       throw HttpException.notFound();
     }
 
-    const reviews = await reviewRepository.findByProductId(productId);
-    const averageRating = await reviewRepository.getAverageRating(productId);
-    const reviewCount = await reviewRepository.getReviewCount(productId);
+    const { reviews, total } = await reviewRepository.findByProductIdPaginated(
+      productId,
+      page,
+      limit,
+    );
+
+    const hasNextPage = page * limit < total;
 
     return {
       reviews,
-      averageRating,
-      reviewCount,
+      meta: {
+        total,
+        page,
+        limit,
+        hasNextPage,
+      },
     };
   }
 
@@ -76,8 +84,8 @@ export class ReviewService {
 
   // 리뷰 수정
   async updateReview(reviewId: string, userId: string, data: UpdateReviewData) {
-    if (data.rating !== undefined && (data.rating < 0 || data.rating > 5)) {
-      throw HttpException.badRequest('별점은 0~5 사이의 값이어야 합니다.');
+    if (data.rating !== undefined && (data.rating < 1 || data.rating > 5)) {
+      throw HttpException.badRequest('별점은 1~5 사이의 값이어야 합니다.');
     }
 
     const review = await reviewRepository.findById(reviewId);

@@ -6,8 +6,20 @@
 @reviewId =
 @orderItemId =
 
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+
 ### 문의 등록
-POST {{baseUrl}}/products/{{productId}}/inquiries
+POST {{baseUrl}}/api/products/testProductId/inquiries
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
@@ -18,10 +30,10 @@ Content-Type: application/json
 }
 
 ### 상품별 문의 조회
-GET {{baseUrl}}/products/{{productId}}/inquiries
+GET {{baseUrl}}/api/products/testProductId/inquiries
 
 ### 내 문의 조회
-GET {{baseUrl}}/inquiries
+GET {{baseUrl}}/api/inquiries
 Authorization: Bearer {{accessToken}}
 
 ### 문의 상세 조회
@@ -67,39 +79,4 @@ Content-Type: application/json
 
 ### 답변 삭제
 DELETE {{baseUrl}}/inquiries/{{replyId}}/replies
-Authorization: Bearer {{accessToken}}
-
-### 리뷰 작성
-POST {{baseUrl}}/products/{{productId}}/reviews
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "rating": 5,
-  "content": "상품 정말 좋아요! 강력 추천합니다.",
-  "orderItemId": "{{orderItemId}}"
-}
-
-### 상품별 리뷰 조회
-GET {{baseUrl}}/products/{{productId}}/reviews
-
-### 내 리뷰 조회
-GET {{baseUrl}}/reviews
-Authorization: Bearer {{accessToken}}
-
-### 리뷰 상세 조회
-GET {{baseUrl}}/reviews/{{reviewId}}
-
-### 리뷰 수정
-PATCH {{baseUrl}}/reviews/{{reviewId}}
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "rating": 4,
-  "content": "상품은 좋은데 배송이 조금 느렸어요."
-}
-
-### 리뷰 삭제
-DELETE {{baseUrl}}/reviews/{{reviewId}}
 Authorization: Bearer {{accessToken}}

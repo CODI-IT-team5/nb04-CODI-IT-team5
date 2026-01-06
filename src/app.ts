@@ -15,6 +15,7 @@ import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
 import { orderRouter } from './routes/order.router.js';
 import productRouter from './routes/product.router.js';
+import { productReviewRouter } from './routes/product-review.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { storeRouter } from './routes/store.router.js';
 import { userRouter } from './routes/user.router.js';
@@ -71,13 +72,14 @@ app.use('/api/s3', s3Router);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/stores', storeRouter);
-app.use('/api/product', productRouter);
+app.use('/api/products', productRouter);
+app.use('/api/product', productReviewRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api', communityRouter);
 
 app.use((req, res, next) => {
   // "경로를 찾을 수 없습니다"라는 404 에러를 강제로 발생시켜서 errorMiddleware로 넘김
-  next(HttpException.notFound());
+  next(HttpException.notFound('잘못된 URL 입니다'));
 });
 
 app.use(errorMiddleware);

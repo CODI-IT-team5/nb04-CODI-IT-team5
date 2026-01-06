@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
+import { ReviewResponse } from '../serializes/review.serialize.js';
 import reviewService from '../services/review.service.js';
 
 export class ReviewController {
@@ -19,7 +20,7 @@ export class ReviewController {
         orderItemId: orderItemId as string,
       });
 
-      res.status(STATUS_CODE.CREATED).json(review);
+      res.status(STATUS_CODE.CREATED).json(ReviewResponse.base(review));
     } catch (error) {
       next(error);
     }
@@ -42,10 +43,12 @@ export class ReviewController {
   async getProductReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { productId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
 
-      const result = await reviewService.getProductReviews(productId as string);
+      const result = await reviewService.getProductReviews(productId as string, page, limit);
 
-      res.status(STATUS_CODE.OK).json(result);
+      res.status(STATUS_CODE.OK).json(ReviewResponse.paginated(result.reviews, result.meta));
     } catch (error) {
       next(error);
     }
