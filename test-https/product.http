@@ -74,6 +74,7 @@ Content-Type: application/json
 
 {
   "name": "가디건 (수정)",
+  "imageId": "{{imageId}}",
   "price": 18000,
   "content": "수정된 상품 상세 설명",
   "isSoldOut": false,
