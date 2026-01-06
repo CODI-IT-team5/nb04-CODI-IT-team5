@@ -6,13 +6,13 @@ import bcrypt from 'bcrypt';
 
 async function main() {
   // ----------------------
-  // 1. 임시 리소스
+  // 1. 기본 리소스
   // ----------------------
   await prisma.image.create({
     data: {
-      id: 'tmp-image',
-      key: config.resource.tmpImageKey,
-      url: config.resource.tmpImageUrl,
+      id: config.resource.defaultImageId,
+      key: config.resource.defaultImageKey,
+      url: config.resource.defaultImageUrl,
     },
   });
 
