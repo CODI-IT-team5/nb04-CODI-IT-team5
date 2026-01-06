@@ -11,7 +11,7 @@ class OrderController {
   getOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const query = req.query as GetOrdersQuery;
+      const query = req.validated!.query as GetOrdersQuery;
 
       const result = await orderService.getOrders({
         userId,
