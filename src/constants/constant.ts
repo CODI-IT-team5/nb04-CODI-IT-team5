@@ -38,6 +38,11 @@ export const MESSAGE = {
     `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
   insufficientPoints: '보유 포인트를 초과하여 사용할 수 없습니다.',
 
+  sizeNotFound: '사이즈가 존재하지 않습니다',
+  cartCreationFailed: '장바구니 생성에 실패했습니다',
+  cartNotFound: '장바구니를 찾을 수 없습니다',
+  cartItemNotFound: '장바구니에 아이템이 없습니다',
+
   tooManyRequests: '요청이 너무 많습니다. 잠시 후 시도해주세요',
   serverError: '문제가 발생했습니다. 나중에 다시 시도하세요',
 
@@ -49,6 +54,5 @@ export const MESSAGE = {
   productUpdateFailed: '상품 업데이트 후 조회에 실패했습니다.',
   storeNotFound: '스토어가 없습니다. 판매자만 상품을 등록할 수 있습니다.',
   categoryNotFound: '카테고리를 찾을 수 없습니다.',
-  sizeNotFound: (sizeId: string) => `사이즈 ID ${sizeId}를 찾을 수 없습니다.`,
   productOwnershipRequired: '본인의 상품만 수정/삭제할 수 있습니다.',
 };
