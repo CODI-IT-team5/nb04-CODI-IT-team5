@@ -72,7 +72,10 @@ export class InquiryService {
   ) {
     if (userType === UserRole.BUYER) {
       const inquiries = await inquiryRepository.findByUserId(userId, options);
-      const totalCount = await inquiryRepository.countByUserId(userId, options?.status ? { status: options.status } : {});
+      const totalCount = await inquiryRepository.countByUserId(
+        userId,
+        options?.status ? { status: options.status } : {},
+      );
       return { inquiries, totalCount };
     } else {
       const store = await storeRepository.findByUserId(userId);
@@ -82,7 +85,10 @@ export class InquiryService {
       }
 
       const inquiries = await inquiryRepository.findByStoreId(store.id, options);
-      const totalCount = await inquiryRepository.countByStoreId(store.id, options?.status ? { status: options.status } : {});
+      const totalCount = await inquiryRepository.countByStoreId(
+        store.id,
+        options?.status ? { status: options.status } : {},
+      );
       return { inquiries, totalCount };
     }
   }

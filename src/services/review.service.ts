@@ -58,11 +58,7 @@ export class ReviewService {
       throw HttpException.notFound();
     }
 
-    const { reviews, total } = await reviewRepository.findByProductIdPaginated(
-      productId,
-      page,
-      limit,
-    );
+    const { reviews, total } = await reviewRepository.findByProductIdPaginated(productId, page, limit);
 
     const hasNextPage = page * limit < total;
 
