@@ -24,19 +24,21 @@ class StoreRepository {
   async findById(storeId: string) {
     return prisma.store.findFirst({
       where: { id: storeId },
+      include: { image: true },
     });
   }
 
   async findByIdWithDetails(storeId: string) {
-    const favoriteCount = await prisma.favoriteStore.count({
-      where: { storeId },
-    });
-
     const store = await prisma.store.findFirst({
       where: { id: storeId },
+      include: { image: true },
     });
 
     if (!store) return null;
+
+    const favoriteCount = await prisma.favoriteStore.count({
+      where: { storeId },
+    });
 
     return {
       ...store,
@@ -47,6 +49,7 @@ class StoreRepository {
   async findMyStoreWithDetails(userId: string) {
     const store = await prisma.store.findFirst({
       where: { userId },
+      include: { image: true },
     });
 
     if (!store) return null;
@@ -163,9 +166,10 @@ class StoreRepository {
         detailAddress: input.detailAddress ?? Prisma.skip,
         phoneNumber: input.phoneNumber,
         content: input.content,
-        image: input.image ?? Prisma.skip,
+        imageId: input.imageId ?? Prisma.skip,
         userId: input.userId,
       },
+      include: { image: true },
     });
   }
 
@@ -178,8 +182,9 @@ class StoreRepository {
         detailAddress: input.detailAddress ?? Prisma.skip,
         phoneNumber: input.phoneNumber ?? Prisma.skip,
         content: input.content ?? Prisma.skip,
-        image: input.image ?? Prisma.skip,
+        imageId: input.imageId ?? Prisma.skip,
       },
+      include: { image: true },
     });
   }
 

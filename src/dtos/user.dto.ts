@@ -54,7 +54,7 @@ export const userDto = {
       .partial()
       .extend({
         currentPassword: passwordDto,
-        image: z.string('이미지주소는 문자열이어야 합니다').trim().url('이미지주소는 url이어야 합니다').optional(),
+        imageId: z.string('이미지 id는 문자열이어야 합니다').optional(),
       }),
   },
 };

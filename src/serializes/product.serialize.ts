@@ -12,7 +12,7 @@ export class ProductResponse {
     return {
       id: product.id,
       name: product.name,
-      image: product.image,
+      image: product.image.url,
       content: product.content,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -52,7 +52,7 @@ export class ProductResponse {
       storeId: item.storeId,
       storeName: item.storeName,
       name: item.name,
-      image: item.image,
+      image: item.image.url,
       price: item.price,
       discountPrice: item.discountPrice,
       discountRate: item.discountRate,

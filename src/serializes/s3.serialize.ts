@@ -5,6 +5,7 @@ export class S3Response {
     return {
       url: image.url,
       key: image.key,
+      id: image.id,
     };
   }
 }

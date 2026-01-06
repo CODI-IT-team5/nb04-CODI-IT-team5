@@ -37,7 +37,7 @@ class AuthService {
         name: user.name,
         type: user.type,
         points: user.points,
-        image: user.image,
+        image: user.image.url,
         grade: {
           id: user.grade.id,
           name: user.grade.name,

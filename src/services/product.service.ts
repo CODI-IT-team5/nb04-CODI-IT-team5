@@ -22,12 +22,12 @@ class ProductService {
     const category = await this.validateCategory(input.data.categoryName);
     await this.validateSizes(input.data.stocks);
 
-    const productData: { name: string; price: number; content?: string; image?: string } = {
+    const productData: { name: string; price: number; content?: string; imageId?: string } = {
       name: input.data.name,
       price: input.data.price,
     };
     if (input.data.content !== undefined) productData.content = input.data.content;
-    if (input.data.image !== undefined) productData.image = input.data.image;
+    if (input.data.imageId !== undefined) productData.imageId = input.data.imageId;
 
     const product = await productRepository.create({
       storeId: store.id,
@@ -92,7 +92,7 @@ class ProductService {
         name: input.name,
         price: input.price,
         content: input.content,
-        image: input.image,
+        imageId: input.imageId,
         categoryId,
         isSoldOut: input.isSoldOut,
       },

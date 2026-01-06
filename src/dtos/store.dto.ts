@@ -21,7 +21,7 @@ const storeBaseBody = z.strictObject({
     .trim()
     .min(1, '스토어 소개는 필수입니다')
     .max(1000, '스토어 소개는 1000자를 초과할 수 없습니다'),
-  image: z.string().url('이미지 URL 형식이 올바르지 않습니다').optional(),
+  imageId: z.string('이미지 id는 문자열이어야 합니다').optional(),
 });
 
 // 스토어 수정 시 모든 필드를 선택적으로 변경한 스키마 (.partial() 사용)

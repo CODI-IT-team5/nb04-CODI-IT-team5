@@ -58,4 +58,12 @@ export const config = {
     region: process.env['AWS_REGION'] || 'ap-northeast-2',
     bucketName: process.env['AWS_BUCKET_NAME'] || 'test-bucket-name',
   },
+  resource: {
+    defaultImageId: process.env['DEFAULT_IMAGE_ID'] || 'default-image',
+    defaultImageUrl:
+      process.env['DEFAULT_IMAGE_URL'] ||
+      'https://codi-it-team5-storage.s3.ap-northeast-2.amazonaws.com/uploads/20260106/add8d014-e63f-42c5-bac5-fa62921bdd98_default-image.jpg',
+    defaultImageKey:
+      process.env['DEFAULT_IMAGE_KEY'] || 'uploads/20260106/add8d014-e63f-42c5-bac5-fa62921bdd98_default-image.jpg',
+  },
 };

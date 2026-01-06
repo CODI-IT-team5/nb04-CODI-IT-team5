@@ -1,3 +1,5 @@
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
+@imageId = {{upload.response.body.data.id}}
 @accessToken = {{auth.response.body.accessToken}}
 @storeId = {{createStore.response.body.id}}
 
@@ -38,8 +40,22 @@ Content-Type: application/json
   "detailAddress": "1동 1111호",
   "phoneNumber": "010-1234-5678",
   "content": "설명 테스트",
-  "image": "https://example.com/image.jpg"
+  "imageId": "default-image"
 }
+
+
+### 이미지 업로드
+# @name upload
+POST {{baseUrl}}/api/s3/upload
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ../test.jpg
+--{{boundary}}--
 
 ### 스토어 수정
 # @name updateStore
@@ -53,7 +69,7 @@ Content-Type: application/json
   "detailAddress": "2동 2222호",
   "phoneNumber": "010-9999-8888",
   "content": "수정된 스토어 소개",
-  "image": "https://example.com/updated-image.jpg"
+  "imageId": "{{imageId}}"
 }
 
 ### 스토어 상세 조회

@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 import type { createUser } from '../dtos/user.dto.js';
 import type { UpdateUser } from '../types/user.type.js';
 import prisma, { type ExtendedTransactionClient } from '../utils/prisma.js';
@@ -6,7 +8,7 @@ class UserRepository {
   getById = async (id: string) => {
     return await prisma.user.findUnique({
       where: { id },
-      include: { grade: true },
+      include: { grade: true, image: true },
     });
   };
 
@@ -35,11 +37,11 @@ class UserRepository {
     return await prisma.user.update({
       where: { id: inputData.userId },
       data: {
-        ...(inputData.name !== undefined && { name: inputData.name }),
-        ...(inputData.password !== undefined && { password: inputData.password }),
-        ...(inputData.image !== undefined && { image: inputData.image }),
+        name: inputData.name ?? Prisma.skip,
+        password: inputData.password ?? Prisma.skip,
+        imageId: inputData.imageId ?? Prisma.skip,
       },
-      include: { grade: true },
+      include: { grade: true, image: true },
     });
   };
 
@@ -58,7 +60,11 @@ class UserRepository {
   getLikeStores = async (userId: string) => {
     return await prisma.favoriteStore.findMany({
       where: { userId },
-      include: { store: true },
+      include: {
+        store: {
+          include: { image: true },
+        },
+      },
     });
   };
 }
