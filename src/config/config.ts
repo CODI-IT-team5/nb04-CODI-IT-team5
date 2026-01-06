@@ -58,4 +58,10 @@ export const config = {
     region: process.env['AWS_REGION'] || 'ap-northeast-2',
     bucketName: process.env['AWS_BUCKET_NAME'] || 'test-bucket-name',
   },
+  resource: {
+    tmpImageUrl:
+      process.env['TMP_IMAGE_URL'] ||
+      'https://codi-it-team5-storage.s3.ap-northeast-2.amazonaws.com/uploads/20260106/c86a74da-ddfa-4e78-9d30-a145c55256ad_tmp-image.jpg',
+    tmpImageKey: process.env['TMP_IMAGE_KEY'] || 'uploads/20260106/c86a74da-ddfa-4e78-9d30-a145c55256ad_tmp-image.jpg',
+  },
 };
