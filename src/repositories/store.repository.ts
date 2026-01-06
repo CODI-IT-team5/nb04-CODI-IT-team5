@@ -8,7 +8,7 @@ import type {
 } from '../types/store.type.js';
 import prisma from '../utils/prisma.js';
 
-export class StoreRepository {
+class StoreRepository {
   async findByUserId(userId: string) {
     return prisma.store.findFirst({
       where: { userId },
@@ -215,5 +215,4 @@ export class StoreRepository {
   }
 }
 
-const storeRepository = new StoreRepository();
-export default storeRepository;
+export const storeRepository = new StoreRepository();

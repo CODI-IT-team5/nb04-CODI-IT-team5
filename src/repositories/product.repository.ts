@@ -11,7 +11,7 @@ import type {
 } from '../dtos/product.dto.js';
 import prisma from '../utils/prisma.js';
 
-export class ProductRepository {
+class ProductRepository {
   findById = async (productId: string) => {
     return prisma.product.findFirst({
       where: { id: productId },
@@ -273,4 +273,4 @@ export class ProductRepository {
   };
 }
 
-export default new ProductRepository();
+export const productRepository = new ProductRepository();

@@ -1,5 +1,5 @@
 import orderItemRepository from '../repositories/order-item.repository.js';
-import productRepository from '../repositories/product.repository.js';
+import { productRepository } from '../repositories/product.repository.js';
 import type { CreateReviewData, UpdateReviewData } from '../repositories/review.repository.js';
 import reviewRepository from '../repositories/review.repository.js';
 import { HttpException } from '../utils/http-exception.js';

@@ -2,8 +2,8 @@ import { InquiryStatus, NotificationType, UserRole } from '@prisma/client';
 
 import type { CreateInquiryData, UpdateInquiryData } from '../repositories/inquiry.repository.js';
 import inquiryRepository from '../repositories/inquiry.repository.js';
-import productRepository from '../repositories/product.repository.js';
-import storeRepository from '../repositories/store.repository.js';
+import { productRepository } from '../repositories/product.repository.js';
+import { storeRepository } from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
 import logger from '../utils/logger.js';
 import { notificationService } from './notification.service.js';

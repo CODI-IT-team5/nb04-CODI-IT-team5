@@ -1,7 +1,7 @@
 import { MESSAGE } from '../constants/constant.js';
 import { metadataRepository } from '../repositories/metadata.repository.js';
-import productRepository from '../repositories/product.repository.js';
-import storeRepository from '../repositories/store.repository.js';
+import { productRepository } from '../repositories/product.repository.js';
+import { storeRepository } from '../repositories/store.repository.js';
 import type {
   ProductCreateServiceInput,
   ProductDeleteServiceInput,
