@@ -203,7 +203,7 @@ class ProductService {
     const reviewStats = this.calculateReviewStats(product.reviews);
     return {
       ...product,
-      reviews: [reviewStats],
+      reviews: reviewStats,
       inquiries: product.inquiries,
     };
   };

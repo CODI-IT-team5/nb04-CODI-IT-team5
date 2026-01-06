@@ -9,11 +9,12 @@ import { errorMiddleware } from './middlewares/error.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { authRouter } from './routes/auth.router.js';
 import { cartRouter } from './routes/cart.router.js';
-import communityRoutes from './routes/community.router.js';
+import { communityRouter } from './routes/community.router.js';
 import { dashboardRouter } from './routes/dashboard.router.js';
 import { metadataRouter } from './routes/metadata.router.js';
 import { notificationRouter } from './routes/notification.router.js';
 import { orderRouter } from './routes/order.router.js';
+import productRouter from './routes/product.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { storeRouter } from './routes/store.router.js';
 import { userRouter } from './routes/user.router.js';
@@ -39,15 +40,21 @@ app.use(
   }),
 ); // 요청 허용 도메인
 
-// SSE compression 제외 (compression 설정되면 타임아웃 발생)
-// TODO: 추후 더 나은 방법 찾아보기
-app.use('/api/notifications/sse', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Content-Encoding', 'identity');
-  next();
-});
-
-app.use(compression({ threshold: config.app.compression_threshold, level: config.app.compression_level })); // 응답 압축
+// SSE 경로는 compression 제외
+app.use(
+  compression({
+    threshold: config.app.compression_threshold,
+    level: config.app.compression_level,
+    filter: (req, res) => {
+      // SSE 엔드포인트는 압축 제외
+      if (req.path === '/api/notifications/sse') {
+        return false;
+      }
+      // 기본 compression filter 사용
+      return compression.filter(req, res);
+    },
+  }),
+); // 응답 압축
 app.use(limiter); // API 요청 제한
 app.use(helmet()); // 보안 헤더 적용
 
@@ -58,14 +65,15 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
-app.use('/api/stores', storeRouter);
-app.use('/api/s3', s3Router);
-app.use('/api/dashboard', dashboardRouter);
 app.use('/api/metadata', metadataRouter);
-app.use('/api/orders', orderRouter);
-app.use('/api', communityRoutes);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/s3', s3Router);
 app.use('/api/cart', cartRouter);
+app.use('/api/orders', orderRouter);
+app.use('/api/stores', storeRouter);
+app.use('/api/product', productRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api', communityRouter);
 
 app.use((req, res, next) => {
   // "경로를 찾을 수 없습니다"라는 404 에러를 강제로 발생시켜서 errorMiddleware로 넘김
