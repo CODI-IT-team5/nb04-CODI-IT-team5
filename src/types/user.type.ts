@@ -1,4 +1,4 @@
-import type { UserRole } from '@prisma/client';
+import type { Image, UserRole } from '@prisma/client';
 
 export interface UserBase {
   id: string;
@@ -9,7 +9,18 @@ export interface UserBase {
   createdAt: Date;
   updatedAt: Date;
   grade: Grade;
-  image: string | null;
+}
+
+export interface GetById {
+  id: string;
+  name: string;
+  email: string;
+  type: UserRole;
+  points: number;
+  createdAt: Date;
+  updatedAt: Date;
+  grade: Grade;
+  image: Image;
 }
 
 interface Grade {
@@ -23,7 +34,7 @@ export interface UpdateUser {
   userId: string;
   name?: string | undefined;
   password?: string | undefined;
-  image?: string | undefined;
+  imageId?: string | undefined;
 }
 
 export interface UpdateUserInput extends UpdateUser {
@@ -43,7 +54,7 @@ export interface likeStores {
     detailAddress: string | null;
     phoneNumber: string;
     content: string;
-    image: string | null;
+    image: Image;
   };
 }
 
