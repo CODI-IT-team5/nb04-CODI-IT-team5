@@ -1,10 +1,7 @@
 
 @accessToken = {{auth.response.body.accessToken}}
-@productId =
-@inquiryId =
-@replyId =
-@reviewId =
-@orderItemId =
+@inquiryId = {{inquiry.response.body.id}}
+@replyId = {{reply.response.body.id}}
 
 ### 로그인
 # @name auth
@@ -17,15 +14,15 @@ User-Agent: rest-client-test
   "password": "test1234"
 }
 
-
 ### 문의 등록
+# @name inquiry
 POST {{baseUrl}}/api/products/testProductId/inquiries
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "title": "상품 문의드립니다",
-  "content": "배송은 얼마나 걸리나요?",
+  "title": "문의 제목",
+  "content": "문의 본문",
   "isSecret": false
 }
 
@@ -37,46 +34,54 @@ GET {{baseUrl}}/api/inquiries
 Authorization: Bearer {{accessToken}}
 
 ### 문의 상세 조회
-GET {{baseUrl}}/inquiries/{{inquiryId}}
+GET {{baseUrl}}/api/inquiries/{{inquiryId}}
 Authorization: Bearer {{accessToken}}
 
 ### 문의 수정
-PATCH {{baseUrl}}/inquiries/{{inquiryId}}
+PATCH {{baseUrl}}/api/inquiries/{{inquiryId}}
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "title": "상품 문의드립니다 (수정)",
-  "content": "배송은 얼마나 걸리나요? (추가 질문)",
+  "title": "문의 제목 수정",
+  "content": "문의 본문 수정",
   "isSecret": false
 }
 
 ### 문의 삭제
-DELETE {{baseUrl}}/inquiries/{{inquiryId}}
+DELETE {{baseUrl}}/api/inquiries/{{inquiryId}}
 Authorization: Bearer {{accessToken}}
 
-### 답변 등록
-POST {{baseUrl}}/inquiries/{{inquiryId}}/replies
-Authorization: Bearer {{accessToken}}
+### 판매자 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+User-Agent: rest-client-test
 
 {
-  "content": "보통 2-3일 정도 소요됩니다."
+  "email": "seller1@test.com",
+  "password": "test1234"
 }
 
-### 답변 상세 조회
-GET {{baseUrl}}/inquiries/{{replyId}}/replies
-Authorization: Bearer {{accessToken}}
-
-### 답변 수정
-PATCH {{baseUrl}}/inquiries/{{replyId}}/replies
+### 답변 등록
+# @name reply
+POST {{baseUrl}}/api/inquiries/{{inquiryId}}/replies
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "content": "보통 2-3일 정도 소요되며, 빠른 배송도 가능합니다."
+  "content": "답변 본문"
+}
+
+### 답변 수정
+PATCH {{baseUrl}}/api/inquiries/{{replyId}}/replies
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "content": "수정 테스트"
 }
 
 ### 답변 삭제
-DELETE {{baseUrl}}/inquiries/{{replyId}}/replies
+DELETE {{baseUrl}}/api/inquiries/{{replyId}}/replies
 Authorization: Bearer {{accessToken}}

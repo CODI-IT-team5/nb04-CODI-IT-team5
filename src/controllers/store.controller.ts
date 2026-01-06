@@ -58,7 +58,7 @@ class StoreController {
         pageSize,
         userId: req.user.id,
       });
-      res.status(STATUS_CODE.OK).json(result);
+      res.status(STATUS_CODE.OK).json(StoreResponse.myProducts(result));
     } catch (err) {
       next(err);
     }

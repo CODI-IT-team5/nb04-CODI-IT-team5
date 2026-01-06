@@ -98,19 +98,40 @@ export class InquiryRepository {
     });
   }
 
-  async findByUserId(userId: string): Promise<Inquiry[]> {
+  async findByUserId(
+    userId: string,
+    options?: {
+      page?: number;
+      pageSize?: number;
+      status?: InquiryStatus;
+    },
+  ): Promise<Inquiry[]> {
+    const where = {
+      userId,
+      ...(options?.status ? { status: options.status } : {}),
+    };
+
+    const pagination =
+      options?.page && options?.pageSize
+        ? {
+            skip: (options.page - 1) * options.pageSize,
+            take: options.pageSize,
+          }
+        : {};
+
     return prisma.inquiry.findMany({
-      where: { userId },
+      where,
       include: {
         product: {
+          include: {
+            image: true,
+            store: true,
+          },
+        },
+        user: {
           select: {
             id: true,
             name: true,
-            store: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
         reply: true,
@@ -118,16 +139,51 @@ export class InquiryRepository {
       orderBy: {
         createdAt: 'desc',
       },
+      ...pagination,
     });
   }
 
-  async findByStoreId(storeId: string): Promise<Inquiry[]> {
-    return prisma.inquiry.findMany({
-      where: {
-        product: {
-          storeId,
-        },
+  async countByUserId(
+    userId: string,
+    options?: {
+      status?: InquiryStatus;
+    },
+  ): Promise<number> {
+    const where = {
+      userId,
+      ...(options?.status ? { status: options.status } : {}),
+    };
+
+    return prisma.inquiry.count({
+      where,
+    });
+  }
+
+  async findByStoreId(
+    storeId: string,
+    options?: {
+      page?: number;
+      pageSize?: number;
+      status?: InquiryStatus;
+    },
+  ): Promise<Inquiry[]> {
+    const where = {
+      product: {
+        storeId,
       },
+      ...(options?.status ? { status: options.status } : {}),
+    };
+
+    const pagination =
+      options?.page && options?.pageSize
+        ? {
+            skip: (options.page - 1) * options.pageSize,
+            take: options.pageSize,
+          }
+        : {};
+
+    return prisma.inquiry.findMany({
+      where,
       include: {
         user: {
           select: {
@@ -136,9 +192,9 @@ export class InquiryRepository {
           },
         },
         product: {
-          select: {
-            id: true,
-            name: true,
+          include: {
+            image: true,
+            store: true,
           },
         },
         reply: true,
@@ -146,6 +202,25 @@ export class InquiryRepository {
       orderBy: {
         createdAt: 'desc',
       },
+      ...pagination,
+    });
+  }
+
+  async countByStoreId(
+    storeId: string,
+    options?: {
+      status?: InquiryStatus;
+    },
+  ): Promise<number> {
+    const where = {
+      product: {
+        storeId,
+      },
+      ...(options?.status ? { status: options.status } : {}),
+    };
+
+    return prisma.inquiry.count({
+      where,
     });
   }
 

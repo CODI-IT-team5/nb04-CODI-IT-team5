@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
+import { InquiryReplyResponse, type InquiryReplyWithRelations } from '../serializes/inquiry-reply.serialize.js';
 import inquiryReplyService from '../services/inquiry-reply.service.js';
 
 export class InquiryReplyController {
@@ -13,7 +14,7 @@ export class InquiryReplyController {
 
       const reply = await inquiryReplyService.createReply(inquiryId as string, userId, content as string);
 
-      res.status(STATUS_CODE.CREATED).json(reply);
+      res.status(STATUS_CODE.CREATED).json(InquiryReplyResponse.detail(reply as InquiryReplyWithRelations));
     } catch (error) {
       next(error);
     }
@@ -41,7 +42,7 @@ export class InquiryReplyController {
 
       const reply = await inquiryReplyService.updateReply(replyId as string, userId, content as string);
 
-      res.status(STATUS_CODE.OK).json(reply);
+      res.status(STATUS_CODE.OK).json(InquiryReplyResponse.detail(reply as InquiryReplyWithRelations));
     } catch (error) {
       next(error);
     }

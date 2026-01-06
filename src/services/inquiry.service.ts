@@ -61,9 +61,19 @@ export class InquiryService {
     return inquiry;
   }
 
-  async getMyInquiries(userId: string, userType: UserRole) {
+  async getMyInquiries(
+    userId: string,
+    userType: UserRole,
+    options?: {
+      page?: number;
+      pageSize?: number;
+      status?: InquiryStatus;
+    },
+  ) {
     if (userType === UserRole.BUYER) {
-      return inquiryRepository.findByUserId(userId);
+      const inquiries = await inquiryRepository.findByUserId(userId, options);
+      const totalCount = await inquiryRepository.countByUserId(userId, options?.status ? { status: options.status } : {});
+      return { inquiries, totalCount };
     } else {
       const store = await storeRepository.findByUserId(userId);
 
@@ -71,7 +81,9 @@ export class InquiryService {
         throw HttpException.notFound();
       }
 
-      return inquiryRepository.findByStoreId(store.id);
+      const inquiries = await inquiryRepository.findByStoreId(store.id, options);
+      const totalCount = await inquiryRepository.countByStoreId(store.id, options?.status ? { status: options.status } : {});
+      return { inquiries, totalCount };
     }
   }
 
