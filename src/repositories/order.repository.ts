@@ -9,6 +9,7 @@ const orderWithDetailsValidator = Prisma.validator<Prisma.OrderDefaultArgs>()({
       include: {
         product: {
           include: {
+            image: true,
             reviews: true,
             store: true,
           },

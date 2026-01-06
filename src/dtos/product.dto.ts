@@ -16,7 +16,7 @@ const baseProductSchema = z.object({
   name: z.string().min(1, '상품명은 필수입니다').max(100, '상품명은 100자 이하여야 합니다'),
   price: z.number().int().min(0, '가격은 0 이상이어야 합니다'),
   content: z.string().optional(),
-  image: z.string().url('올바른 URL 형식이 아닙니다').optional(),
+  imageId: z.string('이미지 id는 문자열이어야 합니다').optional(),
   categoryName: z.string().min(1, '카테고리명은 필수입니다'),
   stocks: z.array(stockItemSchema).min(1, '최소 하나 이상의 재고 정보가 필요합니다'),
   discountRate: z.number().int().min(0).max(100, '할인율은 0-100 사이여야 합니다').optional(),
@@ -73,14 +73,14 @@ export interface CreateProductRepositoryData {
   name: string;
   price: number;
   content?: string;
-  image?: string;
+  imageId?: string;
 }
 
 export interface UpdateProductRepositoryData {
   name?: string | undefined;
   price?: number | undefined;
   content?: string | undefined;
-  image?: string | undefined;
+  imageId?: string | undefined;
   categoryId?: string | undefined;
   isSoldOut?: boolean | undefined;
 }

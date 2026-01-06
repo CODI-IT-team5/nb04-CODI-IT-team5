@@ -23,7 +23,7 @@ export class OrderResponse {
       productId: item.productId,
       product: {
         name: item.product.name,
-        image: item.product.image,
+        image: item.product.image.url,
         reviews: item.product.reviews.map((review) => ({
           id: review.id,
           rating: review.rating,

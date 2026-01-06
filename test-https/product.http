@@ -1,3 +1,5 @@
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
+@imageId = {{upload.response.body.data.id}}
 @baseUrl = http://localhost:3001
 @accessToken = {{auth.response.body.accessToken}}
 @productId = {{createProduct.response.body.id}}
@@ -22,7 +24,7 @@ Content-Type: application/json
   "name": "가디건",
   "price": 20000,
   "content": "상품 상세 설명",
-  "image": "https://s3.amazonaws.com/bucket/products/cardigan.jpg",
+  "imageId": "default-image",
   "categoryName": "TOP",
   "stocks": [
     {
@@ -51,6 +53,19 @@ GET {{baseUrl}}/api/products?page=1&pageSize=10&search=가디건&sort=recent&pri
 
 ### 상품 상세 조회 (GET /api/products/{productId})
 GET {{baseUrl}}/api/products/{{productId}}
+
+### 이미지 업로드
+# @name upload
+POST {{baseUrl}}/api/s3/upload
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ../test.jpg
+--{{boundary}}--
 
 ### 상품 수정 (PATCH /api/products/{productId})
 PATCH {{baseUrl}}/api/products/{{productId}}

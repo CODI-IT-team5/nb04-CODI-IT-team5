@@ -35,6 +35,7 @@ class ProductRepository {
     return prisma.product.findFirst({
       where: { id: productId },
       include: {
+        image: true,
         store: true,
         category: true,
         stocks: {
@@ -153,6 +154,7 @@ class ProductRepository {
       prisma.product.findMany({
         where,
         include: {
+          image: true,
           store: true,
           productDiscounts: {
             where: {
@@ -191,7 +193,7 @@ class ProductRepository {
         name: input.data.name ?? Prisma.skip,
         price: input.data.price ?? Prisma.skip,
         content: input.data.content ?? Prisma.skip,
-        image: input.data.image ?? Prisma.skip,
+        imageId: input.data.imageId ?? Prisma.skip,
         categoryId: input.data.categoryId ?? Prisma.skip,
         isSoldOut: input.data.isSoldOut ?? Prisma.skip,
       },
