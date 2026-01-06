@@ -35,6 +35,17 @@ class MetadataRepository {
       include: { grade: true },
     });
   };
+  findCategoryByName = async (name: string) => {
+    return await prisma.category.findFirst({
+      where: { name },
+    });
+  };
+
+  findSizeById = async (id: string) => {
+    return await prisma.size.findFirst({
+      where: { id },
+    });
+  };
 }
 
 export const metadataRepository = new MetadataRepository();

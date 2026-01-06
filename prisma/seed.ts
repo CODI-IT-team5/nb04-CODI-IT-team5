@@ -26,8 +26,10 @@ async function main() {
   const hashedPassword = await bcrypt.hash(testPassword, config.app.bcryptSaltRounds);
 
   const [seller1, buyer1] = await Promise.all([
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'seller1@test.com' },
+      update: {},
+      create: {
         email: 'seller1@test.com',
         name: '셀러1',
         password: hashedPassword,
@@ -36,8 +38,10 @@ async function main() {
         gradeId: 'grade_green',
       },
     }),
-    prisma.user.create({
-      data: {
+    prisma.user.upsert({
+      where: { email: 'buyer1@test.com' },
+      update: {},
+      create: {
         email: 'buyer1@test.com',
         name: '바이어1',
         password: hashedPassword,
@@ -81,8 +85,10 @@ async function main() {
   // ----------------------
   // 5. 스토어
   // ----------------------
-  const seller1Store = await prisma.store.create({
-    data: {
+  const seller1Store = await prisma.store.upsert({
+    where: { userId: seller1.id },
+    update: {},
+    create: {
       name: '셀러1 스토어',
       content: '셀러1 스토어 소개',
       address: '서울시 강남구',
@@ -95,11 +101,10 @@ async function main() {
   // ----------------------
   // 6. 관심 스토어
   // ----------------------
-  await prisma.favoriteStore.create({
-    data: {
-      userId: buyer1.id,
-      storeId: seller1Store.id,
-    },
+  await prisma.favoriteStore.upsert({
+    where: { userId_storeId: { userId: buyer1.id, storeId: seller1Store.id } },
+    update: {},
+    create: { userId: buyer1.id, storeId: seller1Store.id },
   });
 
   // ----------------------
@@ -110,8 +115,10 @@ async function main() {
     where: { name: 'TOP' },
   });
 
-  const testProduct = await prisma.product.create({
-    data: {
+  const testProduct = await prisma.product.upsert({
+    where: { id: 'testProductId' },
+    update: {},
+    create: {
       id: 'testProductId',
       storeId: seller1Store.id,
       categoryId: topCategory!.id,
@@ -121,7 +128,22 @@ async function main() {
       isSoldOut: false,
     },
   });
-  console.log(' 테스트용 상품 생성 완료!');
+
+  // ----------------------
+  // 8. 재고 추가 (테스트용)
+  // ----------------------
+  await prisma.productStock.upsert({
+    where: { productId_sizeId: { productId: testProduct.id, sizeId: 'size_s' } },
+    update: { quantity: 10 },
+    create: { productId: testProduct.id, sizeId: 'size_s', quantity: 10 },
+  });
+  await prisma.productStock.upsert({
+    where: { productId_sizeId: { productId: testProduct.id, sizeId: 'size_m' } },
+    update: { quantity: 10 },
+    create: { productId: testProduct.id, sizeId: 'size_m', quantity: 10 },
+  });
+
+  console.log(' 테스트용 상품 및 재고 생성 완료!');
 }
 
 main()
