@@ -26,7 +26,7 @@ export async function patchCart(userId: string, input: PatchCartInput) {
       if (!stock) {
         throw new HttpException({
           status: STATUS_CODE.BAD_REQUEST,
-          message: `사이즈가 존재하지 않습니다.`,
+          message: MESSAGE.sizeNotFound,
         });
       }
 
