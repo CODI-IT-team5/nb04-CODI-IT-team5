@@ -1,4 +1,4 @@
-import type { UpdateGrade } from '../types/metadata.type.js';
+import type { IncrementTotalAmountInput, UpdateGrade, UpdateGradeInput } from '../types/metadata.type.js';
 import prisma from '../utils/prisma.js';
 
 class MetadataRepository {
@@ -16,6 +16,25 @@ class MetadataRepository {
     });
   };
 
+  incrementTotalAmount = async (input: IncrementTotalAmountInput) => {
+    return await input.tx.user.update({
+      where: { id: input.userId },
+      data: {
+        totalAmount: { increment: input.deltaAmount },
+      },
+      include: { grade: true },
+    });
+  };
+
+  updateGrade = async (input: UpdateGradeInput) => {
+    return await input.tx.user.update({
+      where: { id: input.userId },
+      data: {
+        gradeId: input.gradeId,
+      },
+      include: { grade: true },
+    });
+  };
   findCategoryByName = async (name: string) => {
     return await prisma.category.findFirst({
       where: { name },
