@@ -26,6 +26,17 @@ class NotificationController {
 
       // 연결 초기화 메시지 (선택 사항)
       res.write(': connection established\n\n');
+
+      // TODO: SSE 연결 유지, 더 나은 방법이 있는지 찾아보기
+      const heartbeat = setInterval(() => {
+        res.write(':\n\n');
+      }, 30000);
+
+      req.on('close', () => {
+        clearInterval(heartbeat);
+        notificationService.removeClient(userId, res);
+        res.end();
+      });
     } catch (error) {
       logger.error(error as Error, 'SSE connection error:');
       next(error);
