@@ -80,7 +80,7 @@ export type Inquiry = ProductWithRelations['inquiries'][number];
 
 // 재고 아이템 (생성/수정용)
 export interface StockInput {
-  sizeId: string;
+  sizeId: number;
   quantity: number;
 }
 

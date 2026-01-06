@@ -153,7 +153,7 @@ class ProductService {
   };
 
   // 사이즈 검증
-  private validateSizes = async (stocks: { sizeId: string; quantity: number }[]) => {
+  private validateSizes = async (stocks: { sizeId: number; quantity: number }[]) => {
     for (const stock of stocks) {
       const size = await metadataRepository.findSizeById(stock.sizeId);
       if (!size) {

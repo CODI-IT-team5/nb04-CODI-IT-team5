@@ -14,7 +14,7 @@ export type GetOrdersQuery = z.infer<typeof getOrdersQueryDto>;
 const createOrderItemSchema = z.object({
   // productId: z.string().cuid(), (임시) 테스트를 위해서 cuid 검증 X
   productId: z.string(),
-  sizeId: z.string(), // sizeId는 'size_s' 같은 문자열일 수 있으므로 cuid()가 아님
+  sizeId: z.number(), // sizeId는 'size_s' 같은 문자열일 수 있으므로 cuid()가 아님
   quantity: z.number().int().positive(),
 });
 
