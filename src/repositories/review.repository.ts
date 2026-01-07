@@ -1,6 +1,18 @@
-import type { Review } from '@prisma/client';
+import type { Prisma, Review } from '@prisma/client';
 
 import prisma from '../utils/prisma.js';
+
+export type ReviewWithUser = Prisma.ReviewGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        name: true;
+        image: true;
+      };
+    };
+  };
+}>;
 
 export interface CreateReviewData {
   rating: number;
@@ -87,6 +99,39 @@ export class ReviewRepository {
         createdAt: 'desc',
       },
     });
+  }
+
+  async findByProductIdPaginated(
+    productId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ reviews: ReviewWithUser[]; total: number }> {
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      prisma.review.findMany({
+        where: { productId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.review.count({
+        where: { productId },
+      }),
+    ]);
+
+    return { reviews, total };
   }
 
   async findByUserId(userId: string): Promise<Review[]> {

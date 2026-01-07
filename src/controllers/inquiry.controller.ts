@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
+import type { GetMyInquiriesQuery } from '../dtos/inquiry.dto.js';
+import { type InquiryDetailWithRelations, InquiryResponse } from '../serializes/inquiry.serialize.js';
 import inquiryService from '../services/inquiry.service.js';
 
 export class InquiryController {
@@ -31,9 +33,16 @@ export class InquiryController {
       const userId = req.user!.id;
       const userType = req.user!.type;
 
-      const inquiries = await inquiryService.getMyInquiries(userId, userType);
+      const { page, pageSize, status } = req.validated?.query as GetMyInquiriesQuery;
 
-      res.status(STATUS_CODE.OK).json(inquiries);
+      const { inquiries, totalCount } = await inquiryService.getMyInquiries(userId, userType, {
+        page,
+        pageSize,
+        ...(status ? { status } : {}),
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      res.status(STATUS_CODE.OK).json(InquiryResponse.list(inquiries as any, totalCount));
     } catch (error) {
       next(error);
     }
@@ -48,7 +57,7 @@ export class InquiryController {
 
       const inquiry = await inquiryService.getInquiryById(inquiryId as string, userId, userType);
 
-      res.status(STATUS_CODE.OK).json(inquiry);
+      res.status(STATUS_CODE.OK).json(InquiryResponse.detail(inquiry as InquiryDetailWithRelations));
     } catch (error) {
       next(error);
     }
@@ -83,7 +92,7 @@ export class InquiryController {
         isSecret,
       });
 
-      res.status(STATUS_CODE.OK).json(inquiry);
+      res.status(STATUS_CODE.OK).json(InquiryResponse.detail(inquiry as InquiryDetailWithRelations));
     } catch (error) {
       next(error);
     }

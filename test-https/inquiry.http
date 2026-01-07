@@ -1,0 +1,87 @@
+
+@accessToken = {{auth.response.body.accessToken}}
+@inquiryId = {{inquiry.response.body.id}}
+@replyId = {{reply.response.body.id}}
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 문의 등록
+# @name inquiry
+POST {{baseUrl}}/api/products/testProductId/inquiries
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "문의 제목",
+  "content": "문의 본문",
+  "isSecret": false
+}
+
+### 상품별 문의 조회
+GET {{baseUrl}}/api/products/testProductId/inquiries
+
+### 내 문의 조회
+GET {{baseUrl}}/api/inquiries
+Authorization: Bearer {{accessToken}}
+
+### 문의 상세 조회
+GET {{baseUrl}}/api/inquiries/{{inquiryId}}
+Authorization: Bearer {{accessToken}}
+
+### 문의 수정
+PATCH {{baseUrl}}/api/inquiries/{{inquiryId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "문의 제목 수정",
+  "content": "문의 본문 수정",
+  "isSecret": false
+}
+
+### 문의 삭제
+DELETE {{baseUrl}}/api/inquiries/{{inquiryId}}
+Authorization: Bearer {{accessToken}}
+
+### 판매자 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "seller1@test.com",
+  "password": "test1234"
+}
+
+### 답변 등록
+# @name reply
+POST {{baseUrl}}/api/inquiries/{{inquiryId}}/replies
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "content": "답변 본문"
+}
+
+### 답변 수정
+PATCH {{baseUrl}}/api/inquiries/{{replyId}}/replies
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "content": "수정 테스트"
+}
+
+### 답변 삭제
+DELETE {{baseUrl}}/api/inquiries/{{replyId}}/replies
+Authorization: Bearer {{accessToken}}

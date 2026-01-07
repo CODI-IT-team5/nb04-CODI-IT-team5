@@ -9,7 +9,7 @@ export async function findCartByUserId(userId: string) {
 }
 
 // 제품의 특정 사이즈 재고 조회
-export async function getStockQuantity(productId: string, sizeId: string) {
+export async function getStockQuantity(productId: string, sizeId: number) {
   const stock = await prisma.productStock.findUnique({
     where: {
       productId_sizeId: {

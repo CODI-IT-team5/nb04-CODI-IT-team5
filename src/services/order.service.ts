@@ -64,7 +64,7 @@ class OrderService {
         let subtotal = 0;
         const computedItems: {
           productId: string;
-          sizeId: string;
+          sizeId: number;
           quantity: number;
           price: number;
           productName: string;

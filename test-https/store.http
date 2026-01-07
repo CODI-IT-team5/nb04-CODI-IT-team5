@@ -3,8 +3,8 @@
 @accessToken = {{auth.response.body.accessToken}}
 @storeId = {{createStore.response.body.id}}
 
-@newUserEmail = seller@test.com
-@newUserPassword = testtest
+@newUserEmail = seller1@test.com
+@newUserPassword = test1234
 
 ### 회원가입
 POST {{baseUrl}}/api/users
@@ -43,7 +43,6 @@ Content-Type: application/json
   "imageId": "default-image"
 }
 
-
 ### 이미지 업로드
 # @name upload
 POST {{baseUrl}}/api/s3/upload
@@ -79,8 +78,8 @@ GET {{baseUrl}}/api/stores/{{storeId}}
 GET {{baseUrl}}/api/stores/detail/my
 Authorization: Bearer {{accessToken}}
 
-### 내 스토어 등록 상품 조회 (페이징)
-GET {{baseUrl}}/api/stores/detail/my/product?page=1&pageSize=5
+### 내 스토어 등록 상품 조회
+GET {{baseUrl}}/api/stores/detail/my/product
 Authorization: Bearer {{accessToken}}
 
 ### 관심 스토어 등록

@@ -54,7 +54,7 @@ export class CartResponse {
               (s: {
                 id: string;
                 productId: string;
-                sizeId: string;
+                sizeId: number;
                 quantity: number;
                 size: { id: string; name: string; sizeDetail: Prisma.JsonValue } | null;
               }) => ({

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // 재고 아이템 스키마 (상품 생성/수정용)
 export const stockItemSchema = z.object({
-  sizeId: z.string().min(1, '사이즈 ID는 필수입니다'),
+  sizeId: z.number().int().min(1, '카테고리는 1 이상이어야 합니다').max(6, '카테고리는 6 이하여야 합니다'),
   quantity: z.number().int().min(0, '수량은 0 이상이어야 합니다'),
 });
 
@@ -100,7 +100,7 @@ export interface CreateProductRepositoryInput {
 
 export interface CreateStockRepositoryInput {
   productId: string;
-  sizeId: string;
+  sizeId: number;
   quantity: number;
 }
 

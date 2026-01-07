@@ -51,7 +51,7 @@ export interface TransformedProduct extends Omit<ProductWithRelations, 'reviews'
     rate4Length: number;
     rate5Length: number;
     sumScore: number;
-  }[];
+  };
 }
 
 // 상품 목록 아이템 (목록 조회용 간소화 버전)
@@ -80,7 +80,7 @@ export type Inquiry = ProductWithRelations['inquiries'][number];
 
 // 재고 아이템 (생성/수정용)
 export interface StockInput {
-  sizeId: string;
+  sizeId: number;
   quantity: number;
 }
 

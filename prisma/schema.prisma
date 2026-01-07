@@ -185,7 +185,7 @@ model Category {
 }
 
 model Size {
-  id   String @id @default(cuid()) // API 예시가 CUID임
+  id   Int @id @default(autoincrement()) // API 예시가 CUID임
   name String @unique // 예: "L" (조회용)
 
   // API 명세: size: { ko: "L", en: "Large" }
@@ -218,7 +218,7 @@ model CartItem {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  sizeId String
+  sizeId Int
   size   Size   @relation(fields: [sizeId], references: [id])
 
   quantity Int @default(1)
@@ -289,7 +289,7 @@ model ProductStock {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  sizeId String // Size ID가 CUID로 변경됨
+  sizeId Int
   size   Size   @relation(fields: [sizeId], references: [id])
 
   quantity Int @default(0)
@@ -354,7 +354,7 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  sizeId String
+  sizeId Int
   size   Size   @relation(fields: [sizeId], references: [id])
 
   quantity Int // 수량

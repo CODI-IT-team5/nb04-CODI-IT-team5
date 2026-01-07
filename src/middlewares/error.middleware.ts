@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 interface ErrorWithStatus {
   status?: number;

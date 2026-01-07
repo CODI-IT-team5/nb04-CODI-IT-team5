@@ -1,0 +1,69 @@
+@accessToken = {{auth.response.body.accessToken}}
+@orderItemId = {{order.response.body.orderItems[0].id}}
+@reviewId = {{review.response.body.[0].id}}
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 주문 생성
+# @name order
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "김실사용",
+  "phone": "010-1111-2222",
+  "address": "서울시 강남구 진짜 주소",
+  "orderItems": [
+    {
+      "productId": "testProductId",
+      "sizeId": 3,
+      "quantity": 1
+    }
+  ]
+}
+
+### 리뷰 작성
+POST {{baseUrl}}/api/product/testProductId/reviews
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "content": "상품 정말 좋아요! 강력 추천합니다.",
+  "orderItemId": "{{orderItemId}}"
+}
+
+### 상품별 리뷰 조회
+# @name review
+GET {{baseUrl}}/api/product/testProductId/reviews
+
+### 내 리뷰 조회
+GET {{baseUrl}}/reviews
+Authorization: Bearer {{accessToken}}
+
+### 리뷰 상세 조회
+GET {{baseUrl}}/api/reviews/{{reviewId}}
+
+### 리뷰 수정
+PATCH {{baseUrl}}/api/reviews/{{reviewId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "content": "상품은 좋은데 배송이 조금 느렸어요."
+}
+
+### 리뷰 삭제
+DELETE {{baseUrl}}/api/reviews/{{reviewId}}
+Authorization: Bearer {{accessToken}}

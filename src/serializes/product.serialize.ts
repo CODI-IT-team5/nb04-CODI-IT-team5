@@ -25,7 +25,14 @@ export class ProductResponse {
       discountStartTime: activeDiscount?.discountStartTime ?? null,
       discountEndTime: activeDiscount?.discountEndTime ?? null,
       reviewsCount: product.reviewsCount,
-      reviews: product.reviews,
+      reviews: {
+        rate1Length: product.reviews.rate1Length,
+        rate2Length: product.reviews.rate2Length,
+        rate3Length: product.reviews.rate3Length,
+        rate4Length: product.reviews.rate4Length,
+        rate5Length: product.reviews.rate5Length,
+        sumScore: product.reviews.sumScore,
+      },
       inquiries: product.inquiries,
       category: product.category
         ? {

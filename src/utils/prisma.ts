@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import type { Operation } from '@prisma/client/runtime/binary';
 
-import logger from './logger.js';
+import { logger } from './logger.js';
 
 export type ExtendedPrismaClient = typeof prisma;
 export type ExtendedTransactionClient = Parameters<Parameters<ExtendedPrismaClient['$transaction']>[0]>[0];
