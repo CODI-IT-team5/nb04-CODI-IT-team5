@@ -30,8 +30,6 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(loggerMiddleware); // 로그 저장
 
-app.set('etag', false); // TODO: 프론트에서 304 받으면 에러나서 임시 설정
-
 app.use(
   cors({
     origin: config.app.cors_origin,
@@ -79,8 +77,8 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/inquiries', inquiryRouter);
 
+// 404 에러를 강제로 발생시켜서 errorMiddleware로 넘김
 app.use((req, res, next) => {
-  // "경로를 찾을 수 없습니다"라는 404 에러를 강제로 발생시켜서 errorMiddleware로 넘김
   next(HttpException.notFound('잘못된 URL 입니다'));
 });
 
