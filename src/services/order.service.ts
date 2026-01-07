@@ -68,6 +68,7 @@ class OrderService {
           quantity: number;
           price: number;
           productName: string;
+          sizeName: string; // 사이즈 이름을 저장하기 위해 추가
         }[] = [];
 
         for (const item of orderItems) {
@@ -77,6 +78,7 @@ class OrderService {
               product: {
                 select: { price: true, isSoldOut: true, name: true },
               },
+              size: true, // 사이즈 정보를 함께 가져옵니다.
             },
           });
 
@@ -85,10 +87,14 @@ class OrderService {
             await notificationService.createNotification({
               userId: userId,
               type: NotificationType.PRODUCT_SOLDOUT_FOR_BUYER,
-              content: `주문하려는 상품 '${productStock?.product.name}' (${item.sizeId} 사이즈)의 재고가 부족하거나 품절되었습니다.`,
+              content: `주문하려는 상품 '${productStock?.product.name}' (${
+                productStock?.size?.name ?? item.sizeId
+              } 사이즈)의 재고가 부족하거나 품절되었습니다.`,
               url: `/products/${item.productId}`, // 상품 상세 페이지로 연결
             });
-            throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+            throw HttpException.badRequest(
+              MESSAGE.insufficientStock(productStock?.size?.name ?? item.sizeId, productStock?.quantity ?? 0),
+            );
           }
 
           const unitPrice = productStock.product.price;
@@ -100,6 +106,7 @@ class OrderService {
             quantity: item.quantity,
             price: unitPrice,
             productName: productStock.product.name,
+            sizeName: productStock.size.name, // 사이즈 이름을 저장합니다.
           });
         }
 
@@ -165,7 +172,7 @@ class OrderService {
               await notificationService.createNotification({
                 userId: productWithStoreOwner.store.userId,
                 type: NotificationType.PRODUCT_SOLDOUT_FOR_SELLER,
-                content: `판매 중인 상품 '${item.productName}' (${updatedProductStock.sizeId} 사이즈)의 재고가 소진되었습니다.`,
+                content: `판매 중인 상품 '${item.productName}' (${item.sizeName ?? item.sizeId} 사이즈)의 재고가 소진되었습니다.`,
                 url: `/seller/products/${item.productId}`,
               });
             }
@@ -181,7 +188,9 @@ class OrderService {
                 await notificationService.createNotification({
                   userId: buyerId,
                   type: NotificationType.PRODUCT_SOLDOUT_FOR_BUYER,
-                  content: `장바구니에 담아둔 상품 '${item.productName}' (${updatedProductStock.sizeId} 사이즈)의 재고가 모두 소진되었습니다.`,
+                  content: `장바구니에 담아둔 상품 '${item.productName}' (${
+                    item.sizeName ?? item.sizeId
+                  } 사이즈)의 재고가 모두 소진되었습니다.`,
                   url: `/products/${item.productId}`,
                 });
               }

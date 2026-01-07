@@ -225,7 +225,7 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
   });
 }
 
-export async function findUserIdsByProductInCart(productId: string, sizeId: string) {
+export async function findUserIdsByProductInCart(productId: string, sizeId: number) {
   const cartItems = await prisma.cartItem.findMany({
     where: {
       productId,

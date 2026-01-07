@@ -100,10 +100,10 @@ Content-Type: application/json
   "price": 10000,
   "content": "문의 테스트용입니다.",
   "image": "https://s3.amazonaws.com/bucket/products/test-tshirt.jpg",
-  "categoryName": "TOP",
+  "categoryName": "top",
   "stocks": [
     {
-      "sizeId": "size_m",
+      "sizeId": 2,
       "quantity": 100
     }
   ]
@@ -178,10 +178,10 @@ Content-Type: application/json
   "price": 50000,
   "content": "재고가 1개뿐입니다.",
   "image": "https://s3.amazonaws.com/bucket/products/limited-tshirt.jpg",
-  "categoryName": "TOP",
+  "categoryName": "top",
   "stocks": [
     {
-      "sizeId": "size_l",
+      "sizeId": 2,
       "quantity": 1
     }
   ]
@@ -203,7 +203,7 @@ Content-Type: application/json
   "productId": "{{soldOutProductId}}",
   "sizes": [
     {
-      "sizeId": "size_l",
+      "sizeId": 2,
       "quantity": 1
     }
   ]
@@ -225,7 +225,7 @@ Content-Type: application/json
   "orderItems": [
     {
       "productId": "{{soldOutProductId}}",
-      "sizeId": "size_l",
+      "sizeId": 2,
       "quantity": 1
     }
   ]
@@ -266,7 +266,7 @@ Content-Type: application/json
   "orderItems": [
     {
       "productId": "{{soldOutProductId}}",
-      "sizeId": "size_l",
+      "sizeId": 2,
       "quantity": 1
     }
   ]
