@@ -1,11 +1,16 @@
-### sse 테스트는 9번 항목에 있습니다. (로그인해서 토큰 받고 실행해주세요)
+### sse 테스트는 맨 아래 14번 항목에 있습니다.
 
 ### 0. 공통 변수
 @baseUrl = http://localhost:3001
-@productId = testProductId
+# 테스트용으로 생성할 상품 ID를 저장할 변수입니다.
+@testProductId = {{createTestProduct.response.body.id}}
+
+# =================================================================
+# [기본 설정] 로그인 및 토큰 발급
+# =================================================================
 
 # -----------------------------------------------------------------
-# 1. 판매자 로그인
+# 1. 판매자 로그인 (seller1 - seed에 존재)
 # -----------------------------------------------------------------
 # @name sellerLogin
 POST {{baseUrl}}/api/auth/login
@@ -19,9 +24,8 @@ Content-Type: application/json
 ### 판매자 토큰 저장
 @sellerToken = {{sellerLogin.response.body.accessToken}}
 
-
 # -----------------------------------------------------------------
-# 2. 구매자 로그인
+# 2. 구매자 1 로그인 (buyer1 - seed에 존재, 실제 구매자)
 # -----------------------------------------------------------------
 # @name buyerLogin
 POST {{baseUrl}}/api/auth/login
@@ -32,12 +36,11 @@ Content-Type: application/json
   "password": "test1234"
 }
 
-### 구매자 토큰 저장
+### 구매자 1 토큰 저장
 @buyerToken = {{buyerLogin.response.body.accessToken}}
 
-
 # -----------------------------------------------------------------
-# 2.1. 구매자 정보 조회 (ID 획득용)
+# 2.1. 구매자 1 정보 조회 (ID 획득용)
 # -----------------------------------------------------------------
 # @name getMe
 GET {{baseUrl}}/api/users/me
@@ -48,10 +51,71 @@ Authorization: Bearer {{buyerToken}}
 
 
 # -----------------------------------------------------------------
-# 3. 문의 남기기 (구매자 -> 판매자)
+# 3. [NEW] 구매자 2 회원가입 (장바구니 알림 테스트용)
+#    * 이미 가입된 경우 409 에러가 날 수 있으나, 무시하고 로그인 진행하면 됩니다.
+# -----------------------------------------------------------------
+# @name buyer2Signup
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": "장바구니테스터",
+  "email": "buyer2@test.com",
+  "password": "test1234",
+  "type": "BUYER"
+}
+
+###
+
+# -----------------------------------------------------------------
+# 3.1. 구매자 2 로그인
+# -----------------------------------------------------------------
+# @name buyer2Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer2@test.com",
+  "password": "test1234"
+}
+
+### 구매자 2 토큰 저장
+@buyer2Token = {{buyer2Login.response.body.accessToken}}
+
+
+# =================================================================
+# [시나리오 1] 문의/답변 알림 테스트 (기존)
+# =================================================================
+
+# -----------------------------------------------------------------
+# 4. 상품 생성 (테스트용) - 재고 넉넉하게
+# -----------------------------------------------------------------
+# @name createTestProduct
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{sellerToken}}
+Content-Type: application/json
+
+{
+  "name": "문의 테스트용 티셔츠",
+  "price": 10000,
+  "content": "문의 테스트용입니다.",
+  "image": "https://s3.amazonaws.com/bucket/products/test-tshirt.jpg",
+  "categoryName": "TOP",
+  "stocks": [
+    {
+      "sizeId": "size_m",
+      "quantity": 100
+    }
+  ]
+}
+
+###
+
+# -----------------------------------------------------------------
+# 5. 문의 남기기 (구매자 1 -> 판매자)
 # -----------------------------------------------------------------
 # @name createInquiry
-POST {{baseUrl}}/api/inquiries/products/{{productId}}/inquiries
+POST {{baseUrl}}/api/products/{{testProductId}}/inquiries
 Authorization: Bearer {{buyerToken}}
 Content-Type: application/json
 
@@ -66,108 +130,166 @@ Content-Type: application/json
 
 
 # -----------------------------------------------------------------
-# 4. 판매자 알림 확인 (새 문의 알림)
+# 6. 판매자 알림 확인 (새 문의 알림)
 # -----------------------------------------------------------------
 # @name checkSellerNoti
 GET {{baseUrl}}/api/notifications
 Authorization: Bearer {{sellerToken}}
 
 ### 가장 최근 알림 ID 저장
-@notificationId = {{checkSellerNoti.response.body.0.id}}
+@notificationId = {{checkSellerNoti.response.body.list.0.id}}
 
 
 # -----------------------------------------------------------------
-# 5. 알림 읽음 처리 (판매자)
-# -----------------------------------------------------------------
-PATCH {{baseUrl}}/api/notifications/{{notificationId}}/check
-Authorization: Bearer {{sellerToken}}
-
-### 
-
-# -----------------------------------------------------------------
-# 6. 문의에 답변 달기 (판매자 -> 구매자)
+# 7. 문의에 답변 달기 (판매자 -> 구매자 1)
 # -----------------------------------------------------------------
 POST {{baseUrl}}/api/inquiries/{{inquiryId}}/replies
 Authorization: Bearer {{sellerToken}}
 Content-Type: application/json
 
 {
-  "content": "네 고객님, 해당 상품은 정사이즈입니다. 평소 입으시는 사이즈로 주문하시면 됩니다! 감사합니다.",
-  "isSecret": false
+  "content": "네 고객님, 정사이즈입니다."
 }
 
 ###
 
 # -----------------------------------------------------------------
-# 7. 구매자 알림 확인 (새 답변 알림 도착 여부)
+# 8. 구매자 1 알림 확인 (답변 알림)
 # -----------------------------------------------------------------
-# @name checkBuyerNoti
 GET {{baseUrl}}/api/notifications
 Authorization: Bearer {{buyerToken}}
 
-### 구매자의 알림 ID 저장 (가장 최근 것)
-@buyerNotificationId = {{checkBuyerNoti.response.body.0.id}}
+###
+
+# =================================================================
+# [시나리오 2] 품절 알림 테스트 (신규 개발 기능)
+# =================================================================
+
+# -----------------------------------------------------------------
+# 9. [준비] 재고가 딱 1개인 상품 생성
+# -----------------------------------------------------------------
+# @name createLowStockProduct
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{sellerToken}}
+Content-Type: application/json
+
+{
+  "name": "품절 임박 한정판 티셔츠",
+  "price": 50000,
+  "content": "재고가 1개뿐입니다.",
+  "image": "https://s3.amazonaws.com/bucket/products/limited-tshirt.jpg",
+  "categoryName": "TOP",
+  "stocks": [
+    {
+      "sizeId": "size_l",
+      "quantity": 1
+    }
+  ]
+}
+
+### 품절 테스트용 상품 ID 저장
+@soldOutProductId = {{createLowStockProduct.response.body.id}}
+
+
+# -----------------------------------------------------------------
+# 10. [준비] 구매자 2가 해당 상품을 장바구니에 담음
+#     (나중에 이 사람에게 '장바구니 상품 품절' 알림이 와야 함)
+# -----------------------------------------------------------------
+PATCH {{baseUrl}}/api/cart
+Authorization: Bearer {{buyer2Token}}
+Content-Type: application/json
+
+{
+  "productId": "{{soldOutProductId}}",
+  "sizes": [
+    {
+      "sizeId": "size_l",
+      "quantity": 1
+    }
+  ]
+}
 
 ###
 
 # -----------------------------------------------------------------
-# 8. 구매자 알림 읽음 처리
+# 11. [실행] 구매자 1이 마지막 재고(1개)를 주문 -> 품절 발생!
 # -----------------------------------------------------------------
-PATCH {{baseUrl}}/api/notifications/{{buyerNotificationId}}/check
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "name": "김구매",
+  "phone": "010-1234-5678",
+  "address": "서울시 강남구",
+  "orderItems": [
+    {
+      "productId": "{{soldOutProductId}}",
+      "sizeId": "size_l",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# -----------------------------------------------------------------
+# 12. [검증] 알림 확인
+# -----------------------------------------------------------------
+
+# 12-1. 판매자 알림 확인 ("재고가 소진되었습니다" 알림이 있어야 함)
+# @name checkSellerSoldOutNoti
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{sellerToken}}
+
+###
+
+# 12-2. 구매자 2 알림 확인 ("장바구니 상품이 품절되었습니다" 알림이 있어야 함)
+# @name checkBuyer2CartNoti
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{buyer2Token}}
+
+###
+
+
+# -----------------------------------------------------------------
+# 13. [실행 & 검증] 구매자 1이 품절된 상품을 또 주문 시도 -> 실패 알림
+# -----------------------------------------------------------------
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{buyerToken}}
+Content-Type: application/json
+
+{
+  "name": "김구매",
+  "phone": "010-1234-5678",
+  "address": "서울시 강남구",
+  "orderItems": [
+    {
+      "productId": "{{soldOutProductId}}",
+      "sizeId": "size_l",
+      "quantity": 1
+    }
+  ]
+}
+
+### 
+# 위 요청은 400 에러가 발생해야 정상입니다.
+# 에러 발생 후 아래 요청으로 구매자 1에게 "주문 실패/품절" 알림이 왔는지 확인하세요.
+
+GET {{baseUrl}}/api/notifications
 Authorization: Bearer {{buyerToken}}
 
 ###
 
 # =================================================================
-# 9. SSE 30초 주기 테스트
+# 14. SSE 30초 주기 테스트 (옵션)
 # =================================================================
 
-# 테스트 방법:
-# 1. 아래 "SSE 연결 시작" 요청을 먼저 보냅니다.
-# 2. 곧바로 아래 "테스트 알림 생성 1", "테스트 알림 생성 2" 요청을 빠르게 연속으로 보냅니다.
-# 3. "SSE 연결 시작" 요청의 응답 창을 확인합니다.
-#    - 30초 이내에 2개의 알림 데이터가 배열 형태로 한꺼번에 수신되는지 확인합니다. (예: data: [ {..}, {..} ])
-# 4. 아무 요청도 보내지 않고 30초를 더 기다립니다.
-#    - 빈 배열(heartbeat)이 수신되는지 확인합니다. (예: data: [])
-
 # -----------------------------------------------------------------
-# 9.1. SSE 연결 시작 (구매자)
+# 14.1. SSE 연결 시작 (구매자 1)
 # -----------------------------------------------------------------
-# @name subscribeToSSE
 GET {{baseUrl}}/api/notifications/sse
 Authorization: Bearer {{buyerToken}}
 Accept: text/event-stream
 
 ###
-
-# -----------------------------------------------------------------
-# 9.2. 테스트 알림 생성 1 (구매자에게)
-# -----------------------------------------------------------------
-# @name createTestNotification1
-POST {{baseUrl}}/api/notifications
-Authorization: Bearer {{buyerToken}}
-Content-Type: application/json
-
-{
-  "userId": "{{buyerId}}",
-  "type": "INQUIRY_REPLIED_FOR_BUYER",
-  "content": "첫 번째 테스트 알림입니다.",
-  "url": "/test/1"
-}
-
-###
-
-# -----------------------------------------------------------------
-# 9.3. 테스트 알림 생성 2 (구매자에게)
-# -----------------------------------------------------------------
-# @name createTestNotification2
-POST {{baseUrl}}/api/notifications
-Authorization: Bearer {{buyerToken}}
-Content-Type: application/json
-
-{
-  "userId": "{{buyerId}}",
-  "type": "INQUIRY_REPLIED_FOR_BUYER",
-  "content": "두 번째 테스트 알림입니다.",
-  "url": "/test/2"
-}
