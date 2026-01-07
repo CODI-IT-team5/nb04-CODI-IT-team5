@@ -1,4 +1,4 @@
-import { NotificationType,OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
+import { NotificationType, OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
 
 import { MESSAGE } from '../constants/constant.js';
 import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
