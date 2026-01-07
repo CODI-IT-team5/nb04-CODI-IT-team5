@@ -4,7 +4,7 @@ import { metadataRepository } from '../repositories/metadata.repository.js';
 import { MetadataResponse } from '../serializes/metadata.serialize.js';
 import type { UpdateGradeServiceInput } from '../types/metadata.type.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
 import { notificationService } from './notification.service.js';
 

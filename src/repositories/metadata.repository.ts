@@ -41,7 +41,7 @@ class MetadataRepository {
     });
   };
 
-  findSizeById = async (id: string) => {
+  findSizeById = async (id: number) => {
     return await prisma.size.findFirst({
       where: { id },
     });

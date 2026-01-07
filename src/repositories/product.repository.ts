@@ -273,6 +273,27 @@ class ProductRepository {
       },
     });
   };
+
+  updateProductReviewStats = async (productId: string) => {
+    // 해당 상품의 모든 리뷰를 조회하여 통계 계산
+    const reviews = await prisma.review.findMany({
+      where: { productId },
+      select: { rating: true },
+    });
+
+    const reviewsCount = reviews.length;
+    const reviewsRating =
+      reviewsCount > 0 ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount) * 10) : 0;
+
+    // Product 테이블 업데이트
+    return prisma.product.update({
+      where: { id: productId },
+      data: {
+        reviewsCount,
+        reviewsRating,
+      },
+    });
+  };
 }
 
 export const productRepository = new ProductRepository();

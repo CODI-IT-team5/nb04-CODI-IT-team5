@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import { s3Service } from '../services/s3.service.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 interface MulterS3File extends Express.Multer.File {
   location: string;

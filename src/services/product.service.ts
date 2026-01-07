@@ -153,7 +153,7 @@ class ProductService {
   };
 
   // 사이즈 검증
-  private validateSizes = async (stocks: { sizeId: string; quantity: number }[]) => {
+  private validateSizes = async (stocks: { sizeId: number; quantity: number }[]) => {
     for (const stock of stocks) {
       const size = await metadataRepository.findSizeById(stock.sizeId);
       if (!size) {
@@ -203,7 +203,7 @@ class ProductService {
     const reviewStats = this.calculateReviewStats(product.reviews);
     return {
       ...product,
-      reviews: [reviewStats],
+      reviews: reviewStats,
       inquiries: product.inquiries,
     };
   };
@@ -218,6 +218,8 @@ class ProductService {
       rate5Length: 0,
       sumScore: 0,
     };
+
+    let totalRating = 0;
 
     reviews.forEach((review) => {
       switch (review.rating) {
@@ -237,8 +239,11 @@ class ProductService {
           stats.rate5Length++;
           break;
       }
-      stats.sumScore += review.rating;
+      totalRating += review.rating;
     });
+
+    // sumScore는 평균 별점 (소수점 첫째자리까지)
+    stats.sumScore = reviews.length > 0 ? Math.round((totalRating / reviews.length) * 10) / 10 : 0;
 
     return stats;
   };

@@ -6,7 +6,7 @@ export const patchCartDto = z.object({
   sizes: z
     .array(
       z.object({
-        sizeId: z.string(), // 스키마에서 Size.id가 String(cuid)니까 string으로
+        sizeId: z.number(), // 스키마에서 Size.id가 String(cuid)니까 string으로
         quantity: z.number().int().min(0), // 0이면 삭제로 처리
       }),
     )

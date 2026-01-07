@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/config.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 // 허용할 파일 확장자 및 MIME 타입 정의
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];

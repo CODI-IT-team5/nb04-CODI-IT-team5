@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 
 import { config } from '../config/config.js';
 import { MESSAGE } from '../constants/constant.js';
-import logger from './logger.js';
+import { logger } from './logger.js';
 
 export const limiter = rateLimit({
   windowMs: config.app.rateLimitWindowMs,

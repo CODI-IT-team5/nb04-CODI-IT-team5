@@ -57,4 +57,45 @@ export class StoreResponse {
       totalSoldCount: input.totalSoldCount,
     };
   }
+
+  static myProductItem(input: {
+    id: string;
+    image: Image;
+    name: string;
+    price: number;
+    stock: number;
+    isDiscount: boolean;
+    createdAt: Date;
+    isSoldOut: boolean;
+  }) {
+    return {
+      id: input.id,
+      image: input.image.url,
+      name: input.name,
+      price: input.price,
+      stock: input.stock,
+      isDiscount: input.isDiscount,
+      createdAt: input.createdAt,
+      isSoldOut: input.isSoldOut,
+    };
+  }
+
+  static myProducts(input: {
+    list: Array<{
+      id: string;
+      image: Image;
+      name: string;
+      price: number;
+      stock: number;
+      isDiscount: boolean;
+      createdAt: Date;
+      isSoldOut: boolean;
+    }>;
+    totalCount: number;
+  }) {
+    return {
+      list: input.list.map((item) => StoreResponse.myProductItem(item)),
+      totalCount: input.totalCount,
+    };
+  }
 }

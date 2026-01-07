@@ -5,7 +5,7 @@ import inquiryRepository from '../repositories/inquiry.repository.js';
 import { productRepository } from '../repositories/product.repository.js';
 import { storeRepository } from '../repositories/store.repository.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import { notificationService } from './notification.service.js';
 
 export class InquiryService {
@@ -61,9 +61,22 @@ export class InquiryService {
     return inquiry;
   }
 
-  async getMyInquiries(userId: string, userType: UserRole) {
+  async getMyInquiries(
+    userId: string,
+    userType: UserRole,
+    options?: {
+      page?: number;
+      pageSize?: number;
+      status?: InquiryStatus;
+    },
+  ) {
     if (userType === UserRole.BUYER) {
-      return inquiryRepository.findByUserId(userId);
+      const inquiries = await inquiryRepository.findByUserId(userId, options);
+      const totalCount = await inquiryRepository.countByUserId(
+        userId,
+        options?.status ? { status: options.status } : {},
+      );
+      return { inquiries, totalCount };
     } else {
       const store = await storeRepository.findByUserId(userId);
 
@@ -71,7 +84,12 @@ export class InquiryService {
         throw HttpException.notFound();
       }
 
-      return inquiryRepository.findByStoreId(store.id);
+      const inquiries = await inquiryRepository.findByStoreId(store.id, options);
+      const totalCount = await inquiryRepository.countByStoreId(
+        store.id,
+        options?.status ? { status: options.status } : {},
+      );
+      return { inquiries, totalCount };
     }
   }
 

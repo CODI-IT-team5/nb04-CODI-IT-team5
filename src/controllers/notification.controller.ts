@@ -2,9 +2,10 @@ import { NotificationType } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
+import { NotificationResponse } from '../serializes/notification.serialize.js';
 import { notificationService } from '../services/notification.service.js';
 import { HttpException } from '../utils/http-exception.js';
-import logger from '../utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 class NotificationController {
   /**
@@ -50,7 +51,8 @@ class NotificationController {
     try {
       const userId = req.user!.id;
       const notifications = await notificationService.getNotifications(userId);
-      res.status(STATUS_CODE.OK).json(notifications);
+      const response = NotificationResponse.list(notifications);
+      res.status(STATUS_CODE.OK).json(response);
     } catch (error) {
       next(error);
     }
