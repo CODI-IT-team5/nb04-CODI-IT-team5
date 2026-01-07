@@ -122,7 +122,8 @@ class NotificationService {
    * @param userId - 사용자 ID
    */
   async getNotifications(userId: string) {
-    return notificationRepository.findManyByUserId(userId);
+    const notifications = await notificationRepository.findManyByUserId(userId);
+    return notifications;
   }
 
   /**
