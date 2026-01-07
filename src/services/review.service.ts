@@ -36,6 +36,9 @@ export class ReviewService {
     // OrderItem의 isReviewed를 true로 업데이트
     await orderItemRepository.updateIsReviewed(data.orderItemId, true);
 
+    // Product의 리뷰 통계 업데이트
+    await productRepository.updateProductReviewStats(data.productId);
+
     return review;
   }
 
@@ -94,7 +97,12 @@ export class ReviewService {
       throw HttpException.forbidden('본인의 리뷰만 수정할 수 있습니다.');
     }
 
-    return reviewRepository.update(reviewId, data);
+    const updatedReview = await reviewRepository.update(reviewId, data);
+
+    // Product의 리뷰 통계 업데이트
+    await productRepository.updateProductReviewStats(review.productId);
+
+    return updatedReview;
   }
 
   // 리뷰 삭제
@@ -113,6 +121,9 @@ export class ReviewService {
 
     // OrderItem의 isReviewed를 false로 업데이트
     await orderItemRepository.updateIsReviewed(review.orderItemId, false);
+
+    // Product의 리뷰 통계 업데이트
+    await productRepository.updateProductReviewStats(review.productId);
 
     return null;
   }
