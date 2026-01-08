@@ -1,0 +1,7 @@
+@refreshToken = {{auth.response.cookies['refreshToken']}}
+@accessToken = {{auth.response.body.accessToken}}
+
+### 대시보드 조회 (판매자 전용)
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json

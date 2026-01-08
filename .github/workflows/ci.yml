@@ -1,0 +1,51 @@
+name: PR 체크
+
+on:
+  pull_request:
+    branches:
+      - main
+      - deploy
+      - dev
+
+jobs:
+  check:
+    name: 코드 품질 및 실행 확인
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 노드 세팅
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: node_modules 캐시
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: 모듈 설치
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: 환경 변수 설정 (Prisma 생성용)
+        run: echo "DATABASE_URL=postgresql://dummy@localhost/dummy" > .env
+
+      - name: Prisma Client 생성
+        run: npx prisma generate
+
+      - name: Prettier 체크
+        run: npm run format:check
+
+      - name: ESLint 체크
+        run: npm run lint
+
+        # 테스트 코드 작성되면 테스트까지 추가하기
+
+      - name: 빌드
+        run: npm run build
+
+      - name: 서버 실행 확인 (5초)
+        run: npm run start & sleep 5 && kill $!

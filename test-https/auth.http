@@ -1,0 +1,29 @@
+@refreshToken = {{auth.response.cookies['refreshToken']}}
+@accessToken = {{auth.response.body.accessToken}}
+
+### 서버 상태 확인
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "{[email]}",
+  "password": "{[password]}"
+}
+
+### 엑세스 토큰 재발급
+# @name auth
+POST {{baseUrl}}/api/auth/refresh
+Cookie: refreshToken={{refreshToken}}
+Content-Type: application/json
+
+### 로그아웃
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
+Cookie: refreshToken={{refreshToken}}
+Content-Type: application/json

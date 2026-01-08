@@ -1,0 +1,117 @@
+
+# 로그인 응답에서 자동으로 토큰/쿠키 추출
+@refreshToken = {{auth.response.cookies['refreshToken']}}
+@accessToken = {{auth.response.body.accessToken}}
+# 테스트용 상품/사이즈/장바구니아이템/주문 ID (필요 시 교체)
+@productId = testProductId
+@sizeId = size_s
+@cartItemId = PUT_CART_ITEM_ID
+
+### =========================
+### 1. 장바구니 생성
+POST {{baseUrl}}/api/cart
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{}
+
+### 2. 장바구니 조회
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{accessToken}}
+
+### 2-2. 장바구니 상품 추가/수정
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "{{productId}}",
+  "sizes": [
+    { "sizeId": "{{sizeId}}", "quantity": 2 }
+  ]
+}
+
+### 2-3. 장바구니 재조회 -> 여기서 items[0].id 복사해서 cartItemId 갱신
+	# @name getCart
+	GET {{baseUrl}}/api/cart
+	Authorization: Bearer {{accessToken}}
+	
+	@cartItemId = {{getCart.response.body.items[0].id}}
+	
+	### 2-4. 장바구니 아이템 상세
+	GET {{baseUrl}}/api/cart/{{cartItemId}}
+	Authorization: Bearer {{accessToken}}
+
+### 2-5. 장바구니 아이템 삭제
+DELETE {{baseUrl}}/api/cart/{{cartItemId}}
+Authorization: Bearer {{accessToken}}
+
+### =========================
+### 엣지 케이스 테스트
+### =========================
+
+### 3-1. 수량 0으로 아이템 삭제 테스트
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "{{productId}}",
+  "sizes": [
+    { "sizeId": "{{sizeId}}", "quantity": 0 }
+  ]
+}
+
+### 3-2. 빈 productId 테스트 (유효성 검증 오류 예상)
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "",
+  "sizes": [
+    { "sizeId": "{{sizeId}}", "quantity": 1 }
+  ]
+}
+
+### 3-3. 빈 sizes 배열 테스트 (유효성 검증 오류 예상)
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "{{productId}}",
+  "sizes": []
+}
+
+### 3-4. 유효하지 않은 sizeId 테스트 (재고 체크 오류 예상)
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "{{productId}}",
+  "sizes": [
+    { "sizeId": "invalid_size_id", "quantity": 1 }
+  ]
+}
+
+### 3-5. 중복 사이즈 추가 테스트 (upsert 동작 확인)
+PATCH {{baseUrl}}/api/cart
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "productId": "{{productId}}",
+  "sizes": [
+    { "sizeId": "{{sizeId}}", "quantity": 3 }
+  ]
+}
+
+### 3-6. 존재하지 않는 cartItemId 조회 테스트
+GET {{baseUrl}}/api/cart/non_existent_item_id
+Authorization: Bearer {{accessToken}}
+
+### 3-7. 존재하지 않는 cartItemId 삭제 테스트
+DELETE {{baseUrl}}/api/cart/non_existent_item_id
+Authorization: Bearer {{accessToken}}

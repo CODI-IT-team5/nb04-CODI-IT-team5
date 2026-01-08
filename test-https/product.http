@@ -1,0 +1,95 @@
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
+@imageId = {{upload.response.body.data.id}}
+@baseUrl = http://localhost:3001
+@accessToken = {{auth.response.body.accessToken}}
+@productId = {{createProduct.response.body.id}}
+
+### 판매자 계정으로 로그인
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "seller1@test.com",
+  "password": "test1234"
+}
+
+### 상품 등록 (POST /api/products)
+# @name createProduct
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "가디건",
+  "price": 20000,
+  "content": "상품 상세 설명",
+  "imageId": "default-image",
+  "categoryName": "top",
+  "stocks": [
+    {
+      "sizeId": 3,
+      "quantity": 10
+    },
+    {
+      "sizeId": 2,
+      "quantity": 5
+    },
+    {
+      "sizeId": 1,
+      "quantity": 8
+    }
+  ],
+  "discountRate": 10,
+  "discountStartTime": "2025-01-01T00:00:00Z",
+  "discountEndTime": "2025-12-31T23:59:59Z"
+}
+
+### 상품 목록 조회 (GET /api/products)
+GET {{baseUrl}}/api/products
+
+### 상품 목록 조회 - 필터링 (검색, 정렬, 가격 범위, 카테고리)
+GET {{baseUrl}}/api/products?page=1&pageSize=10&search=가디건&sort=recent&priceMin=10000&priceMax=50000&categoryName=TOP
+
+### 상품 상세 조회 (GET /api/products/{productId})
+GET {{baseUrl}}/api/products/{{productId}}
+
+### 이미지 업로드
+# @name upload
+POST {{baseUrl}}/api/s3/upload
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ../test.jpg
+--{{boundary}}--
+
+### 상품 수정 (PATCH /api/products/{productId})
+PATCH {{baseUrl}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "가디건 (수정)",
+  "imageId": "{{imageId}}",
+  "price": 18000,
+  "content": "수정된 상품 상세 설명",
+  "isSoldOut": false,
+  "stocks": [
+    {
+      "sizeId": 1,
+      "quantity": 15
+    },
+    {
+      "sizeId": 2,
+      "quantity": 12
+    }
+  ]
+}
+
+### 상품 삭제 (DELETE /api/products/{productId})
+DELETE {{baseUrl}}/api/products/{{productId}}
+Authorization: Bearer {{accessToken}}

@@ -1,0 +1,95 @@
+@boundary = ----WebKitFormBoundary7MA4YWxkTrZu0gW
+@imageId = {{upload.response.body.data.id}}
+@accessToken = {{auth.response.body.accessToken}}
+@storeId = {{createStore.response.body.id}}
+
+@newUserEmail = seller1@test.com
+@newUserPassword = test1234
+
+### 회원가입
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": "판매자테스트",
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}",
+  "type": "SELLER"
+}
+
+### 로그인 (판매자 계정)
+# @name auth
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+User-Agent: rest-client-test
+
+{
+  "email": "{{newUserEmail}}",
+  "password": "{{newUserPassword}}"
+}
+
+### 새 스토어 등록
+# @name createStore
+POST {{baseUrl}}/api/stores
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "테스트 스토어",
+  "address": "주소 테스트",
+  "detailAddress": "1동 1111호",
+  "phoneNumber": "010-1234-5678",
+  "content": "설명 테스트",
+  "imageId": "default-image"
+}
+
+### 이미지 업로드
+# @name upload
+POST {{baseUrl}}/api/s3/upload
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary={{boundary}}
+
+--{{boundary}}
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ../test.jpg
+--{{boundary}}--
+
+### 스토어 수정
+# @name updateStore
+PATCH {{baseUrl}}/api/stores/{{storeId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "수정된 스토어 이름",
+  "address": "수정된 주소",
+  "detailAddress": "2동 2222호",
+  "phoneNumber": "010-9999-8888",
+  "content": "수정된 스토어 소개",
+  "imageId": "{{imageId}}"
+}
+
+### 스토어 상세 조회
+GET {{baseUrl}}/api/stores/{{storeId}}
+
+### 내 스토어 상세 조회
+GET {{baseUrl}}/api/stores/detail/my
+Authorization: Bearer {{accessToken}}
+
+### 내 스토어 등록 상품 조회
+GET {{baseUrl}}/api/stores/detail/my/product
+Authorization: Bearer {{accessToken}}
+
+### 관심 스토어 등록
+POST {{baseUrl}}/api/stores/{{storeId}}/favorite
+Authorization: Bearer {{accessToken}}
+
+### 관심 스토어 해제
+DELETE {{baseUrl}}/api/stores/{{storeId}}/favorite
+Authorization: Bearer {{accessToken}}
+
+### 관심 스토어 토글 (다시 등록)
+POST {{baseUrl}}/api/stores/{{storeId}}/favorite
+Authorization: Bearer {{accessToken}}

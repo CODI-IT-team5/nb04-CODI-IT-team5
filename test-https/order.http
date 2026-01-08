@@ -1,0 +1,186 @@
+### 공통 변수
+@baseUrl = http://localhost:3001
+@testProductId = testProductId
+
+###
+# =================================================================
+# 0. SETUP - 구매자 로그인
+# =================================================================
+###
+
+# @name buyerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer1@test.com",
+  "password": "test1234"
+}
+
+### 토큰 저장
+@accessToken = {{buyerLogin.response.body.accessToken}}
+
+###
+# =================================================================
+# 1. 테스트 시나리오 1: 실제 주문 (원클릭 결제)
+# - isTest 플래그 없이 요청하여, 주문 즉시 CompletedPayment 상태가 되는지 확인
+# =================================================================
+###
+
+### 1.1. 주문 생성을 위해 장바구니에 상품 담기
+# @name prepareRealOrderCart
+PATCH {{baseUrl}}/api/cart
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{testProductId}}",
+  "sizes": [
+    {
+      "sizeId": "size_m",
+      "quantity": 1
+    }
+  ]
+}
+
+### 1.2. 실제 주문 생성 (isTest 없음)
+# @name createRealOrder
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "김실사용",
+  "phone": "010-1111-2222",
+  "address": "서울시 강남구 진짜 주소",
+  "orderItems": [
+    {
+      "productId": "{{testProductId}}",
+      "sizeId": "size_m",
+      "quantity": 1
+    }
+  ]
+}
+
+### 1.3. 결과 확인
+# - 기대 결과: 최상위 status가 "CompletedPayment" 이고, payments.status도 "CompletedPayment" 인지 확인
+GET {{baseUrl}}/api/orders/{{createRealOrder.response.body.id}}
+Authorization: Bearer {{accessToken}}
+
+
+###
+# =================================================================
+# 2. 테스트 시나리오 2: 테스트 주문 (주문 취소 테스트용)
+# prisma studio나 db 켜놓고 로직 확인하면서 테스트 하는거 추천드립니다 !!
+# - isTest: true 로 요청하여, 주문이 WaitingPayment 상태로 생성되는지 확인
+# =================================================================
+###
+
+### 2.1. 주문 생성을 위해 장바구니에 상품 담기
+# @name prepareTestOrderCart
+PATCH {{baseUrl}}/api/cart
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{testProductId}}",
+  "sizes": [
+    {
+      "sizeId": "size_s",
+      "quantity": 1
+    }
+  ]
+}
+
+### 2.2. 테스트 주문 생성 (isTest: true)
+# @name createTestOrder
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "김테스트",
+  "phone": "010-1234-5678",
+  "address": "서울시 테스트구 테스트로 123",
+  "orderItems": [
+    {
+      "productId": "{{testProductId}}",
+      "sizeId": "size_s",
+      "quantity": 1
+    }
+  ],
+  "usePoint": 0,
+  "isTest": true
+}
+
+### 테스트 주문 ID 저장
+@testOrderId = {{createTestOrder.response.body.id}}
+
+
+### 2.3. 결과 확인
+# - 기대 결과: 최상위 status가 "WaitingPayment" 이고, payments.status는 "Pending" 인지 확인
+GET {{baseUrl}}/api/orders/{{testOrderId}}
+Authorization: Bearer {{accessToken}}
+
+
+###
+# =================================================================
+# 3. 주문 취소 테스트
+# - 위에서 생성한 테스트 주문을 취소
+# =================================================================
+###
+
+DELETE {{baseUrl}}/api/orders/{{testOrderId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+# =================================================================
+# 4. 최종 결과 검증
+# =================================================================
+###
+
+### 4.1. 취소된 주문 상태 확인
+# - 기대 결과: status가 "Cancelled"인지 확인
+GET {{baseUrl}}/api/orders/{{testOrderId}}
+Authorization: Bearer {{accessToken}}
+
+###
+# =================================================================
+# 5. 포인트 적립 및 등급 상승 테스트
+# - Green 등급(0원 이상) -> Orange 등급(100,000원 이상)
+# - 테스트 상품 가격: 50,000원
+# =================================================================
+###
+
+# 테스트 방법:
+# 1. DB 초기화 후, "1.2. 실제 주문 생성" 요청을 **총 2번** 보냅니다. (누적 금액: 100,000원)
+# 2. 아래 "5.1. 등급 상승을 위한 세 번째 주문" 요청을 보냅니다. (누적 금액: 150,000원)
+# 3. 마지막으로 "5.2. 내 정보 확인" 요청을 보내 결과를 확인합니다.
+
+### 5.1. 등급 상승을 위한 세 번째 주문
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "김등급",
+  "phone": "010-3333-4444",
+  "address": "서울시 등급구 상승로",
+  "orderItems": [
+    {
+      "productId": "{{testProductId}}",
+      "sizeId": "size_m",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+### 5.2. 내 정보 확인
+# - 기대 결과:
+#   - grade.name이 "Orange"로 변경되었는지 확인
+#   - points가 Green 등급 적립률(1%)에 따라 1500점(=150,000 * 0.01)이 되었는지 확인
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{accessToken}}
