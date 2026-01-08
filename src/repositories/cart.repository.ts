@@ -15,7 +15,7 @@ class CartRepository {
       where: {
         productId_sizeId: {
           productId,
-          sizeId: sizeId as any,
+          sizeId: sizeId as number,
         },
       },
       select: {
@@ -136,7 +136,7 @@ class CartRepository {
             where: {
               cartId: cart.id,
               productId,
-              sizeId: sizeId as any,
+              sizeId: sizeId as number,
             },
           });
         } else {
@@ -146,7 +146,7 @@ class CartRepository {
               cartId_productId_sizeId: {
                 cartId: cart.id,
                 productId,
-                sizeId: sizeId as any,
+                sizeId: sizeId as number,
               },
             },
             update: {
@@ -155,7 +155,7 @@ class CartRepository {
             create: {
               cartId: cart.id,
               productId,
-              sizeId: sizeId as any,
+              sizeId: sizeId as number,
               quantity,
             },
           });
@@ -230,7 +230,7 @@ class CartRepository {
     const cartItems = await prisma.cartItem.findMany({
       where: {
         productId,
-        sizeId: sizeId as any,
+        sizeId: sizeId as number,
       },
       include: {
         cart: {
@@ -242,7 +242,7 @@ class CartRepository {
     });
 
     // 고유한 사용자 ID 추출
-    const userIds = [...new Set(cartItems.map((item) => (item as any).cart.userId))];
+    const userIds = [...new Set(cartItems.map((item) => item.cart.userId))];
     return userIds;
   }
 }
