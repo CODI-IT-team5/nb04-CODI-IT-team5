@@ -66,4 +66,17 @@ export const config = {
     defaultImageKey:
       process.env['DEFAULT_IMAGE_KEY'] || 'uploads/20260106/add8d014-e63f-42c5-bac5-fa62921bdd98_default-image.jpg',
   },
+  cron: {
+    // Cron 스케줄 (cron 표현식)
+    schedule: process.env['CRON_SCHEDULE'] || '0 3 * * *', // 기본값: 매일 오전 3시
+    // 배치 삭제 설정
+    batchSize: Number(process.env['CRON_BATCH_SIZE']) || 1000, // 한 번에 삭제할 레코드 수
+    batchDelay: Number(process.env['CRON_BATCH_DELAY']) || 100, // 배치 간 대기 시간 (ms)
+    // 데이터 보관 기간 (일)
+    retentionDays: {
+      taxData: Number(process.env['RETENTION_DAYS_TAX_DATA']) || 365 * 5, // 5년 (전자상거래법)
+      userData: Number(process.env['RETENTION_DAYS_USER_DATA']) || 30, // 30일
+      authData: Number(process.env['RETENTION_DAYS_AUTH_DATA']) || 30 * 3, // 3개월 (통신비밀보호법)
+    },
+  },
 };
