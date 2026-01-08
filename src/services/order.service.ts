@@ -1,12 +1,14 @@
-import { OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
+import { NotificationType, OrderStatus, PaymentStatus, PointHistoryType } from '@prisma/client';
 
 import { MESSAGE } from '../constants/constant.js';
 import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
 import * as cartRepository from '../repositories/cart.repository.js';
 import { orderRepository } from '../repositories/order.repository.js';
+import { productRepository } from '../repositories/product.repository.js';
 import { OrderResponse } from '../serializes/order.serialize.js';
 import { HttpException } from '../utils/http-exception.js';
 import prisma from '../utils/prisma.js';
+import { notificationService } from './notification.service.js';
 
 class OrderService {
   /**
@@ -66,6 +68,7 @@ class OrderService {
           quantity: number;
           price: number;
           productName: string;
+          sizeName: string; // 사이즈 이름을 저장하기 위해 추가
         }[] = [];
 
         for (const item of orderItems) {
@@ -75,11 +78,23 @@ class OrderService {
               product: {
                 select: { price: true, isSoldOut: true, name: true },
               },
+              size: true, // 사이즈 정보를 함께 가져옵니다.
             },
           });
 
           if (!productStock || productStock.product.isSoldOut || productStock.quantity < item.quantity) {
-            throw HttpException.badRequest(MESSAGE.insufficientStock(item.sizeId, productStock?.quantity ?? 0));
+            // 구매자에게 품절 알림 전송 (주문 시점에 재고 부족)
+            await notificationService.createNotification({
+              userId: userId,
+              type: NotificationType.PRODUCT_SOLDOUT_FOR_BUYER,
+              content: `주문하려는 상품 '${productStock?.product.name}' (${
+                productStock?.size?.name ?? item.sizeId
+              } 사이즈)의 재고가 부족하거나 품절되었습니다.`,
+              url: `/products/${item.productId}`, // 상품 상세 페이지로 연결
+            });
+            throw HttpException.badRequest(
+              MESSAGE.insufficientStock(productStock?.size?.name ?? item.sizeId, productStock?.quantity ?? 0),
+            );
           }
 
           const unitPrice = productStock.product.price;
@@ -91,6 +106,7 @@ class OrderService {
             quantity: item.quantity,
             price: unitPrice,
             productName: productStock.product.name,
+            sizeName: productStock.size.name, // 사이즈 이름을 저장합니다.
           });
         }
 
@@ -139,7 +155,7 @@ class OrderService {
 
         // 5. 재고 차감 및 판매량 업데이트
         for (const item of computedItems) {
-          await tx.productStock.update({
+          const updatedProductStock = await tx.productStock.update({
             where: { productId_sizeId: { productId: item.productId, sizeId: item.sizeId } },
             data: { quantity: { decrement: item.quantity } },
           });
@@ -147,6 +163,39 @@ class OrderService {
             where: { id: item.productId },
             data: { salesCount: { increment: item.quantity } },
           });
+
+          // 재고 감소 후 재고 수량이 0이 되었는지 확인
+          if (updatedProductStock.quantity === 0) {
+            // 1. 판매자에게 품절 알림 전송
+            const productWithStoreOwner = await productRepository.findByIdWithStoreOwner(item.productId);
+            if (productWithStoreOwner?.store?.userId) {
+              await notificationService.createNotification({
+                userId: productWithStoreOwner.store.userId,
+                type: NotificationType.PRODUCT_SOLDOUT_FOR_SELLER,
+                content: `판매 중인 상품 '${item.productName}' (${item.sizeName ?? item.sizeId} 사이즈)의 재고가 소진되었습니다.`,
+                url: `/seller/products/${item.productId}`,
+              });
+            }
+
+            // 2. 해당 상품을 장바구니에 담은 다른 구매자들에게 품절 알림 전송
+            const userIdsInCart = await cartRepository.findUserIdsByProductInCart(
+              item.productId,
+              updatedProductStock.sizeId,
+            );
+            for (const buyerId of userIdsInCart) {
+              // 현재 주문하는 사용자는 제외
+              if (buyerId !== userId) {
+                await notificationService.createNotification({
+                  userId: buyerId,
+                  type: NotificationType.PRODUCT_SOLDOUT_FOR_BUYER,
+                  content: `장바구니에 담아둔 상품 '${item.productName}' (${
+                    item.sizeName ?? item.sizeId
+                  } 사이즈)의 재고가 모두 소진되었습니다.`,
+                  url: `/products/${item.productId}`,
+                });
+              }
+            }
+          }
         }
 
         // 6. 장바구니 비우기

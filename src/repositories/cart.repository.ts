@@ -224,3 +224,23 @@ export async function getCartItemWithDetails(userId: string, cartItemId: string)
     },
   });
 }
+
+export async function findUserIdsByProductInCart(productId: string, sizeId: number) {
+  const cartItems = await prisma.cartItem.findMany({
+    where: {
+      productId,
+      sizeId,
+    },
+    include: {
+      cart: {
+        select: {
+          userId: true,
+        },
+      },
+    },
+  });
+
+  // 고유한 사용자 ID 추출
+  const userIds = [...new Set(cartItems.map((item) => item.cart.userId))];
+  return userIds;
+}

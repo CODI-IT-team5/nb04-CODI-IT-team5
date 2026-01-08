@@ -34,7 +34,7 @@ export const MESSAGE = {
   forbidden: '권한이 없습니다',
 
   orderItemsEmpty: '주문할 상품이 없습니다.',
-  insufficientStock: (sizeId: number, availableQuantity: number) =>
+  insufficientStock: (sizeId: number | string, availableQuantity: number) =>
     `사이즈 ${sizeId}의 재고가 부족합니다. 원재 수량: ${availableQuantity}`,
   insufficientPoints: '보유 포인트를 초과하여 사용할 수 없습니다.',
 
