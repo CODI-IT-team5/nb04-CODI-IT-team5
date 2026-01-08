@@ -1,3 +1,5 @@
+import './utils/cron.js';
+
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -85,8 +87,15 @@ app.use((req, res, next) => {
 app.use(errorMiddleware);
 
 app.listen(config.app.port, () => {
-  logger.info(`서버 이름: ${config.app.app_name}`);
-  logger.info(`서버 실행 포트: ${config.app.port}`);
-  logger.info(`환경: ${config.app.node_env}`);
-  logger.info(`CORS 허용: ${config.app.cors_origin}`);
+  logger.info(
+    {
+      target: 'server',
+      event: 'start',
+      appName: config.app.app_name,
+      port: config.app.port,
+      nodeEnv: config.app.node_env,
+      corsOrigin: config.app.cors_origin,
+    },
+    '서버 시작',
+  );
 });
