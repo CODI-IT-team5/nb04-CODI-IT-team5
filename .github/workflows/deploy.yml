@@ -1,0 +1,34 @@
+name: 배포 (Staging)
+
+on:
+  push:
+    branches: ['deploy']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: EC2 접속 및 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd /home/ubuntu/nb04-CODI-IT-team5
+            git pull origin deploy
+
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            npm ci
+            npx prisma generate
+            npx prisma migrate deploy
+
+            npx prisma db seed
+
+            npm run build
+            pm2 reload all --update-env || pm2 start dist/app.js --name "codi-it"

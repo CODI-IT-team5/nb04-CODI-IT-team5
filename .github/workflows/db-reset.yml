@@ -1,0 +1,38 @@
+name: ⚠️ DB 초기화 (Reset DB)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: EC2 접속 및 DB 초기화
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd /home/ubuntu/nb04-CODI-IT-team5
+
+            # 1. 최신 코드 상태인지 확인 (선택사항)
+            git pull origin deploy
+
+            # 2. 환경변수 갱신
+            echo "${{ secrets.ENV_FILE }}" > .env
+
+            # 3. 의존성 설치
+            npm install
+            npx prisma generate
+
+            # 4.초기화 명령어 (Reset)
+            # 테이블 삭제 -> 마이그레이션 -> 시드 실행
+            npx prisma migrate reset --force
+
+            # 5. 서버 재시작
+            pm2 reload all --update-env || pm2 start dist/app.js --name "codi-it"
