@@ -9,8 +9,11 @@ async function main() {
   // ----------------------
   // 1. 기본 리소스
   // ----------------------
-  await prisma.image.create({
-    data: {
+  await prisma.image.upsert({
+    where: { id: config.resource.defaultImageId },
+    update: {}, // 이미 있으면 변경하지 않음
+    create: {
+      // 없으면 새로 생성
       id: config.resource.defaultImageId,
       key: config.resource.defaultImageKey,
       url: config.resource.defaultImageUrl,
@@ -553,16 +556,16 @@ async function main() {
 
   console.log('✅ 시드 데이터 생성 완료!');
   console.log('📊 생성된 데이터:');
-  console.log('  - 유저: 5명 (셀러 2명, 바이어 3명)');
-  console.log('  - 스토어: 2개');
-  console.log('  - 상품: 5개');
-  console.log('  - 주문: 3개');
-  console.log('  - 주문 아이템: 5개');
-  console.log('  - 리뷰: 5개');
-  console.log('  - product2 (베이직 티셔츠): 리뷰 1개, 평점 5.0');
-  console.log('  - product3 (슬림 진): 리뷰 1개, 평점 4.0');
-  console.log('  - product4 (원피스): 리뷰 2개, 평점 5.0');
-  console.log('  - product5 (니트): 리뷰 1개, 평점 3.0');
+  console.log('   - 유저: 5명 (셀러 2명, 바이어 3명)');
+  console.log('   - 스토어: 2개');
+  console.log('   - 상품: 5개');
+  console.log('   - 주문: 3개');
+  console.log('   - 주문 아이템: 5개');
+  console.log('   - 리뷰: 5개');
+  console.log('   - product2 (베이직 티셔츠): 리뷰 1개, 평점 5.0');
+  console.log('   - product3 (슬림 진): 리뷰 1개, 평점 4.0');
+  console.log('   - product4 (원피스): 리뷰 2개, 평점 5.0');
+  console.log('   - product5 (니트): 리뷰 1개, 평점 3.0');
 }
 
 main()
