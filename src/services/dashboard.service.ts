@@ -1,6 +1,6 @@
+import { dashboardRepository } from '../repositories/dashboard.repository.js';
 import type { PeriodStats } from '../types/dashboard.type.js';
 import { HttpException } from '../utils/http-exception.js';
-import prisma from '../utils/prisma.js';
 
 // 타입 정의
 const getDateRange = (period: 'today' | 'week' | 'month' | 'year', offset = 0) => {
@@ -45,20 +45,7 @@ const getDateRange = (period: 'today' | 'week' | 'month' | 'year', offset = 0) =
 
 // 기간별 주문 집계
 async function getPeriodStats(storeId: string, start: Date, end: Date) {
-  const orderItems = await prisma.orderItem.findMany({
-    where: {
-      product: { storeId },
-      order: {
-        createdAt: { gte: start, lte: end },
-        status: { not: 'Cancelled' },
-      },
-    },
-    select: {
-      price: true,
-      quantity: true,
-      orderId: true,
-    },
-  });
+  const orderItems = await dashboardRepository.findOrderItemsByPeriod(storeId, start, end);
 
   // 고유 주문 ID 개수 = 주문 건수
   const uniqueOrders = new Set(orderItems.map((item) => item.orderId));
@@ -75,13 +62,10 @@ function calculateChangeRate(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-export const dashboardService = {
+class DashboardService {
   async getDashboard(userId: string) {
     // 판매자의 스토어 조회
-    const store = await prisma.store.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
+    const store = await dashboardRepository.findStoreByUserId(userId);
 
     if (!store) {
       throw HttpException.notFound();
@@ -119,17 +103,7 @@ export const dashboardService = {
     });
 
     // TOP 5 판매 상품
-    const topSales = await prisma.product.findMany({
-      where: { storeId: store.id },
-      orderBy: { salesCount: 'desc' },
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        salesCount: true,
-      },
-    });
+    const topSales = await dashboardRepository.findTopProducts(store.id, 5);
 
     const topSalesFormatted = topSales.map((p) => ({
       totalOrders: p.salesCount,
@@ -141,16 +115,7 @@ export const dashboardService = {
     }));
 
     // 가격대별 매출 비중
-    const allOrderItems = await prisma.orderItem.findMany({
-      where: {
-        product: { storeId: store.id },
-        order: { status: { not: 'Cancelled' } },
-      },
-      select: {
-        price: true,
-        quantity: true,
-      },
-    });
+    const allOrderItems = await dashboardRepository.findAllOrderItemsByStore(store.id);
 
     const priceRanges: Record<string, number> = {
       '~20,000원': 0,
@@ -190,5 +155,7 @@ export const dashboardService = {
       topSales: topSalesFormatted,
       priceRange,
     };
-  },
-};
+  }
+}
+
+export const dashboardService = new DashboardService();
