@@ -103,8 +103,9 @@ export class InquiryController {
     try {
       const { inquiryId } = req.params;
       const userId = req.user!.id;
+      const userType = req.user!.type;
 
-      await inquiryService.deleteInquiry(inquiryId as string, userId);
+      await inquiryService.deleteInquiry(inquiryId as string, userId, userType);
 
       res.status(STATUS_CODE.OK).json({ message: '문의가 삭제되었습니다.' });
     } catch (error) {
