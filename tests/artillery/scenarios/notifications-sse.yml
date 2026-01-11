@@ -1,0 +1,47 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    - duration: 30
+      arrivalRate: 3
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 10
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    path: '../data/buyers.csv'
+    fields:
+      - 'email'
+      - 'password'
+    skipHeader: true
+
+  ensure:
+    p95: 1500
+    p99: 3000
+    maxErrorRate: 1
+
+before:
+  flow:
+    - post:
+        url: '/api/auth/login'
+        json:
+          email: '{{ email }}'
+          password: '{{ password }}'
+        capture:
+          - json: '$.accessToken'
+            as: 'accessToken'
+
+scenarios:
+  - name: 'SSE Notifications Connection'
+    flow:
+      - get:
+          url: '/api/notifications/sse'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+            Accept: 'text/event-stream'
+          expect:
+            - statusCode: 200

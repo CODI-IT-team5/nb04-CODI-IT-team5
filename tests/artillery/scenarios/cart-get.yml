@@ -1,0 +1,46 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 15
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    path: '../data/buyers.csv'
+    fields:
+      - 'email'
+      - 'password'
+    skipHeader: true
+
+  ensure:
+    p95: 500
+    p99: 1000
+    maxErrorRate: 1
+
+before:
+  flow:
+    - post:
+        url: '/api/auth/login'
+        json:
+          email: '{{ email }}'
+          password: '{{ password }}'
+        capture:
+          - json: '$.accessToken'
+            as: 'accessToken'
+
+scenarios:
+  - name: 'Get Cart'
+    flow:
+      - get:
+          url: '/api/cart'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          expect:
+            - statusCode: 200

@@ -1,0 +1,58 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 10
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    - path: '../data/buyers.csv'
+      fields:
+        - 'email'
+        - 'password'
+      skipHeader: true
+    - path: '../data/product.csv'
+      fields: [productId, sizeId, quantity]
+      skipHeader: true
+
+  ensure:
+    p95: 1000
+    p99: 2000
+    maxErrorRate: 1
+
+before:
+  flow:
+    - post:
+        url: '/api/auth/login'
+        json:
+          email: '{{ email }}'
+          password: '{{ password }}'
+        capture:
+          - json: '$.accessToken'
+            as: 'accessToken'
+
+scenarios:
+  - name: 'Create Order'
+    flow:
+      - post:
+          url: '/api/orders'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json:
+            name: '부하테스트이름'
+            phone: '010-1234-5678'
+            address: '부하 테스트 주소'
+            orderItems:
+              - productId: '{{ productId }}'
+                sizeId: '{{ sizeId }}'
+                quantity: '{{ quantity }}'
+          expect:
+            - statusCode:
+                - 201

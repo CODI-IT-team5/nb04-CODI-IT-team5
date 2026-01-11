@@ -1,0 +1,33 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 50
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    path: '../data/products.csv'
+    fields:
+      - productId
+    skipHeader: true
+
+  ensure:
+    p95: 500
+    p99: 1000
+    maxErrorRate: 1
+
+scenarios:
+  - name: 'Product Detail'
+    weight: 3
+    flow:
+      - get:
+          url: '/api/products/{{productId}}'
+          expect:
+            - statusCode: 200

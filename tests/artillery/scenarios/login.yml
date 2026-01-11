@@ -1,0 +1,38 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 15
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    path: '../data/users.csv'
+    fields:
+      - 'email'
+      - 'password'
+    skipHeader: true
+
+  ensure:
+    p95: 800
+    p99: 1500
+    maxErrorRate: 1
+
+scenarios:
+  - name: 'Login'
+    flow:
+      - post:
+          url: '/api/auth/login'
+          json:
+            email: '{{ email }}'
+            password: '{{ password }}'
+          expect:
+            - statusCode: 200
+            - hasProperty: 'accessToken'
+      - think: 1
