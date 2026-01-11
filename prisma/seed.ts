@@ -554,6 +554,25 @@ async function main() {
     productRepository.updateProductReviewStats(product5.id),
   ]);
 
+  // ----------------------
+  // 15. 할인 데이터 생성 (테스트용)
+  // ----------------------
+  const now = new Date();
+  const nextWeek = new Date();
+  nextWeek.setDate(now.getDate() + 7);
+
+  // 모든 상품에 대해 지금부터 일주일간 각기 다른 할인율 적용
+  await prisma.productDiscount.createMany({
+    data: [
+      { productId: product1.id, discountRate: 15, discountStartTime: now, discountEndTime: nextWeek },
+      { productId: product2.id, discountRate: 10, discountStartTime: now, discountEndTime: nextWeek },
+      { productId: product3.id, discountRate: 25, discountStartTime: now, discountEndTime: nextWeek },
+      { productId: product4.id, discountRate: 20, discountStartTime: now, discountEndTime: nextWeek },
+      { productId: product5.id, discountRate: 30, discountStartTime: now, discountEndTime: nextWeek },
+    ],
+    skipDuplicates: true, // 이미 데이터가 있으면 건너뜁니다.
+  });
+
   console.log('✅ 시드 데이터 생성 완료!');
   console.log('📊 생성된 데이터:');
   console.log('   - 유저: 5명 (셀러 2명, 바이어 3명)');
@@ -562,6 +581,7 @@ async function main() {
   console.log('   - 주문: 3개');
   console.log('   - 주문 아이템: 5개');
   console.log('   - 리뷰: 5개');
+  console.log('   - 할인: 5개 (모두 활성)');
   console.log('   - product2 (베이직 티셔츠): 리뷰 1개, 평점 5.0');
   console.log('   - product3 (슬림 진): 리뷰 1개, 평점 4.0');
   console.log('   - product4 (원피스): 리뷰 2개, 평점 5.0');
