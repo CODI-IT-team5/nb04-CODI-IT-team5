@@ -1,3 +1,4 @@
+import { InquiryStatus } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
 
 import { STATUS_CODE } from '../constants/constant.js';
@@ -67,12 +68,19 @@ export class InquiryController {
   async getProductInquiries(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { productId } = req.params;
+      const { page, pageSize, order, status } = req.query;
 
-      const inquiries = await inquiryService.getProductInquiries(productId as string);
+      const result = await inquiryService.getProductInquiries(
+        productId as string,
+        page ? parseInt(page as string) : 1,
+        pageSize ? parseInt(pageSize as string) : 10,
+        order as 'asc' | 'desc' | undefined,
+        status as InquiryStatus | undefined,
+      );
 
       res.json({
-        list: inquiries,
-        totalCount: inquiries.length,
+        list: result.inquiries,
+        totalCount: result.totalCount,
       });
     } catch (error) {
       next(error);

@@ -86,16 +86,21 @@ app.use((req, res, next) => {
 
 app.use(errorMiddleware);
 
-app.listen(config.app.port, () => {
-  logger.info(
-    {
-      target: 'server',
-      event: 'start',
-      appName: config.app.app_name,
-      port: config.app.port,
-      nodeEnv: config.app.node_env,
-      corsOrigin: config.app.cors_origin,
-    },
-    '서버 시작',
-  );
-});
+// 테스트 환경이 아닐 때만 서버 시작
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(config.app.port, () => {
+    logger.info(
+      {
+        target: 'server',
+        event: 'start',
+        appName: config.app.app_name,
+        port: config.app.port,
+        nodeEnv: config.app.node_env,
+        corsOrigin: config.app.cors_origin,
+      },
+      '서버 시작',
+    );
+  });
+}
+
+export default app;
