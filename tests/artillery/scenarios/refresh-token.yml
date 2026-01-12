@@ -1,5 +1,5 @@
 config:
-  target: 'http://localhost:3001'
+  target: '{{ $processEnvironment.TARGET_URL }}'
   http:
     cookieJar: true
   phases:
