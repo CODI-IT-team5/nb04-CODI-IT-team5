@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 
 describe('AuthService - 유닛 테스트', () => {
   let authService: any;
-  let authRepository: any;
-  let bcrypt: any;
-  let jwt: any;
+  let _authRepository: any;
+  let _bcrypt: any;
+  let _jwt: any;
 
   beforeEach(async () => {
     // 모듈 동적 import
@@ -14,9 +14,9 @@ describe('AuthService - 유닛 테스트', () => {
     const jwtModule = await import('jsonwebtoken');
 
     authService = authServiceModule.authService;
-    authRepository = authRepositoryModule.authRepository;
-    bcrypt = bcryptModule.default;
-    jwt = jwtModule.default;
+    _authRepository = authRepositoryModule.authRepository;
+    _bcrypt = bcryptModule.default;
+    _jwt = jwtModule.default;
   });
 
   afterEach(() => {

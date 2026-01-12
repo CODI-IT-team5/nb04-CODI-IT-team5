@@ -11,8 +11,8 @@ import { beforeAll, describe, expect, it } from '@jest/globals';
 import request from 'supertest';
 
 import app from '../../app.js';
-import { generateTestAccessToken } from '../helpers/jwt-test-helper.js';
 import prisma from '../../utils/prisma.js';
+import { generateTestAccessToken } from '../helpers/jwt-test-helper.js';
 
 describe('E2E 테스트 - 전체 API 플로우 (Swagger 스펙 검증)', () => {
   let _accessToken: string;
@@ -44,7 +44,7 @@ describe('E2E 테스트 - 전체 API 플로우 (Swagger 스펙 검증)', () => {
       } else {
         throw new Error('Login failed');
       }
-    } catch (error) {
+    } catch {
       // 로그인 실패 시, DB에서 직접 사용자 찾아서 JWT 생성
       console.log('실제 로그인 실패, 테스트용 JWT 토큰 생성 중...');
 
@@ -572,7 +572,7 @@ describe('E2E 테스트 - 커뮤니티 플로우 (Inquiry → InquiryReply → R
       } else {
         throw new Error('Login failed');
       }
-    } catch (error) {
+    } catch {
       // 로그인 실패 시, DB에서 직접 사용자 찾아서 JWT 생성
       console.log('커뮤니티 플로우 테스트: 실제 로그인 실패, 테스트용 JWT 토큰 생성 중...');
 
