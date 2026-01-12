@@ -1,5 +1,4 @@
 // src/cart/cart.repository.ts
-import { Prisma } from '@prisma/client';
 
 import type { PatchCartInput } from '../dtos/cart.dto.js';
 import prisma from '../utils/prisma.js';
