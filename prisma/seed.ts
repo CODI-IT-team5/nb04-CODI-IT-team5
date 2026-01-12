@@ -273,57 +273,57 @@ async function main() {
     // product1 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product1.id, sizeId: 2 } },
-      update: { quantity: 2000 },
-      create: { productId: product1.id, sizeId: 2, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product1.id, sizeId: 2, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product1.id, sizeId: 3 } },
-      update: { quantity: 2000 },
-      create: { productId: product1.id, sizeId: 3, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product1.id, sizeId: 3, quantity: 10 },
     }),
     // product2 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 1 } },
-      update: { quantity: 2000 },
-      create: { productId: product2.id, sizeId: 1, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 1, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 2 } },
-      update: { quantity: 2000 },
-      create: { productId: product2.id, sizeId: 2, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 2, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 3 } },
-      update: { quantity: 2000 },
-      create: { productId: product2.id, sizeId: 3, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 3, quantity: 10 },
     }),
     // product3 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 2 } },
-      update: { quantity: 2000 },
-      create: { productId: product3.id, sizeId: 2, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 2, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 3 } },
-      update: { quantity: 2000 },
-      create: { productId: product3.id, sizeId: 3, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 3, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 4 } },
-      update: { quantity: 2000 },
-      create: { productId: product3.id, sizeId: 4, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 4, quantity: 10 },
     }),
     // product4 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product4.id, sizeId: 6 } },
-      update: { quantity: 2000 },
-      create: { productId: product4.id, sizeId: 6, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product4.id, sizeId: 6, quantity: 10 },
     }),
     // product5 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product5.id, sizeId: 6 } },
-      update: { quantity: 2000 },
-      create: { productId: product5.id, sizeId: 6, quantity: 2000 },
+      update: { quantity: 10 },
+      create: { productId: product5.id, sizeId: 6, quantity: 10 },
     }),
   ]);
 
