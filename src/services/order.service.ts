@@ -7,7 +7,9 @@ import { orderRepository } from '../repositories/order.repository.js';
 import { productRepository } from '../repositories/product.repository.js';
 import { OrderResponse } from '../serializes/order.serialize.js';
 import { HttpException } from '../utils/http-exception.js';
+import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
+import { metadataService } from './metadata.service.js';
 import { notificationService } from './notification.service.js';
 
 class OrderService {
@@ -57,6 +59,8 @@ class OrderService {
    */
   createOrder = async (userId: string, input: CreateOrderInput) => {
     const { name, phone, address, orderItems, usePoint = 0, isTest = false } = input;
+
+    let finalPriceForGradeUpdate = 0;
 
     const createdOrder = await prisma.$transaction(
       async (tx) => {
@@ -119,6 +123,7 @@ class OrderService {
         if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
 
         const finalPrice = Math.max(subtotal - usePoint, 0);
+        finalPriceForGradeUpdate = finalPrice; // 등급 업데이트를 위해 최종 가격 저장
 
         // 3. 주문 상태 결정
         const orderStatus = isTest ? OrderStatus.WaitingPayment : OrderStatus.CompletedPayment;
@@ -210,9 +215,8 @@ class OrderService {
           });
         }
 
-        // 7. 포인트 사용/적립 및 등급 업데이트 (실제 주문일 경우에만)
+        // 7. 포인트 사용/적립 (실제 주문일 경우에만) - 등급 업데이트 로직은 분리
         if (!isTest) {
-          // 포인트 사용 처리
           if (usePoint > 0) {
             await tx.pointHistory.create({
               data: {
@@ -225,7 +229,6 @@ class OrderService {
             });
           }
 
-          // 포인트 적립 처리
           const earnedPoints = Math.floor(finalPrice * (user.grade.rate / 100));
           if (earnedPoints > 0) {
             await tx.pointHistory.create({
@@ -241,30 +244,32 @@ class OrderService {
 
           // 사용자 누적 금액 및 포인트 최종 업데이트
           const netPointChange = earnedPoints - usePoint;
-          const updatedUser = await tx.user.update({
+          await tx.user.update({
             where: { id: userId },
             data: {
               points: { increment: netPointChange },
               totalAmount: { increment: finalPrice },
             },
           });
-
-          // 등급 업데이트 확인
-          const allGrades = await tx.grade.findMany({ orderBy: { minAmount: 'desc' } });
-          const newGrade = allGrades.find((grade) => updatedUser.totalAmount >= grade.minAmount);
-
-          if (newGrade && newGrade.id !== user.gradeId) {
-            await tx.user.update({
-              where: { id: userId },
-              data: { gradeId: newGrade.id },
-            });
-          }
         }
 
         return order;
       },
       { maxWait: 5000, timeout: 20000 },
     );
+
+    // 트랜잭션 성공 후, 등급 업데이트 및 알림 전송 로직 호출
+    if (!isTest && finalPriceForGradeUpdate > 0) {
+      try {
+        await metadataService.updateTotalAmount({
+          userId: userId,
+          deltaAmount: finalPriceForGradeUpdate,
+        });
+      } catch (err) {
+        // 등급 업데이트 실패가 주문 생성의 성공에 영향을 주지 않도록 로깅만 처리
+        logger.error(err, '주문 후 등급 업데이트 실패');
+      }
+    }
 
     // 8. 최종 결과 반환
     const detailedOrder = await orderRepository.findById(createdOrder.id);

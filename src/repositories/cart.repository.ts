@@ -1,21 +1,23 @@
-// src/repositories/cart.repository.ts
+// src/cart/cart.repository.ts
+import { Prisma } from '@prisma/client';
+
 import type { PatchCartInput } from '../dtos/cart.dto.js';
 import prisma from '../utils/prisma.js';
 
 class CartRepository {
-  async findCartByUserId(userId: string) {
+  findCartByUserId = async (userId: string) => {
     return prisma.cart.findUnique({
       where: { userId },
     });
-  }
+  };
 
   // 제품의 특정 사이즈 재고 조회
-  async getStockQuantity(productId: string, sizeId: number) {
+  getStockQuantity = async (productId: string, sizeId: number) => {
     const stock = await prisma.productStock.findUnique({
       where: {
         productId_sizeId: {
           productId,
-          sizeId: sizeId as number,
+          sizeId,
         },
       },
       select: {
@@ -30,16 +32,16 @@ class CartRepository {
     });
 
     return stock;
-  }
+  };
 
-  async createCart(userId: string) {
+  createCart = async (userId: string) => {
     return prisma.cart.create({
       data: { userId },
     });
-  }
+  };
 
   // 상세 조회용 (GET /api/cart 응답에 쓰기) - Swagger 스펙 준수
-  async getCartWithItems(userId: string) {
+  getCartWithItems = async (userId: string) => {
     const cart = await prisma.cart.findUnique({
       where: { userId },
       include: {
@@ -108,19 +110,19 @@ class CartRepository {
       },
     });
     return cart;
-  }
+  };
 
   // 장바구니 생성 or 기존 cart 반환
-  async getOrCreateCart(userId: string) {
+  getOrCreateCart = async (userId: string) => {
     let cart = await this.findCartByUserId(userId);
     if (!cart) {
       cart = await this.createCart(userId);
     }
     return cart;
-  }
+  };
 
   // PATCH /api/cart – 상품+여러 사이즈 한 번에 처리 (트랜잭션으로 원자성 보장)
-  async upsertCartItems(userId: string, input: PatchCartInput) {
+  upsertCartItems = async (userId: string, input: PatchCartInput) => {
     const { productId, sizes } = input;
 
     const cart = await this.getOrCreateCart(userId);
@@ -136,7 +138,7 @@ class CartRepository {
             where: {
               cartId: cart.id,
               productId,
-              sizeId: sizeId as number,
+              sizeId,
             },
           });
         } else {
@@ -146,7 +148,7 @@ class CartRepository {
               cartId_productId_sizeId: {
                 cartId: cart.id,
                 productId,
-                sizeId: sizeId as number,
+                sizeId,
               },
             },
             update: {
@@ -155,7 +157,7 @@ class CartRepository {
             create: {
               cartId: cart.id,
               productId,
-              sizeId: sizeId as number,
+              sizeId,
               quantity,
             },
           });
@@ -170,10 +172,10 @@ class CartRepository {
     });
 
     return items;
-  }
+  };
 
   // DELETE /api/cart/:cartItemId
-  async deleteCartItem(userId: string, cartItemId: string) {
+  deleteCartItem = async (userId: string, cartItemId: string) => {
     const cart = await this.findCartByUserId(userId);
     if (!cart) {
       return 0;
@@ -187,10 +189,10 @@ class CartRepository {
     });
 
     return result.count;
-  }
+  };
 
   // 단일 카트 아이템 상세 조회 (GET /api/cart/:cartItemId) - Swagger 스펙 준수 (간소화)
-  async getCartItemWithDetails(userId: string, cartItemId: string) {
+  getCartItemWithDetails = async (userId: string, cartItemId: string) => {
     const cart = await this.findCartByUserId(userId);
     if (!cart) return null;
 
@@ -224,13 +226,13 @@ class CartRepository {
         cart: true,
       },
     });
-  }
+  };
 
-  async findUserIdsByProductInCart(productId: string, sizeId: number) {
+  findUserIdsByProductInCart = async (productId: string, sizeId: number) => {
     const cartItems = await prisma.cartItem.findMany({
       where: {
         productId,
-        sizeId: sizeId as number,
+        sizeId,
       },
       include: {
         cart: {
@@ -244,7 +246,7 @@ class CartRepository {
     // 고유한 사용자 ID 추출
     const userIds = [...new Set(cartItems.map((item) => item.cart.userId))];
     return userIds;
-  }
+  };
 }
 
 export const cartRepository = new CartRepository();
