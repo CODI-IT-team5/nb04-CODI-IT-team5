@@ -284,7 +284,7 @@ describe('InquiryService - 유닛 테스트', () => {
       const deleteSpy = jest.spyOn(inquiryRepository, 'delete').mockResolvedValue(mockInquiry as any);
 
       // Act
-      await inquiryService.deleteInquiry(inquiryId, userId);
+      await inquiryService.deleteInquiry(inquiryId, userId, 'BUYER');
 
       // Assert
       expect(deleteSpy).toHaveBeenCalledWith(inquiryId);
@@ -303,7 +303,7 @@ describe('InquiryService - 유닛 테스트', () => {
       jest.spyOn(inquiryRepository, 'findById').mockResolvedValue(mockInquiry as any);
 
       // Act & Assert
-      await expect(inquiryService.deleteInquiry(inquiryId, userId)).rejects.toThrow();
+      await expect(inquiryService.deleteInquiry(inquiryId, userId, 'BUYER')).rejects.toThrow();
     });
   });
 });
