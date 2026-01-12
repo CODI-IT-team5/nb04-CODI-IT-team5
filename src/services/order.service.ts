@@ -2,7 +2,7 @@ import { NotificationType, OrderStatus, PaymentStatus, PointHistoryType } from '
 
 import { MESSAGE } from '../constants/constant.js';
 import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
-import * as cartRepository from '../repositories/cart.repository.js';
+import { cartRepository } from '../repositories/cart.repository.js';
 import { orderRepository } from '../repositories/order.repository.js';
 import { productRepository } from '../repositories/product.repository.js';
 import { OrderResponse } from '../serializes/order.serialize.js';
