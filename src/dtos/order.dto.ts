@@ -40,3 +40,23 @@ export type UpdateOrderInput = z.infer<typeof updateOrderDto>;
 export const orderIdParamDto = z.object({
   orderId: z.string().cuid(),
 });
+
+// Consolidated orderDto for validateMiddleware
+export const orderDto = {
+  createOrder: {
+    body: createOrderDto,
+  },
+  getOrders: {
+    query: getOrdersQueryDto,
+  },
+  getOrderById: {
+    params: orderIdParamDto,
+  },
+  updateOrder: {
+    params: orderIdParamDto,
+    body: updateOrderDto,
+  },
+  deleteOrder: {
+    params: orderIdParamDto,
+  },
+};

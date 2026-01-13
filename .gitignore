@@ -4,3 +4,6 @@ dist
 /src/generated/prisma
 logs
 test.jpg
+
+# Artillery reports
+tests/artillery/reports/*.json
