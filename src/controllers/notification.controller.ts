@@ -27,11 +27,15 @@ class NotificationController {
 
       // 연결 초기화 메시지 (선택 사항)
       res.write(': connection established\n\n');
+      res.flush?.();
 
-      // TODO: SSE 연결 유지, 더 나은 방법이 있는지 찾아보기
+      // SSE 연결 유지를 위한 heartbeat (15초마다)
       const heartbeat = setInterval(() => {
-        res.write(':\n\n');
-      }, 30000);
+        if (!res.writableEnded) {
+          res.write(': heartbeat\n\n');
+          res.flush?.();
+        }
+      }, 15000);
 
       req.on('close', () => {
         clearInterval(heartbeat);
