@@ -51,7 +51,7 @@ class CartController {
   deleteCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const cartItemId = req.params.cartItemId!;
+      const cartItemId = req.params.cartItemId as string;
 
       const deletedCount = await cartService.removeCartItem(userId, cartItemId);
       if (!deletedCount) {
@@ -95,7 +95,7 @@ class CartController {
   getCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const cartItemId = req.params.cartItemId!;
+      const cartItemId = req.params.cartItemId as string;
 
       const item = await cartService.getCartItemWithDetails(userId, cartItemId);
       if (!item) {

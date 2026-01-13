@@ -32,7 +32,7 @@ class StoreController {
     try {
       const { storeId } = req.params;
       if (!storeId) throw HttpException.badRequest('storeId가 필요합니다');
-      const store = await storeService.getById(storeId);
+      const store = await storeService.getById(storeId as string);
       res.status(STATUS_CODE.OK).json(StoreResponse.detail(store));
     } catch (err) {
       next(err);
@@ -69,7 +69,7 @@ class StoreController {
       if (!req.user) throw HttpException.userNotFound();
       const { storeId } = req.params;
       if (!storeId) throw HttpException.badRequest('storeId가 필요합니다');
-      const result = await storeService.toggleFavorite({ storeId, userId: req.user.id });
+      const result = await storeService.toggleFavorite({ storeId: storeId as string, userId: req.user.id });
       res.status(STATUS_CODE.OK).json({
         type: result.type,
         store: StoreResponse.base(result.store),
