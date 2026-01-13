@@ -120,6 +120,9 @@ class ProductService {
       }
     }
 
+    // 캐시 무효화 후 다시 조회
+    productRepository.invalidateProductCache(input.productId);
+
     const updatedProduct = await productRepository.findByIdWithRelations(input.productId);
     if (!updatedProduct) {
       throw HttpException.notFound(MESSAGE.productUpdateFailed);
@@ -131,6 +134,7 @@ class ProductService {
   // 상품 삭제
   delete = async (input: ProductDeleteServiceInput) => {
     await this.validateProductOwnership({ productId: input.productId, userId: input.userId });
+    productRepository.invalidateProductCache(input.productId);
     await productRepository.delete(input.productId);
   };
 

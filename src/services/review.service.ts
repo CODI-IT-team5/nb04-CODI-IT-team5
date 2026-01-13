@@ -39,6 +39,9 @@ export class ReviewService {
     // Product의 리뷰 통계 업데이트
     await productRepository.updateProductReviewStats(data.productId);
 
+    // 상품 캐시 무효화 (리뷰 통계 변경)
+    productRepository.invalidateProductCache(data.productId);
+
     return review;
   }
 
@@ -102,6 +105,9 @@ export class ReviewService {
     // Product의 리뷰 통계 업데이트
     await productRepository.updateProductReviewStats(review.productId);
 
+    // 상품 캐시 무효화 (리뷰 통계 변경)
+    productRepository.invalidateProductCache(review.productId);
+
     return updatedReview;
   }
 
@@ -124,6 +130,9 @@ export class ReviewService {
 
     // Product의 리뷰 통계 업데이트
     await productRepository.updateProductReviewStats(review.productId);
+
+    // 상품 캐시 무효화 (리뷰 통계 변경)
+    productRepository.invalidateProductCache(review.productId);
 
     return null;
   }

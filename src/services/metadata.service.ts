@@ -16,7 +16,7 @@ class MetadataService {
 
   updateTotalAmount = async (input: UpdateGradeServiceInput) => {
     const result = await prisma.$transaction(async (tx) => {
-      //TODO: 캐시에서 가져오는 걸로 변경하기
+      // 캐시에서 등급 정보 조회 (LRU 캐시 적용됨)
       const grades = await metadataRepository.gradeList();
       if (!grades || grades.length === 0) throw HttpException.notFound();
 

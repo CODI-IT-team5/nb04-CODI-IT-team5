@@ -44,6 +44,8 @@ class StoreService {
 
     try {
       const updatedStore = await storeRepository.update(input);
+      // 스토어 캐시 무효화
+      storeRepository.invalidateStoreCache(input.storeId);
       return updatedStore;
     } catch (err: unknown) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -80,6 +82,8 @@ class StoreService {
     }
 
     const result = await storeRepository.toggleFavorite(input);
+    // 찜 카운트 변경으로 인한 스토어 캐시 무효화
+    storeRepository.invalidateStoreCache(input.storeId);
 
     return {
       type: result.type,
