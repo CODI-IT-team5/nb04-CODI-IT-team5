@@ -32,7 +32,7 @@ class OrderController {
   getOrderById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const orderId = req.params.orderId!;
+      const orderId = req.params.orderId as string;
 
       const order = await orderService.getOrderById(userId, orderId);
       return res.status(STATUS_CODE.OK).json(order);
@@ -62,7 +62,7 @@ class OrderController {
   deleteOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const orderId = req.params.orderId!;
+      const orderId = req.params.orderId as string;
 
       const result = await orderService.deleteOrder(userId, orderId);
       return res.status(STATUS_CODE.OK).json(result);
@@ -77,7 +77,7 @@ class OrderController {
   updateOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user!.id;
-      const orderId = req.params.orderId!;
+      const orderId = req.params.orderId as string;
       const orderData = req.body as UpdateOrderInput;
 
       const result = await orderService.updateOrder(userId, orderId, orderData);

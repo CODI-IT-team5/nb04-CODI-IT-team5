@@ -40,7 +40,7 @@ class ProductController {
       if (!req.params.productId) {
         throw new HttpException({ status: STATUS_CODE.BAD_REQUEST, message: '상품 ID가 필요합니다' });
       }
-      const product = await productService.getById(req.params.productId);
+      const product = await productService.getById(req.params.productId as string);
       res.status(STATUS_CODE.OK).json(ProductResponse.detail(product));
     } catch (err) {
       next(err);
@@ -79,7 +79,7 @@ class ProductController {
       if (!req.params.productId) {
         throw new HttpException({ status: STATUS_CODE.BAD_REQUEST, message: '상품 ID가 필요합니다' });
       }
-      await productService.delete({ userId: req.user.id, productId: req.params.productId });
+      await productService.delete({ userId: req.user.id, productId: req.params.productId as string });
       res.status(STATUS_CODE.NO_CONTENT).send();
     } catch (err) {
       next(err);
