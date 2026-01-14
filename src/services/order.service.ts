@@ -9,6 +9,7 @@ import { OrderResponse } from '../serializes/order.serialize.js';
 import { HttpException } from '../utils/http-exception.js';
 import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
+import { dashboardService } from './dashboard.service.js';
 import { metadataService } from './metadata.service.js';
 import { notificationService } from './notification.service.js';
 
@@ -61,6 +62,8 @@ class OrderService {
     const { name, phone, address, orderItems, usePoint = 0, isTest = false } = input;
 
     let finalPriceForGradeUpdate = 0;
+    // 대시보드 캐시 무효화를 위해 영향받는 스토어 ID 수집
+    const affectedStoreIds = new Set<string>();
 
     const createdOrder = await prisma.$transaction(
       async (tx) => {
@@ -80,7 +83,7 @@ class OrderService {
             where: { productId: item.productId, sizeId: item.sizeId },
             include: {
               product: {
-                select: { price: true, isSoldOut: true, name: true },
+                select: { price: true, isSoldOut: true, name: true, storeId: true },
               },
               size: true, // 사이즈 정보를 함께 가져옵니다.
             },
@@ -103,6 +106,9 @@ class OrderService {
 
           const unitPrice = productStock.product.price;
           subtotal += unitPrice * item.quantity;
+
+          // 대시보드 캐시 무효화를 위해 스토어 ID 수집
+          affectedStoreIds.add(productStock.product.storeId);
 
           computedItems.push({
             productId: item.productId,
@@ -271,7 +277,12 @@ class OrderService {
       }
     }
 
-    // 8. 최종 결과 반환
+    // 8. 대시보드 캐시 무효화 (트랜잭션 완료 후)
+    for (const storeId of affectedStoreIds) {
+      dashboardService.invalidateDashboardCache(storeId);
+    }
+
+    // 9. 최종 결과 반환
     const detailedOrder = await orderRepository.findById(createdOrder.id);
     return OrderResponse.single(detailedOrder!);
   };
@@ -280,10 +291,21 @@ class OrderService {
    * 주문 취소
    */
   deleteOrder = async (userId: string, orderId: string) => {
-    return prisma.$transaction(async (tx) => {
+    // 주문 취소 시 영향받는 스토어 ID 수집
+    const affectedStoreIds = new Set<string>();
+
+    const result = await prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirst({
         where: { id: orderId, userId },
-        include: { orderItems: true },
+        include: {
+          orderItems: {
+            include: {
+              product: {
+                select: { storeId: true },
+              },
+            },
+          },
+        },
       });
 
       if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
@@ -300,6 +322,8 @@ class OrderService {
           where: { id: item.productId },
           data: { salesCount: { decrement: item.quantity } },
         });
+        // 대시보드 캐시 무효화를 위해 스토어 ID 수집
+        affectedStoreIds.add(item.product.storeId);
       }
 
       if (order.usePoint > 0) {
@@ -317,6 +341,13 @@ class OrderService {
 
       return { message: '주문이 성공적으로 취소되었습니다.' };
     });
+
+    // 대시보드 캐시 무효화 (트랜잭션 완료 후)
+    for (const storeId of affectedStoreIds) {
+      dashboardService.invalidateDashboardCache(storeId);
+    }
+
+    return result;
   };
 
   /**

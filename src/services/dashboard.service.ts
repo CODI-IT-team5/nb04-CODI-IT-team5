@@ -1,6 +1,10 @@
 import { dashboardRepository } from '../repositories/dashboard.repository.js';
 import type { PeriodStats } from '../types/dashboard.type.js';
+import { cacheManager, dashboardCache } from '../utils/cache.js';
 import { HttpException } from '../utils/http-exception.js';
+import { logger } from '../utils/logger.js';
+
+const DASHBOARD_CACHE_KEY_PREFIX = 'store:';
 
 // 타입 정의
 const getDateRange = (period: 'today' | 'week' | 'month' | 'year', offset = 0) => {
@@ -69,6 +73,14 @@ class DashboardService {
 
     if (!store) {
       throw HttpException.notFound();
+    }
+
+    // 캐시 확인
+    const cacheKey = `${DASHBOARD_CACHE_KEY_PREFIX}${store.id}`;
+    const cached = dashboardCache.get(cacheKey);
+    if (cached) {
+      logger.debug({ target: 'cache', event: 'hit', cache: 'dashboard', storeId: store.id }, '대시보드 캐시 히트');
+      return cached;
     }
 
     // 기간별 통계 계산 (병렬 처리)
@@ -150,11 +162,24 @@ class DashboardService {
       percentage: totalRevenue > 0 ? Math.round((sales / totalRevenue) * 1000) / 10 : 0,
     }));
 
-    return {
+    const result = {
       ...stats,
       topSales: topSalesFormatted,
       priceRange,
     };
+
+    // 캐시에 저장
+    dashboardCache.set(cacheKey, result);
+    logger.debug(
+      { target: 'cache', event: 'miss', cache: 'dashboard', storeId: store.id },
+      '대시보드 캐시 미스 - DB에서 조회',
+    );
+
+    return result;
+  }
+
+  invalidateDashboardCache(storeId: string) {
+    cacheManager.invalidate('dashboard', `${DASHBOARD_CACHE_KEY_PREFIX}${storeId}`);
   }
 }
 
