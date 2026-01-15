@@ -93,14 +93,26 @@ export class InquiryService {
     }
   }
 
-  async getProductInquiries(productId: string) {
+  async getProductInquiries(
+    productId: string,
+    page: number = 1,
+    pageSize: number = 10,
+    order?: 'asc' | 'desc',
+    status?: InquiryStatus,
+  ) {
     const product = await productRepository.findById(productId);
 
     if (!product) {
       throw HttpException.notFound();
     }
 
-    return inquiryRepository.findByProductId(productId);
+    return inquiryRepository.findByProductIdWithPagination({
+      productId,
+      page,
+      pageSize,
+      ...(order && { order }),
+      ...(status && { status }),
+    });
   }
 
   async updateInquiry(inquiryId: string, userId: string, data: UpdateInquiryData) {

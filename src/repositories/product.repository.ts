@@ -9,7 +9,11 @@ import type {
   UpdateStockRepositoryInput,
   UpsertStocksRepositoryInput,
 } from '../dtos/product.dto.js';
+import { cacheManager, productDetailCache } from '../utils/cache.js';
+import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
+
+const PRODUCT_DETAIL_CACHE_KEY_PREFIX = 'detail:';
 
 class ProductRepository {
   findById = async (productId: string) => {
@@ -32,7 +36,14 @@ class ProductRepository {
   };
 
   findByIdWithRelations = async (productId: string) => {
-    return prisma.product.findFirst({
+    const cacheKey = `${PRODUCT_DETAIL_CACHE_KEY_PREFIX}${productId}`;
+    const cached = productDetailCache.get(cacheKey);
+    if (cached) {
+      logger.debug({ target: 'cache', event: 'hit', cache: 'product-detail', productId }, '상품 상세 캐시 히트');
+      return cached;
+    }
+
+    const product = await prisma.product.findFirst({
       where: { id: productId },
       include: {
         image: true,
@@ -69,6 +80,19 @@ class ProductRepository {
         },
       },
     });
+
+    if (product) {
+      productDetailCache.set(cacheKey, product);
+      logger.debug(
+        { target: 'cache', event: 'miss', cache: 'product-detail', productId },
+        '상품 상세 캐시 미스 - DB에서 조회',
+      );
+    }
+    return product;
+  };
+
+  invalidateProductCache = (productId: string) => {
+    cacheManager.invalidate('product-detail', `${PRODUCT_DETAIL_CACHE_KEY_PREFIX}${productId}`);
   };
 
   findMany = async (input: FindManyProductRepositoryInput) => {

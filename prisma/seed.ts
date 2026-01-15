@@ -1,9 +1,9 @@
 import { config } from '../src/config/config.js';
 import { productRepository } from '../src/repositories/product.repository.js';
-import prisma from '../src/utils/prisma.js';
-
-import { OrderStatus, UserRole } from '@prisma/client';
+import { PrismaClient, OrderStatus, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
+
+const prisma = new PrismaClient();
 
 async function main() {
   // ----------------------
@@ -11,9 +11,8 @@ async function main() {
   // ----------------------
   await prisma.image.upsert({
     where: { id: config.resource.defaultImageId },
-    update: {}, // 이미 있으면 변경하지 않음
+    update: {},
     create: {
-      // 없으면 새로 생성
       id: config.resource.defaultImageId,
       key: config.resource.defaultImageKey,
       url: config.resource.defaultImageUrl,
@@ -40,7 +39,32 @@ async function main() {
   const testPassword = 'test1234';
   const hashedPassword = await bcrypt.hash(testPassword, config.app.bcryptSaltRounds);
 
-  const [seller1, seller2, buyer1, buyer2, buyer3] = await Promise.all([
+  // E2E 테스트용 사용자 추가
+  const [seller0, buyer, seller1, seller2, buyer1, buyer2, buyer3] = await Promise.all([
+    prisma.user.upsert({
+      where: { email: 'seller0@codiit.com' },
+      update: {},
+      create: {
+        email: 'seller0@codiit.com',
+        name: 'E2E 판매자',
+        password: hashedPassword,
+        lastLoginAt: new Date(),
+        type: UserRole.SELLER,
+        gradeId: 'grade_green',
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: 'buyer@codiit.com' },
+      update: {},
+      create: {
+        email: 'buyer@codiit.com',
+        name: 'E2E 구매자',
+        password: hashedPassword,
+        lastLoginAt: new Date(),
+        type: UserRole.BUYER,
+        gradeId: 'grade_green',
+      },
+    }),
     prisma.user.upsert({
       where: { email: 'seller1@test.com' },
       update: {},
@@ -137,7 +161,19 @@ async function main() {
   // ----------------------
   // 6. 스토어
   // ----------------------
-  const [seller1Store, seller2Store] = await Promise.all([
+  const [seller0Store, seller1Store, seller2Store] = await Promise.all([
+    prisma.store.upsert({
+      where: { userId: seller0.id },
+      update: {},
+      create: {
+        name: 'E2E 테스트 스토어',
+        content: 'E2E 테스트용 스토어입니다',
+        address: '서울시 강남구',
+        detailAddress: 'E2E빌딩 1층',
+        phoneNumber: '010-0000-0000',
+        userId: seller0.id,
+      },
+    }),
     prisma.store.upsert({
       where: { userId: seller1.id },
       update: {},
@@ -608,25 +644,6 @@ async function main() {
     productRepository.updateProductReviewStats(product4.id),
     productRepository.updateProductReviewStats(product5.id),
   ]);
-
-  // ----------------------
-  // 15. 할인 데이터 생성 (테스트용)
-  // ----------------------
-  const now = new Date();
-  const nextWeek = new Date();
-  nextWeek.setDate(now.getDate() + 7);
-
-  // 모든 상품에 대해 지금부터 일주일간 각기 다른 할인율 적용
-  await prisma.productDiscount.createMany({
-    data: [
-      { productId: product1.id, discountRate: 15, discountStartTime: now, discountEndTime: nextWeek },
-      { productId: product2.id, discountRate: 10, discountStartTime: now, discountEndTime: nextWeek },
-      { productId: product3.id, discountRate: 25, discountStartTime: now, discountEndTime: nextWeek },
-      { productId: product4.id, discountRate: 20, discountStartTime: now, discountEndTime: nextWeek },
-      { productId: product5.id, discountRate: 30, discountStartTime: now, discountEndTime: nextWeek },
-    ],
-    skipDuplicates: true, // 이미 데이터가 있으면 건너뜁니다.
-  });
 
   console.log('✅ 시드 데이터 생성 완료!');
   console.log('📊 생성된 데이터:');
