@@ -48,8 +48,10 @@ async function main() {
             if (model) {
               try {
                 await model.deleteMany({ where: { [field]: { in: ids } } });
-              } catch ( // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              _e) {
+              } catch (
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                _e
+              ) {
                 // 에러나도 무시하고 다음으로 진행 (안전장치)
               }
             }
