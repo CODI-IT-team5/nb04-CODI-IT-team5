@@ -20,7 +20,8 @@
     "lint:fix": "eslint . --fix",
     "format": "npx prettier . --write",
     "format:check": "npx prettier --check .",
-    "perf": "dotenv artillery run"
+    "perf": "dotenv artillery run",
+    "cron:cleanup": "npx tsx test-https/scripts/cleanup.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
