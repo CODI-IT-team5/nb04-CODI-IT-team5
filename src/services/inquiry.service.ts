@@ -93,14 +93,26 @@ export class InquiryService {
     }
   }
 
-  async getProductInquiries(productId: string) {
+  async getProductInquiries(
+    productId: string,
+    page: number = 1,
+    pageSize: number = 10,
+    order?: 'asc' | 'desc',
+    status?: InquiryStatus,
+  ) {
     const product = await productRepository.findById(productId);
 
     if (!product) {
       throw HttpException.notFound();
     }
 
-    return inquiryRepository.findByProductId(productId);
+    return inquiryRepository.findByProductIdWithPagination({
+      productId,
+      page,
+      pageSize,
+      ...(order && { order }),
+      ...(status && { status }),
+    });
   }
 
   async updateInquiry(inquiryId: string, userId: string, data: UpdateInquiryData) {
@@ -121,15 +133,21 @@ export class InquiryService {
     return inquiryRepository.update(inquiryId, data);
   }
 
-  async deleteInquiry(inquiryId: string, userId: string) {
+  async deleteInquiry(inquiryId: string, userId: string, userType: UserRole) {
     const inquiry = await inquiryRepository.findById(inquiryId);
 
     if (!inquiry) {
       throw HttpException.notFound();
     }
 
-    if (inquiry.userId !== userId) {
-      throw HttpException.forbidden('본인의 문의만 삭제할 수 있습니다.');
+    const isAuthor = inquiry.userId === userId;
+    const inquiryWithProduct = inquiry as typeof inquiry & {
+      product?: { store?: { userId: string } };
+    };
+    const isSeller = userType === UserRole.SELLER && inquiryWithProduct.product?.store?.userId === userId;
+
+    if (!isAuthor && !isSeller) {
+      throw HttpException.forbidden('문의를 삭제할 권한이 없습니다.');
     }
 
     return inquiryRepository.delete(inquiryId);

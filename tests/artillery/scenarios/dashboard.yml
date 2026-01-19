@@ -1,0 +1,47 @@
+config:
+  target: '{{ $processEnvironment.TARGET_URL }}'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 15
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    path: '../data/sellers.csv'
+    fields:
+      - 'email'
+      - 'password'
+    skipHeader: true
+
+  ensure:
+    p95: 1000
+    p99: 2000
+    maxErrorRate: 1
+
+before:
+  flow:
+    - post:
+        url: '/api/auth/login'
+        json:
+          email: '{{ email }}'
+          password: '{{ password }}'
+        capture:
+          - json: '$.accessToken'
+            as: 'accessToken'
+
+scenarios:
+  - name: 'Dashboard'
+    flow:
+      - get:
+          url: '/api/dashboard'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          expect:
+            - statusCode:
+                - 200

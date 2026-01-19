@@ -4,31 +4,15 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { MESSAGE, STATUS_CODE } from '../constants/constant.js';
 import type { PatchCartInput } from '../dtos/cart.dto.js';
-import { getCartItemWithDetails, getCartWithItems } from '../repositories/cart.repository.js';
 import { CartResponse } from '../serializes/cart.serialize.js';
-import * as cartService from '../services/cart.service.js';
+import { cartService } from '../services/cart.service.js';
 import { HttpException } from '../utils/http-exception.js';
 
 class CartController {
-  private getUserIdOr401(req: Request): string {
-    const user = req.user;
-    if (!user) {
-      throw HttpException.unauthorized(MESSAGE.unauthorized);
-    }
-    return user.id;
-  }
-
-  private getCartItemIdOrThrow(cartItemId: string | undefined): string {
-    if (!cartItemId) {
-      throw HttpException.badRequest(MESSAGE.badRequest);
-    }
-    return cartItemId;
-  }
-
   // POST /api/cart : 장바구니 생성 (또는 기존 카트 반환)
   createCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req);
+      const userId = req.user!.id;
 
       const cart = await cartService.createCart(userId);
       if (!cart) {
@@ -52,7 +36,7 @@ class CartController {
   // PATCH /api/cart : 장바구니 수정 (아이템 추가/수정)
   patchCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req);
+      const userId = req.user!.id;
 
       const body = req.body as PatchCartInput;
       const items = await cartService.patchCart(userId, body);
@@ -66,8 +50,8 @@ class CartController {
   // DELETE /api/cart/:cartItemId : 장바구니 아이템 삭제
   deleteCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req);
-      const cartItemId = this.getCartItemIdOrThrow(req.params.cartItemId);
+      const userId = req.user!.id;
+      const cartItemId = req.params.cartItemId as string;
 
       const deletedCount = await cartService.removeCartItem(userId, cartItemId);
       if (!deletedCount) {
@@ -83,9 +67,9 @@ class CartController {
   // GET /api/cart : 장바구니 조회
   getCart = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req);
+      const userId = req.user!.id;
 
-      const cart = await getCartWithItems(userId);
+      const cart = await cartService.getCartWithItems(userId);
 
       // 장바구니가 없으면 404
       if (!cart) {
@@ -110,10 +94,10 @@ class CartController {
   // GET /api/cart/:cartItemId : 장바구니 아이템 상세 조회 (Swagger 스펙 준수)
   getCartItem = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = this.getUserIdOr401(req);
-      const cartItemId = this.getCartItemIdOrThrow(req.params.cartItemId);
+      const userId = req.user!.id;
+      const cartItemId = req.params.cartItemId as string;
 
-      const item = await getCartItemWithDetails(userId, cartItemId);
+      const item = await cartService.getCartItemWithDetails(userId, cartItemId);
       if (!item) {
         throw HttpException.notFound(MESSAGE.cartItemNotFound);
       }

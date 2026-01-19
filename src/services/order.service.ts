@@ -2,12 +2,15 @@ import { NotificationType, OrderStatus, PaymentStatus, PointHistoryType } from '
 
 import { MESSAGE } from '../constants/constant.js';
 import type { CreateOrderInput, GetOrdersQuery, UpdateOrderInput } from '../dtos/order.dto.js';
-import * as cartRepository from '../repositories/cart.repository.js';
+import { cartRepository } from '../repositories/cart.repository.js';
 import { orderRepository } from '../repositories/order.repository.js';
 import { productRepository } from '../repositories/product.repository.js';
 import { OrderResponse } from '../serializes/order.serialize.js';
 import { HttpException } from '../utils/http-exception.js';
+import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
+import { dashboardService } from './dashboard.service.js';
+import { metadataService } from './metadata.service.js';
 import { notificationService } from './notification.service.js';
 
 class OrderService {
@@ -58,6 +61,10 @@ class OrderService {
   createOrder = async (userId: string, input: CreateOrderInput) => {
     const { name, phone, address, orderItems, usePoint = 0, isTest = false } = input;
 
+    let finalPriceForGradeUpdate = 0;
+    // 대시보드 캐시 무효화를 위해 영향받는 스토어 ID 수집
+    const affectedStoreIds = new Set<string>();
+
     const createdOrder = await prisma.$transaction(
       async (tx) => {
         // 1. 상품 정보 및 재고 조회, 가격 계산
@@ -76,7 +83,7 @@ class OrderService {
             where: { productId: item.productId, sizeId: item.sizeId },
             include: {
               product: {
-                select: { price: true, isSoldOut: true, name: true },
+                select: { price: true, isSoldOut: true, name: true, storeId: true },
               },
               size: true, // 사이즈 정보를 함께 가져옵니다.
             },
@@ -100,6 +107,9 @@ class OrderService {
           const unitPrice = productStock.product.price;
           subtotal += unitPrice * item.quantity;
 
+          // 대시보드 캐시 무효화를 위해 스토어 ID 수집
+          affectedStoreIds.add(productStock.product.storeId);
+
           computedItems.push({
             productId: item.productId,
             sizeId: item.sizeId,
@@ -119,6 +129,7 @@ class OrderService {
         if (usePoint > user.points) throw HttpException.badRequest(MESSAGE.insufficientPoints);
 
         const finalPrice = Math.max(subtotal - usePoint, 0);
+        finalPriceForGradeUpdate = finalPrice; // 등급 업데이트를 위해 최종 가격 저장
 
         // 3. 주문 상태 결정
         const orderStatus = isTest ? OrderStatus.WaitingPayment : OrderStatus.CompletedPayment;
@@ -210,9 +221,8 @@ class OrderService {
           });
         }
 
-        // 7. 포인트 사용/적립 및 등급 업데이트 (실제 주문일 경우에만)
+        // 7. 포인트 사용/적립 (실제 주문일 경우에만) - 등급 업데이트 로직은 분리
         if (!isTest) {
-          // 포인트 사용 처리
           if (usePoint > 0) {
             await tx.pointHistory.create({
               data: {
@@ -225,7 +235,6 @@ class OrderService {
             });
           }
 
-          // 포인트 적립 처리
           const earnedPoints = Math.floor(finalPrice * (user.grade.rate / 100));
           if (earnedPoints > 0) {
             await tx.pointHistory.create({
@@ -241,24 +250,13 @@ class OrderService {
 
           // 사용자 누적 금액 및 포인트 최종 업데이트
           const netPointChange = earnedPoints - usePoint;
-          const updatedUser = await tx.user.update({
+          await tx.user.update({
             where: { id: userId },
             data: {
               points: { increment: netPointChange },
               totalAmount: { increment: finalPrice },
             },
           });
-
-          // 등급 업데이트 확인
-          const allGrades = await tx.grade.findMany({ orderBy: { minAmount: 'desc' } });
-          const newGrade = allGrades.find((grade) => updatedUser.totalAmount >= grade.minAmount);
-
-          if (newGrade && newGrade.id !== user.gradeId) {
-            await tx.user.update({
-              where: { id: userId },
-              data: { gradeId: newGrade.id },
-            });
-          }
         }
 
         return order;
@@ -266,7 +264,25 @@ class OrderService {
       { maxWait: 5000, timeout: 20000 },
     );
 
-    // 8. 최종 결과 반환
+    // 트랜잭션 성공 후, 등급 업데이트 및 알림 전송 로직 호출
+    if (!isTest && finalPriceForGradeUpdate > 0) {
+      try {
+        await metadataService.updateTotalAmount({
+          userId: userId,
+          deltaAmount: finalPriceForGradeUpdate,
+        });
+      } catch (err) {
+        // 등급 업데이트 실패가 주문 생성의 성공에 영향을 주지 않도록 로깅만 처리
+        logger.error(err, '주문 후 등급 업데이트 실패');
+      }
+    }
+
+    // 8. 대시보드 캐시 무효화 (트랜잭션 완료 후)
+    for (const storeId of affectedStoreIds) {
+      dashboardService.invalidateDashboardCache(storeId);
+    }
+
+    // 9. 최종 결과 반환
     const detailedOrder = await orderRepository.findById(createdOrder.id);
     return OrderResponse.single(detailedOrder!);
   };
@@ -275,10 +291,21 @@ class OrderService {
    * 주문 취소
    */
   deleteOrder = async (userId: string, orderId: string) => {
-    return prisma.$transaction(async (tx) => {
+    // 주문 취소 시 영향받는 스토어 ID 수집
+    const affectedStoreIds = new Set<string>();
+
+    const result = await prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirst({
         where: { id: orderId, userId },
-        include: { orderItems: true },
+        include: {
+          orderItems: {
+            include: {
+              product: {
+                select: { storeId: true },
+              },
+            },
+          },
+        },
       });
 
       if (!order) throw HttpException.notFound('주문을 찾을 수 없습니다.');
@@ -295,6 +322,8 @@ class OrderService {
           where: { id: item.productId },
           data: { salesCount: { decrement: item.quantity } },
         });
+        // 대시보드 캐시 무효화를 위해 스토어 ID 수집
+        affectedStoreIds.add(item.product.storeId);
       }
 
       if (order.usePoint > 0) {
@@ -312,6 +341,13 @@ class OrderService {
 
       return { message: '주문이 성공적으로 취소되었습니다.' };
     });
+
+    // 대시보드 캐시 무효화 (트랜잭션 완료 후)
+    for (const storeId of affectedStoreIds) {
+      dashboardService.invalidateDashboardCache(storeId);
+    }
+
+    return result;
   };
 
   /**

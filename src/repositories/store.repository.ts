@@ -6,7 +6,11 @@ import type {
   ToggleFavoriteInput,
   UpdateStoreServiceInput,
 } from '../types/store.type.js';
+import { cacheManager, storeDetailCache } from '../utils/cache.js';
+import { logger } from '../utils/logger.js';
 import prisma from '../utils/prisma.js';
+
+const STORE_DETAIL_CACHE_KEY_PREFIX = 'detail:';
 
 class StoreRepository {
   async findByUserId(userId: string) {
@@ -29,6 +33,13 @@ class StoreRepository {
   }
 
   async findByIdWithDetails(storeId: string) {
+    const cacheKey = `${STORE_DETAIL_CACHE_KEY_PREFIX}${storeId}`;
+    const cached = storeDetailCache.get(cacheKey);
+    if (cached) {
+      logger.debug({ target: 'cache', event: 'hit', cache: 'store-detail', storeId }, '스토어 상세 캐시 히트');
+      return cached;
+    }
+
     const store = await prisma.store.findFirst({
       where: { id: storeId },
       include: { image: true },
@@ -40,11 +51,22 @@ class StoreRepository {
       where: { storeId },
     });
 
-    return {
+    const result = {
       ...store,
       favoriteCount,
     };
+
+    storeDetailCache.set(cacheKey, result);
+    logger.debug(
+      { target: 'cache', event: 'miss', cache: 'store-detail', storeId },
+      '스토어 상세 캐시 미스 - DB에서 조회',
+    );
+    return result;
   }
+
+  invalidateStoreCache = (storeId: string) => {
+    cacheManager.invalidate('store-detail', `${STORE_DETAIL_CACHE_KEY_PREFIX}${storeId}`);
+  };
 
   async findMyStoreWithDetails(userId: string) {
     const store = await prisma.store.findFirst({

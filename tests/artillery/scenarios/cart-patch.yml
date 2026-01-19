@@ -1,0 +1,57 @@
+config:
+  target: '{{ $processEnvironment.TARGET_URL }}'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warm up'
+    - duration: 60
+      arrivalRate: 15
+      name: 'Sustained load'
+
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+  payload:
+    - path: '../data/buyers.csv'
+      fields:
+        - 'email'
+        - 'password'
+      skipHeader: true
+    - path: '../data/products.csv'
+      fields:
+        - 'productId'
+        - 'sizeId'
+        - 'quantity'
+      skipHeader: true
+
+  ensure:
+    p95: 800
+    p99: 1500
+    maxErrorRate: 1
+
+before:
+  flow:
+    - post:
+        url: '/api/auth/login'
+        json:
+          email: '{{ email }}'
+          password: '{{ password }}'
+        capture:
+          - json: '$.accessToken'
+            as: 'accessToken'
+
+scenarios:
+  - name: 'Patch Cart'
+    flow:
+      - patch:
+          url: '/api/cart'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json:
+            productId: '{{ productId }}'
+            sizes:
+              - sizeId: '{{ sizeId }}'
+                quantity: '{{ quantity }}'
+          expect:
+            - statusCode: 200

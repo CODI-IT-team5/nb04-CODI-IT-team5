@@ -1,9 +1,9 @@
 import { config } from '../src/config/config.js';
 import { productRepository } from '../src/repositories/product.repository.js';
-import prisma from '../src/utils/prisma.js';
-
-import { OrderStatus, UserRole } from '@prisma/client';
+import { PrismaClient, OrderStatus, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
+
+const prisma = new PrismaClient();
 
 async function main() {
   // ----------------------
@@ -11,9 +11,8 @@ async function main() {
   // ----------------------
   await prisma.image.upsert({
     where: { id: config.resource.defaultImageId },
-    update: {}, // 이미 있으면 변경하지 않음
+    update: {},
     create: {
-      // 없으면 새로 생성
       id: config.resource.defaultImageId,
       key: config.resource.defaultImageKey,
       url: config.resource.defaultImageUrl,
@@ -40,7 +39,32 @@ async function main() {
   const testPassword = 'test1234';
   const hashedPassword = await bcrypt.hash(testPassword, config.app.bcryptSaltRounds);
 
-  const [seller1, seller2, buyer1, buyer2, buyer3] = await Promise.all([
+  // E2E 테스트용 사용자 추가
+  const [seller0, buyer, seller1, seller2, buyer1, buyer2, buyer3] = await Promise.all([
+    prisma.user.upsert({
+      where: { email: 'seller0@codiit.com' },
+      update: {},
+      create: {
+        email: 'seller0@codiit.com',
+        name: 'E2E 판매자',
+        password: hashedPassword,
+        lastLoginAt: new Date(),
+        type: UserRole.SELLER,
+        gradeId: 'grade_green',
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: 'buyer@codiit.com' },
+      update: {},
+      create: {
+        email: 'buyer@codiit.com',
+        name: 'E2E 구매자',
+        password: hashedPassword,
+        lastLoginAt: new Date(),
+        type: UserRole.BUYER,
+        gradeId: 'grade_green',
+      },
+    }),
     prisma.user.upsert({
       where: { email: 'seller1@test.com' },
       update: {},
@@ -137,7 +161,19 @@ async function main() {
   // ----------------------
   // 6. 스토어
   // ----------------------
-  const [seller1Store, seller2Store] = await Promise.all([
+  const [seller0Store, seller1Store, seller2Store] = await Promise.all([
+    prisma.store.upsert({
+      where: { userId: seller0.id },
+      update: {},
+      create: {
+        name: 'E2E 테스트 스토어',
+        content: 'E2E 테스트용 스토어입니다',
+        address: '서울시 강남구',
+        detailAddress: 'E2E빌딩 1층',
+        phoneNumber: '010-0000-0000',
+        userId: seller0.id,
+      },
+    }),
     prisma.store.upsert({
       where: { userId: seller1.id },
       update: {},
@@ -284,51 +320,106 @@ async function main() {
     // product2 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 1 } },
-      update: { quantity: 20 },
-      create: { productId: product2.id, sizeId: 1, quantity: 20 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 1, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 2 } },
-      update: { quantity: 20 },
-      create: { productId: product2.id, sizeId: 2, quantity: 20 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 2, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product2.id, sizeId: 3 } },
-      update: { quantity: 20 },
-      create: { productId: product2.id, sizeId: 3, quantity: 20 },
+      update: { quantity: 10 },
+      create: { productId: product2.id, sizeId: 3, quantity: 10 },
     }),
     // product3 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 2 } },
-      update: { quantity: 15 },
-      create: { productId: product3.id, sizeId: 2, quantity: 15 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 2, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 3 } },
-      update: { quantity: 15 },
-      create: { productId: product3.id, sizeId: 3, quantity: 15 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 3, quantity: 10 },
     }),
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product3.id, sizeId: 4 } },
-      update: { quantity: 15 },
-      create: { productId: product3.id, sizeId: 4, quantity: 15 },
+      update: { quantity: 10 },
+      create: { productId: product3.id, sizeId: 4, quantity: 10 },
     }),
     // product4 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product4.id, sizeId: 6 } },
-      update: { quantity: 25 },
-      create: { productId: product4.id, sizeId: 6, quantity: 25 },
+      update: { quantity: 10 },
+      create: { productId: product4.id, sizeId: 6, quantity: 10 },
     }),
     // product5 재고
     prisma.productStock.upsert({
       where: { productId_sizeId: { productId: product5.id, sizeId: 6 } },
-      update: { quantity: 18 },
-      create: { productId: product5.id, sizeId: 6, quantity: 18 },
+      update: { quantity: 10 },
+      create: { productId: product5.id, sizeId: 6, quantity: 10 },
     }),
   ]);
 
   // ----------------------
-  // 10. 주문 생성
+  // 10. 장바구니 생성
+  // ----------------------
+  const [cart1, cart2, cart3] = await Promise.all([
+    prisma.cart.upsert({
+      where: { userId: buyer1.id },
+      update: {},
+      create: { userId: buyer1.id },
+    }),
+    prisma.cart.upsert({
+      where: { userId: buyer2.id },
+      update: {},
+      create: { userId: buyer2.id },
+    }),
+    prisma.cart.upsert({
+      where: { userId: buyer3.id },
+      update: {},
+      create: { userId: buyer3.id },
+    }),
+  ]);
+
+  // ----------------------
+  // 11. 장바구니 아이템 생성
+  // ----------------------
+  await Promise.all([
+    // buyer1 장바구니: product1 M사이즈 2개, product3 L사이즈 1개
+    prisma.cartItem.upsert({
+      where: { cartId_productId_sizeId: { cartId: cart1.id, productId: product1.id, sizeId: 3 } },
+      update: { quantity: 2 },
+      create: { cartId: cart1.id, productId: product1.id, sizeId: 3, quantity: 2 },
+    }),
+    prisma.cartItem.upsert({
+      where: { cartId_productId_sizeId: { cartId: cart1.id, productId: product3.id, sizeId: 4 } },
+      update: { quantity: 1 },
+      create: { cartId: cart1.id, productId: product3.id, sizeId: 4, quantity: 1 },
+    }),
+    // buyer2 장바구니: product4 Free사이즈 1개
+    prisma.cartItem.upsert({
+      where: { cartId_productId_sizeId: { cartId: cart2.id, productId: product4.id, sizeId: 6 } },
+      update: { quantity: 1 },
+      create: { cartId: cart2.id, productId: product4.id, sizeId: 6, quantity: 1 },
+    }),
+    // buyer3 장바구니: product2 S사이즈 3개, product5 Free사이즈 2개
+    prisma.cartItem.upsert({
+      where: { cartId_productId_sizeId: { cartId: cart3.id, productId: product2.id, sizeId: 2 } },
+      update: { quantity: 3 },
+      create: { cartId: cart3.id, productId: product2.id, sizeId: 2, quantity: 3 },
+    }),
+    prisma.cartItem.upsert({
+      where: { cartId_productId_sizeId: { cartId: cart3.id, productId: product5.id, sizeId: 6 } },
+      update: { quantity: 2 },
+      create: { cartId: cart3.id, productId: product5.id, sizeId: 6, quantity: 2 },
+    }),
+  ]);
+
+  // ----------------------
+  // 12. 주문 생성
   // ----------------------
   const [order1, order2, order3] = await Promise.all([
     // buyer1의 주문 (product2 구매)
@@ -382,7 +473,7 @@ async function main() {
   ]);
 
   // ----------------------
-  // 11. 주문 아이템 생성
+  // 13. 주문 아이템 생성
   // ----------------------
   const [orderItem1, orderItem2, orderItem3, orderItem4, orderItem5] = await Promise.all([
     // order1 - product2
@@ -463,7 +554,7 @@ async function main() {
   ]);
 
   // ----------------------
-  // 12. 리뷰 생성
+  // 14. 리뷰 생성
   // ----------------------
   await Promise.all([
     // product2에 대한 리뷰 (buyer1)
@@ -534,7 +625,7 @@ async function main() {
   ]);
 
   // ----------------------
-  // 13. 리뷰 작성 완료 표시
+  // 15. 리뷰 작성 완료 표시
   // ----------------------
   await Promise.all([
     prisma.orderItem.update({ where: { id: orderItem1.id }, data: { isReviewed: true } }),
@@ -545,7 +636,7 @@ async function main() {
   ]);
 
   // ----------------------
-  // 14. 상품별 리뷰 통계 업데이트
+  // 16. 상품별 리뷰 통계 업데이트
   // ----------------------
   await Promise.all([
     productRepository.updateProductReviewStats(product2.id),
@@ -559,9 +650,12 @@ async function main() {
   console.log('   - 유저: 5명 (셀러 2명, 바이어 3명)');
   console.log('   - 스토어: 2개');
   console.log('   - 상품: 5개');
+  console.log('   - 장바구니: 3개 (바이어별 1개)');
+  console.log('   - 장바구니 아이템: 5개');
   console.log('   - 주문: 3개');
   console.log('   - 주문 아이템: 5개');
   console.log('   - 리뷰: 5개');
+  console.log('   - 할인: 5개 (모두 활성)');
   console.log('   - product2 (베이직 티셔츠): 리뷰 1개, 평점 5.0');
   console.log('   - product3 (슬림 진): 리뷰 1개, 평점 4.0');
   console.log('   - product4 (원피스): 리뷰 2개, 평점 5.0');

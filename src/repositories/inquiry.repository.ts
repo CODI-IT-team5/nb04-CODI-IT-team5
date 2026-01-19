@@ -98,6 +98,44 @@ export class InquiryRepository {
     });
   }
 
+  async findByProductIdWithPagination(params: {
+    productId: string;
+    page: number;
+    pageSize: number;
+    order?: 'asc' | 'desc';
+    status?: InquiryStatus;
+  }): Promise<{ inquiries: Inquiry[]; totalCount: number }> {
+    const { productId, page, pageSize, order = 'desc', status } = params;
+
+    const where = {
+      productId,
+      ...(status ? { status } : {}),
+    };
+
+    const [inquiries, totalCount] = await Promise.all([
+      prisma.inquiry.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          reply: true,
+        },
+        orderBy: {
+          createdAt: order,
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.inquiry.count({ where }),
+    ]);
+
+    return { inquiries, totalCount };
+  }
+
   async findByUserId(
     userId: string,
     options?: {

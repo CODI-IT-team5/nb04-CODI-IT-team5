@@ -34,6 +34,7 @@ export class ProductResponse {
         sumScore: product.reviews.sumScore,
       },
       inquiries: product.inquiries,
+      categoryId: product.category?.id ?? null,
       category: product.category
         ? {
             id: product.category.id,
@@ -49,6 +50,7 @@ export class ProductResponse {
           name: stock.size.name,
         },
       })),
+      isSoldOut: product.isSoldOut,
     };
   }
 
