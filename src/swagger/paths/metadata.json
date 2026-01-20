@@ -1,0 +1,33 @@
+{
+  "/api/metadata/grade": {
+    "get": {
+      "tags": ["Metadata"],
+      "summary": "등급 목록 조회",
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grades": { "type": "array", "items": { "$ref": "#/components/schemas/Grade" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Metadata"],
+      "summary": "등급 수정 (테스트용)",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "수정 성공"
+        }
+      }
+    }
+  }
+}

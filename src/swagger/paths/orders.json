@@ -1,0 +1,134 @@
+{
+  "/api/orders": {
+    "get": {
+      "tags": ["Orders"],
+      "summary": "주문 목록 조회",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/OrderStatus" } },
+        { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orders": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } },
+                  "totalCount": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": ["Orders"],
+      "summary": "주문 생성",
+      "security": [{ "bearerAuth": [] }],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["name", "phone", "address", "orderItems"],
+              "properties": {
+                "name": { "type": "string" },
+                "phone": { "type": "string" },
+                "address": { "type": "string" },
+                "orderItems": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "productId": { "type": "string" },
+                      "sizeId": { "type": "integer" },
+                      "quantity": { "type": "integer" }
+                    }
+                  }
+                },
+                "usePoint": { "type": "integer" },
+                "isTest": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "주문 생성 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Order" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/orders/{orderId}": {
+    "get": {
+      "tags": ["Orders"],
+      "summary": "주문 상세 조회",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Order" }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Orders"],
+      "summary": "주문 정보 수정",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "phone": { "type": "string" },
+                "address": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "수정 성공"
+        }
+      }
+    },
+    "delete": {
+      "tags": ["Orders"],
+      "summary": "주문 취소",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "취소 성공"
+        }
+      }
+    }
+  }
+}

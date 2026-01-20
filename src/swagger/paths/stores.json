@@ -1,0 +1,170 @@
+{
+  "/api/stores": {
+    "post": {
+      "tags": ["Stores"],
+      "summary": "스토어 등록",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["name", "address", "phoneNumber", "content"],
+              "properties": {
+                "name": { "type": "string", "example": "패션스토어" },
+                "address": { "type": "string", "example": "서울시 강남구" },
+                "detailAddress": { "type": "string" },
+                "phoneNumber": { "type": "string", "example": "010-1234-5678" },
+                "content": { "type": "string" },
+                "imageId": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "스토어 등록 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Store" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/stores/detail/my": {
+    "get": {
+      "tags": ["Stores"],
+      "summary": "내 스토어 조회",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Store" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/stores/detail/my/product": {
+    "get": {
+      "tags": ["Stores"],
+      "summary": "내 스토어 상품 목록",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+        { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "products": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+                  "totalCount": { "type": "integer" },
+                  "page": { "type": "integer" },
+                  "pageSize": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/stores/{storeId}": {
+    "get": {
+      "tags": ["Stores"],
+      "summary": "스토어 상세 조회",
+      "parameters": [
+        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Store" }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Stores"],
+      "summary": "스토어 정보 수정",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "address": { "type": "string" },
+                "detailAddress": { "type": "string" },
+                "phoneNumber": { "type": "string" },
+                "content": { "type": "string" },
+                "imageId": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "수정 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Store" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/stores/{storeId}/favorite": {
+    "post": {
+      "tags": ["Stores"],
+      "summary": "관심 스토어 등록",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "등록 성공"
+        }
+      }
+    },
+    "delete": {
+      "tags": ["Stores"],
+      "summary": "관심 스토어 해제",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "해제 성공"
+        }
+      }
+    }
+  }
+}

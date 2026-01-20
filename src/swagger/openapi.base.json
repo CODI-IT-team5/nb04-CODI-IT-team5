@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CODI-IT API",
+    "version": "1.0.0",
+    "description": "CODI-IT 이커머스 플랫폼 API 문서\n\n## 인증\n대부분의 API는 JWT 토큰 인증이 필요합니다.\n- **Access Token**: Authorization 헤더에 Bearer 토큰으로 전달\n- **Refresh Token**: HttpOnly 쿠키로 자동 전달\n\n## 사용자 역할\n- **BUYER**: 구매자 - 상품 구매, 리뷰 작성, 문의 등록\n- **SELLER**: 판매자 - 스토어 관리, 상품 등록, 문의 답변"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development Server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "인증 관련 API" },
+    { "name": "Users", "description": "사용자 관련 API" },
+    { "name": "Stores", "description": "스토어 관련 API" },
+    { "name": "Products", "description": "상품 관련 API" },
+    { "name": "Cart", "description": "장바구니 관련 API" },
+    { "name": "Orders", "description": "주문 관련 API" },
+    { "name": "Reviews", "description": "리뷰 관련 API" },
+    { "name": "Inquiries", "description": "상품 문의 관련 API" },
+    { "name": "Notifications", "description": "알림 관련 API" },
+    { "name": "Metadata", "description": "메타데이터 API" },
+    { "name": "Dashboard", "description": "판매자 대시보드 API" },
+    { "name": "S3", "description": "파일 업로드 API" }
+  ]
+}

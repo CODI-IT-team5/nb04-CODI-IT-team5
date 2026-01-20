@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 
 import { config } from './config/config.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
@@ -22,6 +23,7 @@ import { reviewRouter } from './routes/review.router.js';
 import { s3Router } from './routes/s3.router.js';
 import { storeRouter } from './routes/store.router.js';
 import { userRouter } from './routes/user.router.js';
+import { openAPIDocument } from './swagger/index.js';
 import { HttpException } from './utils/http-exception.js';
 import { logger } from './utils/logger.js';
 import { limiter } from './utils/rate-limit.js';
@@ -63,6 +65,12 @@ app.use(helmet()); // 보안 헤더 적용
 // 서버 상태 테스트용
 app.get('/health', (_req, res) => {
   res.status(200).send('OK');
+});
+
+// Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openAPIDocument));
+app.get('/api-docs.json', (_req, res) => {
+  res.json(openAPIDocument);
 });
 
 app.use('/api/auth', authRouter);

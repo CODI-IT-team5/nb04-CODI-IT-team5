@@ -1,0 +1,139 @@
+{
+  "/api/users": {
+    "post": {
+      "tags": ["Users"],
+      "summary": "회원가입",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["name", "type", "email", "password"],
+              "properties": {
+                "name": { "type": "string", "minLength": 2, "maxLength": 30, "example": "홍길동" },
+                "type": { "$ref": "#/components/schemas/UserRole" },
+                "email": { "type": "string", "format": "email", "example": "user@example.com" },
+                "password": { "type": "string", "minLength": 8, "example": "password123" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "회원가입 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        },
+        "409": {
+          "description": "이미 존재하는 이메일",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Error" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/users/me": {
+    "get": {
+      "tags": ["Users"],
+      "summary": "내 정보 조회",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Users"],
+      "summary": "내 정보 수정",
+      "security": [{ "bearerAuth": [] }],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["currentPassword"],
+              "properties": {
+                "name": { "type": "string" },
+                "password": { "type": "string" },
+                "currentPassword": { "type": "string" },
+                "imageId": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "수정 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/users/me/likes": {
+    "get": {
+      "tags": ["Users"],
+      "summary": "관심 스토어 목록 조회",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stores": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Store" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/users/delete": {
+    "delete": {
+      "tags": ["Users"],
+      "summary": "회원 탈퇴",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "탈퇴 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

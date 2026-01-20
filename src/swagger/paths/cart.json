@@ -1,0 +1,105 @@
+{
+  "/api/cart": {
+    "get": {
+      "tags": ["Cart"],
+      "summary": "장바구니 조회",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "items": { "type": "array", "items": { "$ref": "#/components/schemas/CartItem" } },
+                  "totalPrice": { "type": "integer" },
+                  "totalQuantity": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": ["Cart"],
+      "summary": "장바구니 생성",
+      "security": [{ "bearerAuth": [] }],
+      "responses": {
+        "200": {
+          "description": "생성 성공"
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Cart"],
+      "summary": "장바구니 수정",
+      "description": "quantity가 0이면 해당 항목 삭제",
+      "security": [{ "bearerAuth": [] }],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["productId", "sizes"],
+              "properties": {
+                "productId": { "type": "string" },
+                "sizes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sizeId": { "type": "integer" },
+                      "quantity": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "수정 성공"
+        }
+      }
+    }
+  },
+  "/api/cart/{cartItemId}": {
+    "get": {
+      "tags": ["Cart"],
+      "summary": "장바구니 항목 조회",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CartItem" }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "tags": ["Cart"],
+      "summary": "장바구니 항목 삭제",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [
+        { "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "삭제 성공"
+        }
+      }
+    }
+  }
+}
