@@ -7,7 +7,14 @@
         { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
         { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
         { "name": "search", "in": "query", "schema": { "type": "string" } },
-        { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["mostReviewed", "recent", "lowPrice", "highPrice", "highRating", "salesRanking"] } },
+        {
+          "name": "sort",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": ["mostReviewed", "recent", "lowPrice", "highPrice", "highRating", "salesRanking"]
+          }
+        },
         { "name": "priceMin", "in": "query", "schema": { "type": "integer" } },
         { "name": "priceMax", "in": "query", "schema": { "type": "integer" } },
         { "name": "size", "in": "query", "schema": { "type": "string" } },
@@ -85,9 +92,7 @@
     "get": {
       "tags": ["Products"],
       "summary": "상품 상세 조회",
-      "parameters": [
-        { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "조회 성공",
@@ -104,9 +109,7 @@
       "summary": "상품 수정",
       "description": "판매자 전용",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "requestBody": {
         "content": {
           "application/json": {
@@ -144,9 +147,7 @@
       "summary": "상품 삭제",
       "description": "판매자 전용",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "삭제 성공"

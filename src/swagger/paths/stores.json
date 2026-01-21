@@ -88,9 +88,7 @@
     "get": {
       "tags": ["Stores"],
       "summary": "스토어 상세 조회",
-      "parameters": [
-        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "조회 성공",
@@ -107,9 +105,7 @@
       "summary": "스토어 정보 수정",
       "description": "판매자 전용",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "requestBody": {
         "content": {
           "application/json": {
@@ -144,9 +140,7 @@
       "tags": ["Stores"],
       "summary": "관심 스토어 등록",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "등록 성공"
@@ -157,9 +151,7 @@
       "tags": ["Stores"],
       "summary": "관심 스토어 해제",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "storeId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "해제 성공"

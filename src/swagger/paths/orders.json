@@ -76,9 +76,7 @@
       "tags": ["Orders"],
       "summary": "주문 상세 조회",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "조회 성공",
@@ -94,9 +92,7 @@
       "tags": ["Orders"],
       "summary": "주문 정보 수정",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "requestBody": {
         "content": {
           "application/json": {
@@ -121,9 +117,7 @@
       "tags": ["Orders"],
       "summary": "주문 취소",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "취소 성공"

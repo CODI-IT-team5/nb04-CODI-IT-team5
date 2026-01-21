@@ -74,9 +74,7 @@
       "tags": ["Cart"],
       "summary": "장바구니 항목 조회",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "조회 성공",
@@ -92,9 +90,7 @@
       "tags": ["Cart"],
       "summary": "장바구니 항목 삭제",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "cartItemId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "삭제 성공"

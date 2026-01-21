@@ -64,9 +64,7 @@
       "tags": ["Notifications"],
       "summary": "알림 읽음 처리",
       "security": [{ "bearerAuth": [] }],
-      "parameters": [
-        { "name": "alarmId", "in": "path", "required": true, "schema": { "type": "string" } }
-      ],
+      "parameters": [{ "name": "alarmId", "in": "path", "required": true, "schema": { "type": "string" } }],
       "responses": {
         "200": {
           "description": "읽음 처리 성공"
