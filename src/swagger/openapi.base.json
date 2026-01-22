@@ -7,6 +7,10 @@
   },
   "servers": [
     {
+      "url": "http://3.34.104.78",
+      "description": "Production Server"
+    },
+    {
       "url": "http://localhost:3001",
       "description": "Development Server"
     }
