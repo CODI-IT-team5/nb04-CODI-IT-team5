@@ -83,9 +83,25 @@ class OrderService {
             where: { productId: item.productId, sizeId: item.sizeId },
             include: {
               product: {
-                select: { price: true, isSoldOut: true, name: true, storeId: true },
+                select: {
+                  price: true,
+                  isSoldOut: true,
+                  name: true,
+                  storeId: true,
+                  productDiscounts: {
+                    where: {
+                      revokedAt: null,
+                      discountStartTime: { lte: new Date() },
+                      discountEndTime: { gte: new Date() },
+                    },
+                    select: {
+                      discountRate: true,
+                    },
+                    take: 1,
+                  },
+                },
               },
-              size: true, // 사이즈 정보를 함께 가져옵니다.
+              size: true,
             },
           });
 
@@ -104,7 +120,13 @@ class OrderService {
             );
           }
 
-          const unitPrice = productStock.product.price;
+          const originalPrice = productStock.product.price;
+          const discount = productStock.product.productDiscounts[0];
+
+          let unitPrice = originalPrice;
+          if (discount && discount.discountRate > 0) {
+            unitPrice = Math.floor(originalPrice * (1 - discount.discountRate / 100));
+          }
           subtotal += unitPrice * item.quantity;
 
           // 대시보드 캐시 무효화를 위해 스토어 ID 수집
