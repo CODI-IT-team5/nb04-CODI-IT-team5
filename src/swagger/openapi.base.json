@@ -3,7 +3,7 @@
   "info": {
     "title": "CODI-IT API",
     "version": "1.0.0",
-    "description": "CODI-IT 이커머스 플랫폼 API 문서\n\n## 인증\n대부분의 API는 JWT 토큰 인증이 필요합니다.\n- **Access Token**: Authorization 헤더에 Bearer 토큰으로 전달\n- **Refresh Token**: HttpOnly 쿠키로 자동 전달\n\n## 사용자 역할\n- **BUYER**: 구매자 - 상품 구매, 리뷰 작성, 문의 등록\n- **SELLER**: 판매자 - 스토어 관리, 상품 등록, 문의 답변"
+    "description": "CODI-IT 이커머스 플랫폼 API 문서\n\n## 인증\n대부분의 API는 JWT 토큰 인증이 필요합니다.\n- **Access Token**: Authorization 헤더에 Bearer 토큰으로 전달\n- **Refresh Token**: HttpOnly 쿠키로 자동 전달\n\n## 사용자 역할\n- **BUYER**: 구매자 - 상품 구매, 리뷰 작성, 문의 등록\n- **SELLER**: 판매자 - 스토어 관리, 상품 등록, 문의 답변\n\n## 테스트 계정\n| 역할 | 이메일 | 비밀번호 |\n|------|--------|----------|\n| Buyer | buyer1@test.com | test1234 |\n| Seller | seller1@test.com | test1234 |"
   },
   "servers": [
     {
