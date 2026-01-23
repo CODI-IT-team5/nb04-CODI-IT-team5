@@ -1,7 +1,7 @@
 # 🛍️ CODI-IT
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=slice&color=1a1a1a&height=250&section=header&text=CODI-IT&fontSize=80&fontColor=ffffff&animation=fadeIn&desc=Fashion%20E-commerce&descSize=25&descAlignY=65"/>
+  <img src="https://capsule-render.vercel.app/api?type=slice&color=1a1a1a&height=250&section=header&text=CODI-IT&fontSize=80&fontColor=ffffff&animation=fadeIn&desc=Fashion%20E-commerce&descSize=25&descAlignY=65&descAlign=50&stroke=000000&strokeWidth=2"/>
 </div>
 
 <div align="center">
