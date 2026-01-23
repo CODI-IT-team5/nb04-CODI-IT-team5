@@ -1,0 +1,179 @@
+{
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "JWT 액세스 토큰"
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string", "example": "에러 메시지" },
+        "status": { "type": "integer", "example": 400 }
+      }
+    },
+    "UserRole": {
+      "type": "string",
+      "enum": ["BUYER", "SELLER"]
+    },
+    "OrderStatus": {
+      "type": "string",
+      "enum": ["WaitingPayment", "CompletedPayment", "Processing", "Shipping", "Delivered", "Cancelled", "Refunded"]
+    },
+    "InquiryStatus": {
+      "type": "string",
+      "enum": ["PENDING", "ANSWERED"]
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "clxyz123456789" },
+        "name": { "type": "string", "example": "홍길동" },
+        "email": { "type": "string", "format": "email", "example": "user@example.com" },
+        "type": { "$ref": "#/components/schemas/UserRole" },
+        "imageUrl": { "type": "string", "nullable": true },
+        "point": { "type": "integer", "example": 1000 },
+        "gradeId": { "type": "integer", "example": 1 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Store": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "store-123" },
+        "name": { "type": "string", "example": "패션스토어" },
+        "address": { "type": "string", "example": "서울시 강남구" },
+        "detailAddress": { "type": "string", "nullable": true },
+        "phoneNumber": { "type": "string", "example": "010-1234-5678" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string", "nullable": true },
+        "favoriteCount": { "type": "integer", "example": 150 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Product": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "product-123" },
+        "name": { "type": "string", "example": "기본 티셔츠" },
+        "price": { "type": "integer", "example": 29000 },
+        "content": { "type": "string", "nullable": true },
+        "imageUrl": { "type": "string", "nullable": true },
+        "isSoldOut": { "type": "boolean", "example": false },
+        "store": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "category": {
+          "type": "object",
+          "nullable": true,
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "averageRating": { "type": "number", "example": 4.5 },
+        "reviewCount": { "type": "integer", "example": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CartItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "product": { "$ref": "#/components/schemas/Product" },
+        "size": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string" }
+          }
+        },
+        "quantity": { "type": "integer" }
+      }
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "example": "order-123" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "status": { "$ref": "#/components/schemas/OrderStatus" },
+        "totalPrice": { "type": "integer" },
+        "usedPoint": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Review": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string", "nullable": true },
+        "user": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Inquiry": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "isSecret": { "type": "boolean" },
+        "status": { "$ref": "#/components/schemas/InquiryStatus" },
+        "user": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "reply": {
+          "type": "object",
+          "nullable": true,
+          "properties": {
+            "id": { "type": "string" },
+            "content": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Grade": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "minPoint": { "type": "integer" },
+        "maxPoint": { "type": "integer" },
+        "pointRate": { "type": "number" }
+      }
+    }
+  }
+}

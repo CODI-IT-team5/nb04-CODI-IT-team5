@@ -55,6 +55,7 @@
     "node-cron": "^4.2.1",
     "pino": "^10.1.0",
     "pino-pretty": "^13.1.2",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },
@@ -71,8 +72,8 @@
     "@types/multer": "^2.0.0",
     "@types/multer-s3": "^3.0.3",
     "@types/supertest": "^6.0.2",
-    "cross-env": "^10.1.0",
     "artillery": "^2.0.27",
+    "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-import": "^2.32.0",

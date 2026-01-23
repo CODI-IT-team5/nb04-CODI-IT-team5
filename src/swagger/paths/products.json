@@ -1,0 +1,158 @@
+{
+  "/api/products": {
+    "get": {
+      "tags": ["Products"],
+      "summary": "상품 목록 조회",
+      "parameters": [
+        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+        { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 10 } },
+        { "name": "search", "in": "query", "schema": { "type": "string" } },
+        {
+          "name": "sort",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": ["mostReviewed", "recent", "lowPrice", "highPrice", "highRating", "salesRanking"]
+          }
+        },
+        { "name": "priceMin", "in": "query", "schema": { "type": "integer" } },
+        { "name": "priceMax", "in": "query", "schema": { "type": "integer" } },
+        { "name": "size", "in": "query", "schema": { "type": "string" } },
+        { "name": "favoriteStore", "in": "query", "schema": { "type": "boolean" } },
+        { "name": "categoryName", "in": "query", "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "products": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+                  "totalCount": { "type": "integer" },
+                  "page": { "type": "integer" },
+                  "pageSize": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "post": {
+      "tags": ["Products"],
+      "summary": "상품 등록",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["name", "price", "categoryName", "stocks"],
+              "properties": {
+                "name": { "type": "string", "example": "기본 티셔츠" },
+                "price": { "type": "integer", "example": 29000 },
+                "content": { "type": "string" },
+                "imageId": { "type": "string" },
+                "categoryName": { "type": "string", "example": "상의" },
+                "stocks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sizeId": { "type": "integer" },
+                      "quantity": { "type": "integer" }
+                    }
+                  }
+                },
+                "discountRate": { "type": "integer" },
+                "discountStartTime": { "type": "string", "format": "date-time" },
+                "discountEndTime": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "상품 등록 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Product" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/products/{productId}": {
+    "get": {
+      "tags": ["Products"],
+      "summary": "상품 상세 조회",
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "responses": {
+        "200": {
+          "description": "조회 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Product" }
+            }
+          }
+        }
+      }
+    },
+    "patch": {
+      "tags": ["Products"],
+      "summary": "상품 수정",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "price": { "type": "integer" },
+                "content": { "type": "string" },
+                "imageId": { "type": "string" },
+                "categoryName": { "type": "string" },
+                "stocks": { "type": "array", "items": { "type": "object" } },
+                "discountRate": { "type": "integer" },
+                "discountStartTime": { "type": "string", "format": "date-time" },
+                "discountEndTime": { "type": "string", "format": "date-time" },
+                "isSoldOut": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "수정 성공",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Product" }
+            }
+          }
+        }
+      }
+    },
+    "delete": {
+      "tags": ["Products"],
+      "summary": "상품 삭제",
+      "description": "판매자 전용",
+      "security": [{ "bearerAuth": [] }],
+      "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "responses": {
+        "200": {
+          "description": "삭제 성공"
+        }
+      }
+    }
+  }
+}
